@@ -18,6 +18,7 @@
     "typecheck": "pnpm -r typecheck",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "db:generate": "pnpm --filter @wa-kijo/db generate",
     "db:migrate": "pnpm --filter @wa-kijo/db migrate",
     "db:seed": "pnpm --filter @wa-kijo/db seed",
     "db:studio": "pnpm --filter @wa-kijo/db studio",

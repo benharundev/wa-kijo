@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Better Auth core models
+// Field names must exactly match what Better Auth 1.5's Prisma adapter
+// expects. Do NOT rename these fields without updating the adapter config in
+// Phase 3. @@map directives lowercase table names as the adapter expects.
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Soft delete (project-wide convention — not managed by Better Auth)
+  deletedAt     DateTime?
+  deletedBy     String?
+
+  // Audit
+  createdBy     String?
+  updatedBy     String?
+
+  sessions    Session[]
+  accounts    Account[]
+  members     Member[]
+  invitations Invitation[]
+
+  @@index([email])
+  @@index([deletedAt])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, value])
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ---------------------------------------------------------------------------
+// Multi-tenancy models — extend Better Auth's organization plugin schema.
+// Better Auth expects: organization, member, invitation (exact model names).
+// Added: parentOrgId (hierarchy), orgType (tenant classification).
+// role/status stored as String, not Prisma enum — Better Auth compat.
+// ---------------------------------------------------------------------------
+
+model Organization {
+  id       String  @id @default(cuid())
+  name     String
+  slug     String  @unique
+  logo     String?
+  metadata String? // Better Auth stores serialized JSON here
+
+  // Hierarchy — null for root orgs (FR-O02)
+  parentOrgId String?
+  parent      Organization?  @relation("OrgHierarchy", fields: [parentOrgId], references: [id])
+  children    Organization[] @relation("OrgHierarchy")
+
+  // Tenant classification: AGENCY | WORKSPACE | SYSTEM (FR-O03)
+  orgType String @default("WORKSPACE")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  deletedBy String?
+  createdBy String?
+  updatedBy String?
+
+  members     Member[]
+  invitations Invitation[]
+
+  @@index([slug])
+  @@index([parentOrgId])
+  @@index([deletedAt])
+  @@map("organization")
+}
+
+// role: OWNER | ADMIN | MEMBER | GUEST — string for Better Auth compat
+model Member {
+  id        String   @id @default(cuid())
+  role      String   @default("MEMBER")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@index([organizationId])
+  @@map("member")
+}
+
+// role:   OWNER | ADMIN | MEMBER | GUEST — string for Better Auth compat
+// status: PENDING | ACCEPTED | REJECTED | CANCELED | EXPIRED
+model Invitation {
+  id        String   @id @default(cuid())
+  email     String
+  role      String   @default("MEMBER")
+  status    String   @default("PENDING")
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  inviterId String
+  inviter   User   @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([organizationId])
+  @@index([status])
+  @@map("invitation")
+}

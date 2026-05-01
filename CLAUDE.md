@@ -95,8 +95,11 @@ wa-kijo/
 ```bash
 # First-time local setup
 cp .env.example .env
-pnpm install
+pnpm install              # postinstall auto-runs prisma generate
 pnpm docker:up            # start Postgres 16 + Redis 7
+pnpm db:migrate           # apply migrations (name prompt: "init_schema")
+# Note: ports default to 5434 (Postgres) and 6381 (Redis) to avoid
+# conflicts with other local services (see .env.example).
 
 # Day-to-day
 pnpm dev                  # run api + web with hot reload
@@ -120,6 +123,15 @@ pnpm docker:up            # start dev containers (detached)
 pnpm docker:down          # stop dev containers
 pnpm docker:logs          # tail container logs
 ```
+
+## Workspace package build pattern
+
+`packages/shared` and `packages/db` are source-first packages. They use **conditional
+exports**: TypeScript resolves the `types` condition (`.ts` source), Node.js resolves
+the `require` condition (`dist/` CJS build). Before starting the API in dev mode, both
+packages are auto-built by the dev script (`pnpm dev` handles this). After editing code
+in a workspace package, run `pnpm --filter @wa-kijo/shared build` (or `@wa-kijo/db`) to
+update the CJS output — otherwise the running API still sees the old compiled version.
 
 ## TypeScript config
 
