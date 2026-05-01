@@ -1,0 +1,13 @@
+{
+  "name": "@wa-kijo/api",
+  "version": "0.0.1",
+  "private": true,
+  "description": "NestJS API — placeholder, scaffolded in Phase 2",
+  "scripts": {
+    "dev": "echo 'Not yet scaffolded. See Phase 2.'",
+    "build": "echo 'Not yet scaffolded.'",
+    "test": "echo 'No tests yet.' && exit 0",
+    "lint": "echo 'No lint config yet.' && exit 0",
+    "typecheck": "echo 'Nothing to typecheck yet.' && exit 0"
+  }
+}

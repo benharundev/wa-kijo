@@ -1,0 +1,14 @@
+{
+  "name": "@wa-kijo/db",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Prisma schema, migrations, and seed scripts — populated in Phase 2",
+  "scripts": {
+    "migrate": "echo 'Not yet scaffolded. See Phase 2.'",
+    "seed": "echo 'Not yet scaffolded.'",
+    "studio": "echo 'Not yet scaffolded.'",
+    "test": "echo 'No tests yet.' && exit 0",
+    "lint": "echo 'No lint config yet.' && exit 0",
+    "typecheck": "echo 'Nothing to typecheck yet.' && exit 0"
+  }
+}

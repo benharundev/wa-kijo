@@ -1,0 +1,13 @@
+{
+  "name": "@wa-kijo/web",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Next.js web app — placeholder, scaffolded in Phase 4",
+  "scripts": {
+    "dev": "echo 'Not yet scaffolded. See Phase 4.'",
+    "build": "echo 'Not yet scaffolded.'",
+    "test": "echo 'No tests yet.' && exit 0",
+    "lint": "echo 'No lint config yet.' && exit 0",
+    "typecheck": "echo 'Nothing to typecheck yet.' && exit 0"
+  }
+}
