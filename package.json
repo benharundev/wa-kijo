@@ -13,6 +13,7 @@
     "dev": "pnpm -r --parallel --filter='./apps/*' dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
+    "test:integration": "pnpm -r --filter='./apps/*' test:integration",
     "test:e2e": "pnpm -r --filter='./apps/*' test:e2e",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",

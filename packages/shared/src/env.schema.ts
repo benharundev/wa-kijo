@@ -23,13 +23,17 @@ export const EnvSchema = z.object({
     .default('debug'),
   SENTRY_DSN: z.string().optional(),
 
-  // Phase 3 — Better Auth (optional until Phase 3)
-  BETTER_AUTH_SECRET: z.string().optional(),
-  BETTER_AUTH_URL: z.string().optional(),
+  // Phase 3 — Better Auth (required)
+  BETTER_AUTH_SECRET: z.string().min(32),
+  BETTER_AUTH_URL: z.string().url(),
 
-  // Phase 3 — Email (optional until Phase 3)
-  RESEND_API_KEY: z.string().optional(),
-  EMAIL_FROM: z.string().optional(),
+  // Phase 3 — Email (required)
+  RESEND_API_KEY: z.string().startsWith('re_'),
+  EMAIL_FROM: z.string().email(),
+
+  // Phase 3 — OAuth providers (optional — app must not crash when absent)
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
 
   // Phase 4 — Billing (optional until Phase 4)
   STRIPE_SECRET_KEY: z.string().optional(),

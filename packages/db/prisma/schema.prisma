@@ -50,6 +50,9 @@ model Session {
   ipAddress String?
   userAgent String?
 
+  // Added by Better Auth organisation plugin — tracks the active org for this session
+  activeOrganizationId String?
+
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -131,10 +134,10 @@ model Organization {
   @@map("organization")
 }
 
-// role: OWNER | ADMIN | MEMBER | GUEST — string for Better Auth compat
+// role: owner | admin | member — lowercase strings, Better Auth default role names
 model Member {
   id        String   @id @default(cuid())
-  role      String   @default("MEMBER")
+  role      String   @default("member")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -150,13 +153,13 @@ model Member {
   @@map("member")
 }
 
-// role:   OWNER | ADMIN | MEMBER | GUEST — string for Better Auth compat
-// status: PENDING | ACCEPTED | REJECTED | CANCELED | EXPIRED
+// role:   owner | admin | member — lowercase, Better Auth compat
+// status: pending | accepted | rejected | canceled
 model Invitation {
   id        String   @id @default(cuid())
   email     String
-  role      String   @default("MEMBER")
-  status    String   @default("PENDING")
+  role      String   @default("member")
+  status    String   @default("pending")
   expiresAt DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

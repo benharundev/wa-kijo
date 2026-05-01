@@ -1,9 +1,14 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 import { ConfigModule } from './config/config.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
 import { HealthModule } from './modules/health/health.module';
+import { EmailModule } from './modules/email/email.module';
+import { AuthModule } from './auth/auth.module';
+import { AuthGuard } from './common/guards/auth.guard';
+import { PermissionGuard } from './common/guards/permission.guard';
 import { EnvService } from './config/env.service';
 
 @Module({
@@ -35,7 +40,15 @@ import { EnvService } from './config/env.service';
 
     PrismaModule,
     RedisModule,
+    EmailModule,   // @Global() — EmailService injectable everywhere
+    AuthModule,    // @Global() — BETTER_AUTH token + AuthService injectable everywhere
     HealthModule,
+  ],
+  providers: [
+    // AuthGuard runs first on every route. @Public() skips validation.
+    { provide: APP_GUARD, useClass: AuthGuard },
+    // PermissionGuard runs after AuthGuard. @RequirePermission() opts in.
+    { provide: APP_GUARD, useClass: PermissionGuard },
   ],
 })
 export class AppModule {}

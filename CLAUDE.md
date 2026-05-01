@@ -24,8 +24,8 @@ rationale.**
 | Phase | Scope | Status |
 |-------|-------|--------|
 | 1 | Repo skeleton, tooling, Docker Compose, tsconfig | ✅ Complete |
-| 2 | NestJS API scaffold, Prisma schema, BaseRepository | ⏳ Pending |
-| 3 | Better Auth, multi-tenant org hierarchy | ⏳ Pending |
+| 2 | NestJS API scaffold, Prisma schema, BaseRepository | ✅ Complete |
+| 3 | Better Auth, multi-tenant org hierarchy | ✅ Complete |
 | 4 | Next.js frontend scaffold | ⏳ Pending |
 
 `apps/api/`, `apps/web/`, and `packages/db/` are **package.json-only
