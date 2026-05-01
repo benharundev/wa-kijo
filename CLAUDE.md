@@ -1,4 +1,6 @@
-# wa'kijo — Project Memory
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 > **What this is:** Persistent project context loaded by Claude Code at every
 > session. Keep it lean. Ad-hoc context goes in `docs/` and is referenced via
@@ -16,6 +18,19 @@ depending on tier.
 
 **See `@docs/prd.md` for full scope. See `@docs/architecture.md` for decision
 rationale.**
+
+## Current phase status
+
+| Phase | Scope | Status |
+|-------|-------|--------|
+| 1 | Repo skeleton, tooling, Docker Compose, tsconfig | ✅ Complete |
+| 2 | NestJS API scaffold, Prisma schema, BaseRepository | ⏳ Pending |
+| 3 | Better Auth, multi-tenant org hierarchy | ⏳ Pending |
+| 4 | Next.js frontend scaffold | ⏳ Pending |
+
+`apps/api/`, `apps/web/`, and `packages/db/` are **package.json-only
+placeholders** until their respective phases are complete. Do not assume source
+files exist there.
 
 ## Tech stack — non-negotiable
 
@@ -37,11 +52,11 @@ rationale.**
 ```
 wa-kijo/
 ├── apps/
-│   ├── api/              # NestJS
-│   └── web/              # Next.js
+│   ├── api/              # NestJS  (@wa-kijo/api)
+│   └── web/              # Next.js (@wa-kijo/web)
 ├── packages/
-│   ├── db/               # Prisma schema + migrations
-│   └── shared/           # Zod schemas, types shared by api + web
+│   ├── db/               # Prisma schema + migrations (@wa-kijo/db)
+│   └── shared/           # Zod schemas, types shared by api + web (@wa-kijo/shared)
 ├── docs/                 # PRD, architecture, runbook (referenced ad-hoc)
 └── .claude/rules/        # backend.md, frontend.md, testing.md, security.md
 ```
@@ -78,16 +93,43 @@ wa-kijo/
 ## Build commands
 
 ```bash
-pnpm install              # install deps
+# First-time local setup
+cp .env.example .env
+pnpm install
+pnpm docker:up            # start Postgres 16 + Redis 7
+
+# Day-to-day
 pnpm dev                  # run api + web with hot reload
-pnpm test                 # unit + integration tests
+pnpm build                # production build (both apps)
+pnpm test                 # unit + integration tests (all packages)
 pnpm test:e2e             # Playwright
 pnpm lint                 # ESLint + Prettier check
 pnpm typecheck            # tsc --noEmit
+pnpm format               # auto-format all files
+
+# Run a single test file
+pnpm --filter @wa-kijo/api test -- --run src/modules/contacts/contacts.service.spec.ts
+
+# Database
 pnpm db:migrate           # Prisma migrate dev
 pnpm db:seed              # seed dev data
-pnpm build                # production build (both apps)
+pnpm db:studio            # open Prisma Studio
+
+# Docker helpers
+pnpm docker:up            # start dev containers (detached)
+pnpm docker:down          # stop dev containers
+pnpm docker:logs          # tail container logs
 ```
+
+## TypeScript config
+
+`tsconfig.base.json` at the root applies to all packages. Key settings future
+Claude instances must know when scaffolding backend code:
+
+- `target: ES2022`, `module: NodeNext`
+- `experimentalDecorators: true` + `emitDecoratorMetadata: true` — required for
+  NestJS dependency injection
+- `strict: true` — no implicit any, strict null checks enforced
 
 ## Skills to consult
 
