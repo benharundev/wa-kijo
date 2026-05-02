@@ -3,6 +3,8 @@ import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Logger } from 'nestjs-pino';
 import type { FastifyInstance } from 'fastify';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { patchNestJsSwagger } from 'nestjs-zod';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
@@ -10,6 +12,10 @@ import { EnvService } from './config/env.service';
 import { BETTER_AUTH, type BetterAuthInstance } from './auth/better-auth.token';
 import { requestContextStorage } from './common/context/request-context';
 import { FilteredLogger } from './common/logger/filtered-logger';
+
+// Patches Swagger schema generation to understand nestjs-zod DTOs.
+// Must be called before SwaggerModule.createDocument().
+patchNestJsSwagger();
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -52,6 +58,12 @@ async function bootstrap(): Promise<void> {
   // Returning `reply` from a Fastify hook stops the lifecycle — Fastify will
   // not attempt to route/handle the request further.
   //
+  // CORS must be applied here manually. toNodeHandler writes directly to
+  // reply.raw (Node's ServerResponse), bypassing Fastify's header layer and
+  // app.enableCors(). We set headers on reply.raw before handing off, and
+  // handle OPTIONS preflight ourselves so the browser never sees a missing
+  // Access-Control-Allow-Origin on auth routes.
+  //
   // Dynamic import required: better-auth/node is ESM-only and cannot be
   // loaded via require(). We cache toNodeHandler after the first import.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -59,6 +71,19 @@ async function bootstrap(): Promise<void> {
 
   fastifyInstance.addHook('onRequest', async (request, reply) => {
     if (request.url?.startsWith('/api/auth/')) {
+      const corsOrigin = env.get('CORS_ORIGIN');
+      reply.raw.setHeader('Access-Control-Allow-Origin', corsOrigin);
+      reply.raw.setHeader('Access-Control-Allow-Credentials', 'true');
+      reply.raw.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+      reply.raw.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,Cookie');
+
+      // Respond to preflight immediately — do not forward OPTIONS to Better Auth.
+      if (request.method === 'OPTIONS') {
+        reply.raw.writeHead(204);
+        reply.raw.end();
+        return reply;
+      }
+
       if (!toNodeHandler) {
         // ESM interop: use new Function() to prevent SWC from transforming
         // import() to require() in CJS builds.
@@ -83,6 +108,21 @@ async function bootstrap(): Promise<void> {
     origin: env.get('CORS_ORIGIN'),
     credentials: true,
   });
+
+  // ── Swagger (non-production only) ───────────────────────────────────────────
+  if (env.get('NODE_ENV') !== 'production') {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle("wa'kijo API")
+      .setDescription('Multi-tenant B2B SaaS boilerplate — API reference')
+      .setVersion('1.0')
+      .addCookieAuth('better-auth.session_token') // Better Auth session cookie
+      .build();
+
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('api/docs', app, document, {
+      jsonDocumentUrl: 'api/docs/json',
+    });
+  }
 
   const port = env.get('PORT');
   await app.listen(port, '0.0.0.0');

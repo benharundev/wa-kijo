@@ -51,7 +51,9 @@ async function esmImport(specifier: string): Promise<any> {
             cookieCache: { enabled: true, maxAge: 60 * 5 },
           },
 
-          // Allow the frontend origin to send cookies
+          // Allow the frontend origin to send cookies.
+          // CORS headers for /api/auth/* are set in main.ts (reply.raw) because
+          // toNodeHandler bypasses Fastify's header layer and app.enableCors().
           trustedOrigins: [env.get('CORS_ORIGIN')],
 
           emailAndPassword: {

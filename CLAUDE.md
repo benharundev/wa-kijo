@@ -28,9 +28,10 @@ rationale.**
 | 3 | Better Auth, multi-tenant org hierarchy | ✅ Complete |
 | 4 | Next.js frontend scaffold | ✅ Complete |
 
-`apps/api/`, `apps/web/`, and `packages/db/` are **package.json-only
-placeholders** until their respective phases are complete. Do not assume source
-files exist there.
+All four phases are complete. The API currently has `health/` and `email/`
+modules plus the full auth/context infrastructure. **Domain feature modules
+(contacts, conversations, billing, etc.) do not exist yet** — Phase 5+ builds
+those on top of the existing scaffold.
 
 ## Tech stack — non-negotiable
 
@@ -52,13 +53,35 @@ files exist there.
 ```
 wa-kijo/
 ├── apps/
-│   ├── api/              # NestJS  (@wa-kijo/api)
-│   └── web/              # Next.js (@wa-kijo/web)
+│   ├── api/src/
+│   │   ├── main.ts               # Fastify bootstrap + Better Auth hooks
+│   │   ├── app.module.ts
+│   │   ├── auth/                 # Better Auth factory + AuthService
+│   │   ├── base/                 # BaseRepository<T> (extend for every repo)
+│   │   ├── common/
+│   │   │   ├── context/          # AsyncLocalStorage RequestContext store
+│   │   │   ├── decorators/       # @Public(), @CurrentUser(), @RequirePermission()
+│   │   │   ├── filters/          # HttpExceptionFilter
+│   │   │   ├── guards/           # AuthGuard (APP_GUARD #1), PermissionGuard (#2)
+│   │   │   └── interceptors/     # TransformInterceptor
+│   │   ├── config/               # EnvService (Zod-validated, @Global)
+│   │   ├── prisma/               # PrismaModule (@Global)
+│   │   ├── redis/                # RedisModule (@Global)
+│   │   └── modules/              # Feature modules (health/, email/ exist; add yours here)
+│   └── web/src/
+│       ├── app/(auth)/           # sign-in, sign-up, magic-link, reset-password
+│       ├── app/(app)/            # authenticated shell: dashboard, orgs/[orgId], settings
+│       ├── components/layout/    # Sidebar, TopBar, OrgSwitcher, UserMenu
+│       ├── components/ui/        # shadcn/ui primitives
+│       ├── lib/                  # auth-client.ts, fetcher.ts
+│       └── providers/            # QueryProvider, ThemeProvider
 ├── packages/
-│   ├── db/               # Prisma schema + migrations (@wa-kijo/db)
-│   └── shared/           # Zod schemas, types shared by api + web (@wa-kijo/shared)
-├── docs/                 # PRD, architecture, runbook (referenced ad-hoc)
-└── .claude/rules/        # backend.md, frontend.md, testing.md, security.md
+│   ├── db/prisma/schema.prisma   # Single Prisma schema (Better Auth models + custom)
+│   └── shared/src/
+│       ├── auth/                 # roles.ts, permissions.ts, can.types.ts
+│       └── dto/                  # Zod schemas reused by API and web
+├── docs/decisions/               # ADRs — NNNN-title.md (see 0001-better-auth-with-org-hierarchy.md)
+└── .claude/rules/                # backend.md, frontend.md, testing.md, security.md
 ```
 
 ## Always do these
@@ -104,8 +127,9 @@ pnpm db:migrate           # apply migrations (name prompt: "init_schema")
 # Day-to-day
 pnpm dev                  # run api + web with hot reload
 pnpm build                # production build (both apps)
-pnpm test                 # unit + integration tests (all packages)
-pnpm test:e2e             # Playwright
+pnpm test                 # unit tests (Vitest, all packages)
+pnpm test:integration     # integration tests with Testcontainers (real Postgres, serial)
+pnpm test:e2e             # Playwright (starts api + web servers automatically)
 pnpm lint                 # ESLint + Prettier check
 pnpm typecheck            # tsc --noEmit
 pnpm format               # auto-format all files
@@ -123,6 +147,35 @@ pnpm docker:up            # start dev containers (detached)
 pnpm docker:down          # stop dev containers
 pnpm docker:logs          # tail container logs
 ```
+
+## Auth & request context architecture
+
+This is the most non-obvious part of the codebase — it spans 5+ files.
+
+**Request lifecycle (every authenticated HTTP call):**
+
+```
+Fastify onRequest hook #1  → AsyncLocalStorage.run({ requestId, userId:'', orgId:'' … })
+Fastify onRequest hook #2  → /api/auth/* caught here → Better Auth handler, exits Fastify
+                              (all other routes fall through to NestJS pipeline)
+NestJS APP_GUARD #1        → AuthGuard: validates session cookie via Better Auth,
+                              calls AuthService.resolveContext() to populate the store
+NestJS APP_GUARD #2        → PermissionGuard: reads @RequirePermission metadata,
+                              checks PERMISSIONS[key].includes(ctx.userRole)
+Controller / Service       → reads RequestContext via getRequestContext() anywhere in chain
+BaseRepository             → auto-scopes every query to ctx.orgId
+```
+
+**Key files:**
+- `apps/api/src/main.ts` — Fastify hook setup (hooks #1 and #2)
+- `apps/api/src/common/context/request-context.ts` — AsyncLocalStorage store shape
+- `apps/api/src/auth/auth.service.ts` — `resolveContext()` + `resolveEffectiveRole()`
+- `apps/api/src/common/guards/auth.guard.ts` — session validation, store population
+- `apps/api/src/common/guards/permission.guard.ts` — RBAC enforcement
+
+**Hierarchy role resolution:** a user with `owner` role in a parent AGENCY org
+automatically receives `owner` authority in all child WORKSPACEs. Depth limit is
+3 levels (enforced in `AuthService`). `@Public()` bypasses both guards.
 
 ## Workspace package build pattern
 
