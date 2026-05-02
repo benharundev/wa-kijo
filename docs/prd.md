@@ -85,8 +85,8 @@ who needs MongoDB / Drizzle / Auth.js out of the box.
 | **Phase 2** | ✅ Complete | NestJS + Fastify scaffold, Prisma schema, BaseRepository, Pino logging, BullMQ wiring, Swagger UI |
 | **Phase 3** | ✅ Complete | Better Auth integration, organisation hierarchy, RBAC guards, AsyncLocalStorage context |
 | **Phase 4** | ✅ Complete | Next.js 15 frontend scaffold, shadcn/ui, TanStack Query, auth pages, app shell |
-| **Phase 5** | 🚧 In progress | Domain feature modules (contacts, conversations, tags) — used by `wa-kiro` |
-| **Phase 6** | Planned | Stripe + Billplz / ToyyibPay billing modules behind a common interface |
+| **Phase 5** | ✅ Complete | Domain feature modules (contacts, conversations, messages, tags) — used by `wa-kiro` |
+| **Phase 6** | 🚧 In progress | Stripe + Billplz / ToyyibPay billing modules behind a common interface |
 | **Phase 7** | Planned | Public API key authentication for buyers' integrations |
 | **Phase 8** | Planned | Mintlify customer documentation site published at `docs.wakijo.dev` |
 | **1.0** | Planned | First public release; commercial licence finalised |
@@ -131,7 +131,7 @@ The full FR catalogue is grouped by domain. Each requirement has a stable
 | FR-208 | Single source-of-truth permission catalogue in `@wa-kijo/shared` | ✅ |
 | FR-209 | Member invitation flow with email | ✅ |
 | FR-210 | Member removal | ✅ |
-| FR-211 | Cross-tenant access fuzz test in CI | 🚧 Phase 5 |
+| FR-211 | Cross-tenant access fuzz test in CI | ✅ |
 | FR-212 | Custom roles per organisation | Planned 1.1 |
 
 ### 5.3 Data layer (FR-300 series)
@@ -145,7 +145,7 @@ The full FR catalogue is grouped by domain. Each requirement has a stable
 | FR-305 | Tenant scoping injected by Prisma middleware | ✅ |
 | FR-306 | Migration files generated only via `prisma migrate dev` | ✅ |
 | FR-307 | DTO validation via Zod end-to-end | ✅ |
-| FR-308 | Audit log table for sensitive mutations | 🚧 Phase 5 |
+| FR-308 | Audit log table for sensitive mutations | ✅ |
 | FR-309 | Restore-from-soft-delete admin endpoint | Planned 1.1 |
 
 ### 5.4 Domain modules (FR-400 series)
@@ -156,19 +156,19 @@ The full FR catalogue is grouped by domain. Each requirement has a stable
 | FR-402 | Tags module: CRUD per organisation | ✅ |
 | FR-403 | Conversations module: open / close / snooze, channel agnostic | ✅ |
 | FR-404 | Messages module: inbound + outbound, queued dispatch | ✅ |
-| FR-405 | Bulk contact import (CSV) | Planned Phase 5.1 |
-| FR-406 | Webhook ingest endpoint with HMAC verification | Planned Phase 5.2 |
+| FR-405 | Bulk contact import (CSV) | ✅ |
+| FR-406 | Webhook ingest endpoint with HMAC verification | 🚧 Phase 6 |
 
 ### 5.5 Billing (FR-500 series)
 
 | ID | Requirement | Status |
 |---|---|---|
-| FR-501 | `BillingProvider` interface with Stripe implementation | 🚧 Phase 6 |
-| FR-502 | Billplz implementation behind the same interface | 🚧 Phase 6 |
-| FR-503 | ToyyibPay implementation behind the same interface | 🚧 Phase 6 |
-| FR-504 | Webhook signature verification for every provider | 🚧 Phase 6 |
-| FR-505 | Idempotent webhook handling using provider event IDs | 🚧 Phase 6 |
-| FR-506 | Plan / quota model decoupled from provider | 🚧 Phase 6 |
+| FR-501 | `BillingProvider` interface with Stripe implementation | 🚧 In progress (Phase 6) |
+| FR-502 | Billplz implementation behind the same interface | 🚧 In progress (Phase 6) |
+| FR-503 | ToyyibPay implementation behind the same interface | 🚧 In progress (Phase 6) |
+| FR-504 | Webhook signature verification for every provider | 🚧 In progress (Phase 6) |
+| FR-505 | Idempotent webhook handling using provider event IDs | 🚧 In progress (Phase 6) |
+| FR-506 | Plan / quota model decoupled from provider | 🚧 In progress (Phase 6) |
 | FR-507 | Usage-based metering for outbound messages | Planned 1.1 |
 
 ### 5.6 Background jobs (FR-600 series)
@@ -178,8 +178,8 @@ The full FR catalogue is grouped by domain. Each requirement has a stable
 | FR-601 | BullMQ + Redis 7 wired into NestJS | ✅ |
 | FR-602 | Retry: 3 attempts, exponential backoff (1s, 5s, 30s) | ✅ |
 | FR-603 | Dead-letter queue for terminally failed jobs | ✅ |
-| FR-604 | Bull-Board admin panel at `/admin/queues`, RBAC-gated | 🚧 Phase 5 |
-| FR-605 | Scheduled jobs (cron) for cleanup and reporting | Planned Phase 5.2 |
+| FR-604 | Bull-Board admin panel at `/admin/queues`, RBAC-gated | ✅ |
+| FR-605 | Scheduled jobs (cron) for cleanup and reporting | ✅ |
 
 ### 5.7 Email (FR-700 series)
 
@@ -224,8 +224,8 @@ The full FR catalogue is grouped by domain. Each requirement has a stable
 | FR-1005 | Playwright E2E suite | ✅ |
 | FR-1006 | Docker Compose dev stack (Postgres 16, Redis 7) | ✅ |
 | FR-1007 | Swagger UI at `/api/docs` (dev only) | ✅ |
-| FR-1008 | Static OpenAPI snapshot generated on release | 🚧 Phase 5 |
-| FR-1009 | CI pipeline: typecheck, lint, unit, integration, e2e | Planned Phase 5 |
+| FR-1008 | Static OpenAPI snapshot generated on release | ✅ |
+| FR-1009 | CI pipeline: typecheck, lint, unit, integration, e2e | ✅ |
 
 ---
 
@@ -289,3 +289,4 @@ decided.
 | 2026-04-15 | core | Added FR-300 series, NFRs |
 | 2026-04-25 | core | Added FR-200 (RBAC) and Phase 3 status |
 | 2026-05-02 | core | Phase 4 status, FR-900 series, Mintlify scope |
+| 2026-05-02 | core | Phase 5 marked complete (contacts, conversations, messages, tags, audit log, cross-tenant fuzz tests) |

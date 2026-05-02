@@ -1,0 +1,128 @@
+---
+title: "What you get"
+description: "The full bill of materials — features, files, defaults."
+---
+
+## At a glance
+
+| Layer | Technology | Notes |
+|---|---|---|
+| **Backend framework** | NestJS 11 + Fastify adapter | Higher throughput than Express; tested under load |
+| **Database** | Prisma 5 + PostgreSQL 16 | Soft delete, audit fields, cursor pagination |
+| **Authentication** | Better Auth ≥1.5 | Email/password, magic link, Google OAuth, sessions |
+| **Multi-tenancy** | 3-level org hierarchy | SYSTEM → AGENCY → WORKSPACE with role inheritance |
+| **Frontend** | Next.js 15 (App Router) | shadcn/ui, Tailwind, TanStack Query, React Hook Form |
+| **Validation** | Zod end-to-end | Single schema shared by API and frontend |
+| **Background jobs** | BullMQ + Redis 7 | Retries, DLQ, Bull-Board admin UI |
+| **Email** | Resend + (planned) React Email | Templates: verify, magic link, invitation |
+| **Billing** | Stripe + Billplz/ToyyibPay | Common `BillingProvider` interface |
+| **Observability** | Pino structured logs + Sentry | Request IDs, PII redaction, log levels |
+| **Dev tooling** | pnpm 9, Vitest, Playwright, Docker Compose | Monorepo, fast installs |
+
+## Repository layout
+
+```
+wa-kijo/
+├── apps/
+│   ├── api/                  # NestJS backend  (@wa-kijo/api)
+│   │   ├── src/
+│   │   │   ├── main.ts       # Fastify bootstrap + Better Auth hooks
+│   │   │   ├── auth/         # Better Auth factory + AuthService
+│   │   │   ├── base/         # BaseRepository<T>
+│   │   │   ├── common/       # context, decorators, filters, guards, interceptors
+│   │   │   ├── config/       # EnvService (Zod-validated, @Global)
+│   │   │   ├── prisma/       # PrismaService (@Global)
+│   │   │   ├── redis/        # RedisModule (@Global)
+│   │   │   └── modules/      # health, email, contacts, conversations…
+│   │   └── test/             # integration suites (Testcontainers)
+│   └── web/                  # Next.js 15 frontend (@wa-kijo/web)
+│       ├── src/app/(auth)/   # sign-in, sign-up, magic-link, reset-password
+│       ├── src/app/(app)/    # authenticated shell + pages
+│       ├── src/components/   # shadcn/ui primitives + layout
+│       └── tests/e2e/        # Playwright suites
+├── packages/
+│   ├── db/                   # Prisma schema + migrations + seed (@wa-kijo/db)
+│   └── shared/               # Zod DTOs + types (@wa-kijo/shared)
+├── docs/                     # internal docs (architecture, runbook, ADRs)
+├── docs-site/                # this Mintlify site
+└── .claude/rules/            # backend, frontend, security, testing rules
+```
+
+Files you will edit constantly:
+
+- `packages/db/prisma/schema.prisma` — your data model lives here.
+- `packages/shared/src/dto/*.ts` — Zod DTOs shared with the frontend.
+- `packages/shared/src/auth/permissions.ts` — your RBAC catalogue.
+- `apps/api/src/modules/<feature>/*` — your business logic.
+- `apps/web/src/app/(app)/<feature>/*` — your UI.
+
+Files you should rarely touch:
+
+- `apps/api/src/main.ts` — bootstrap. Only change if adding hooks.
+- `apps/api/src/auth/**` — Better Auth wiring. Track upstream upgrades.
+- `apps/api/src/common/**` — guards, filters, interceptors.
+- `apps/api/src/base/base.repository.ts` — extend, don't modify.
+
+## Default URLs
+
+| Service | URL |
+|---|---|
+| Web app | http://localhost:3001 |
+| API | http://localhost:3000 |
+| Swagger UI | http://localhost:3000/api/docs |
+| OpenAPI JSON | http://localhost:3000/api/docs/json |
+| Bull-Board (queues, RBAC-gated) | http://localhost:3000/admin/queues |
+| Prisma Studio | `pnpm db:studio` → http://localhost:5555 |
+
+## Default ports
+
+These differ from "tutorial defaults" so they don't conflict with other
+local services on the same machine:
+
+| Service | Port | Why |
+|---|---|---|
+| API | 3000 | NestJS default |
+| Web | 3001 | Next.js |
+| Postgres (Docker) | 5434 | Avoids clash with system Postgres on 5432 |
+| Redis (Docker) | 6381 | Avoids clash with system Redis on 6379 |
+
+## What's included by tier
+
+| Feature | Solo | Team | Agency | Enterprise |
+|---|---|---|---|---|
+| Private GitHub repo access | ✅ | ✅ | ✅ | ✅ |
+| Seats | 1 | 5 | unlimited (1 entity) | custom |
+| Updates window | 6 months | 12 months | 24 months | 24 months |
+| Major version upgrades | optional add-on | included | included | included |
+| Mintlify customer docs | ✅ | ✅ | ✅ | ✅ |
+| Discord community | ✅ | ✅ | ✅ | ✅ |
+| Email support SLA | best-effort | 48 hr | 24 hr | same business day |
+| Slack Connect | — | — | — | ✅ |
+| Onboarding call | — | — | 1 × 1 hr | unlimited |
+| Custom CLA | — | — | — | ✅ |
+| Roadmap influence | — | — | — | ✅ |
+
+See [pricing](https://wakijo.dev/pricing) for indicative figures.
+
+## What's *not* included
+
+We deliberately leave these out so wa'kijo stays focused. They're
+documented in the PRD § 7 with the reasoning, but in summary:
+
+- No drag-and-drop UI builder, low-code editor, or visual schema designer.
+- No CMS or marketing-site CMS.
+- No support for non-Postgres databases.
+- No support for Express, Hono, Drizzle, Mongoose, or Auth.js.
+- No managed hosting — you own your deployments.
+- No free tier — wa'kijo is a commercial product.
+
+## Where to look next
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get the repo running locally.
+  </Card>
+  <Card title="Architecture" icon="diagram-project" href="/concepts/architecture">
+    Understand the request lifecycle before writing code.
+  </Card>
+</CardGroup>

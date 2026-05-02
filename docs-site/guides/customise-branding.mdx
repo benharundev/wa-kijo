@@ -1,0 +1,165 @@
+---
+title: "Customise branding & opinions"
+description: "Rebrand the product, swap providers, add auth methods, and remove modules you don't need."
+---
+
+This page is the entry point for "I want my fork to be *my* product".
+It's a short index — the longer per-topic pages are linked at each
+step.
+
+## Branding (1–2 hours)
+
+<Steps>
+  <Step title="Search-and-replace the product name">
+    ```bash
+    rg -l 'wa-kijo|wa.kijo' \
+      --glob '!CLAUDE.md' --glob '!CHANGELOG.md' \
+      --glob '!docs/decisions/*' --glob '!*.lock*'
+    ```
+    Replace with your product name. Update the `name` field in every
+    `package.json`, the cookie prefix in
+    `apps/api/src/auth/auth.module.ts`, the OpenAPI title in
+    `apps/api/src/main.ts`, and the `<title>` in
+    `apps/web/src/app/layout.tsx`.
+  </Step>
+  <Step title="Replace the colour tokens">
+    Tailwind theme variables in `apps/web/src/app/globals.css`:
+    ```css
+    :root {
+      --color-primary: 12 100% 50%;     /* HSL — your brand colour */
+      --color-secondary: 210 40% 96%;
+      /* ... */
+    }
+    ```
+    shadcn/ui consumes these variables, so a single file change
+    re-skins the entire app.
+  </Step>
+  <Step title="Replace the logo and favicon">
+    `apps/web/public/logo.svg` and `apps/web/public/favicon.ico`. The
+    sidebar's `<Image>` reference is in
+    `apps/web/src/components/layout/sidebar.tsx`.
+  </Step>
+  <Step title="Update email templates">
+    `apps/api/src/modules/email/templates/` — verification, magic link,
+    invitation. Inline brand colour, wordmark, support email.
+  </Step>
+</Steps>
+
+The full branding rundown is at [Customisation § Branding](https://github.com/wakijo/wa-kijo/blob/main/docs/customization.md#2-branding)
+in the internal docs.
+
+## Auth methods
+
+Better Auth supports many auth strategies. To enable a new one (e.g.
+GitHub OAuth or passkeys):
+
+<Steps>
+  <Step title="Install the plugin">
+    ```bash
+    pnpm --filter @wa-kijo/api add better-auth/social-providers
+    ```
+  </Step>
+  <Step title="Add to the betterAuth config">
+    ```ts
+    // apps/api/src/auth/auth.module.ts
+    socialProviders: {
+      github: {
+        clientId:     env.get('GITHUB_CLIENT_ID'),
+        clientSecret: env.get('GITHUB_CLIENT_SECRET'),
+      },
+    },
+    ```
+  </Step>
+  <Step title="Add env vars to env.schema.ts and .env.example">
+    ```ts
+    GITHUB_CLIENT_ID:     z.string().optional(),
+    GITHUB_CLIENT_SECRET: z.string().optional(),
+    ```
+  </Step>
+  <Step title="Add the UI button">
+    ```tsx
+    // apps/web/src/app/(auth)/sign-in/page.tsx
+    <Button onClick={() => authClient.signIn.social({ provider: 'github' })}>
+      Continue with GitHub
+    </Button>
+    ```
+  </Step>
+</Steps>
+
+## Custom roles
+
+The default role model is fixed (`owner`, `admin`, `member`). For
+tenant-defined custom roles:
+
+1. Add a `Role` model with `name`, `organizationId`, `permissions
+   String[]`.
+2. Update `Member.role` to reference the new table.
+3. Replace the `hasPermission()` lookup with a database lookup keyed
+   on the active member's role.
+4. Cache the role-permission map in Redis with a 60-second TTL.
+5. Document as an ADR.
+
+This is a meaningful architectural shift. Most B2B SaaS products do
+fine with fixed roles — confirm you actually need this before
+committing.
+
+## Remove modules you don't need
+
+| Module | Files to remove | Frontend pages | Permissions to drop |
+|---|---|---|---|
+| Billing | `apps/api/src/modules/billing/` | `apps/web/src/app/(app)/orgs/[orgId]/billing/` | `billing:*` |
+| Conversations / messages | `apps/api/src/modules/conversations/` | n/a | `conversation:*`, `message:*` |
+| Tags | `apps/api/src/modules/contacts/tags*` | n/a | `tag:*` |
+| Contacts | `apps/api/src/modules/contacts/` | n/a | `contact:*` |
+
+After removing a module, delete its import from
+`apps/api/src/app.module.ts`, drop its tables in a new migration (use
+the two-step pattern), and update the OpenAPI snapshot.
+
+## Hooking your own logic into core events
+
+The recommended pattern for "I want to do X when a contact is created"
+is **domain events** dispatched through BullMQ:
+
+```ts
+// In your processor module — no changes to ContactsService needed
+@Processor(QUEUE_NAMES.EVENTS)
+export class YourFeatureProcessor extends WorkerHost {
+  async process(job: Job) {
+    if (job.name !== 'contact.created') return;
+    // your custom logic
+  }
+}
+```
+
+This keeps your code in your modules. When wa'kijo upgrades change
+`ContactsService`, your processor keeps working — no merge conflict.
+
+See [Background jobs § Domain events](/concepts/background-jobs#domain-events)
+for the canonical pattern.
+
+## Localisation
+
+Frontend i18n wiring lands in 1.0. Until then:
+
+- Add a `// i18n: <key>` comment next to every user-visible string.
+- Centralise English copy in a single file
+  (`apps/web/src/lib/copy.en.ts`) so the migration is mechanical.
+- Plan for **right-to-left support** if you'll ship Arabic, Hebrew, or
+  Farsi. Tailwind's `dir-rtl` plugin handles most of it.
+
+## What to keep in sync with upstream
+
+If you do nothing else, keep these files current with each upstream
+wa'kijo release:
+
+- `apps/api/src/auth/**`
+- `apps/api/src/common/**`
+- `apps/api/src/base/**`
+- `packages/db/prisma/schema.prisma` (accept new fields, never drop them)
+- `packages/shared/src/auth/**`
+- `.claude/rules/**`
+
+Modify everything else freely. The upstream diff for a typical wa'kijo
+release touches only the files above plus their tests and docs — see
+the [upgrade guide](/upgrade-guide).

@@ -1,0 +1,170 @@
+---
+title: "Configuration reference"
+description: "Every environment variable wa'kijo reads, what it defaults to, and what happens if you forget it."
+---
+
+wa'kijo validates the entire environment via Zod
+([`packages/shared/src/env.schema.ts`](https://github.com/wakijo/wa-kijo/blob/main/packages/shared/src/env.schema.ts))
+at process startup. **A missing required variable fails fast** —
+better than discovering it on the first user request.
+
+The full template lives in [`.env.example`](https://github.com/wakijo/wa-kijo/blob/main/.env.example).
+Copy to `.env` for local dev. In production, use your platform's
+secret manager.
+
+## Quick view
+
+| Required | Variable |
+|---|---|
+| ✅ | `DATABASE_URL` |
+| ✅ | `BETTER_AUTH_SECRET` |
+| ✅ | `BETTER_AUTH_URL` |
+| ✅ | `RESEND_API_KEY` |
+| ✅ | `EMAIL_FROM` |
+| optional | everything else |
+
+## Node + runtime
+
+| Variable | Default | Notes |
+|---|---|---|
+| `NODE_ENV` | `development` | Set to `production` in prod — disables Swagger UI, enforces secure cookies |
+
+## API
+
+| Variable | Default | Notes |
+|---|---|---|
+| `API_PORT` | `3000` | Port NestJS listens on |
+| `API_BASE_URL` | `http://localhost:3000` | Used internally for cross-origin URL generation |
+| `API_PREFIX` | `api/v1` | Mounted on every NestJS controller |
+| `LOG_LEVEL` | `debug` (dev) / `info` (prod) | `fatal \| error \| warn \| info \| debug \| trace` |
+
+## Web
+
+| Variable | Default | Notes |
+|---|---|---|
+| `WEB_PORT` | `3001` | Next.js dev/start port |
+| `WEB_BASE_URL` | `http://localhost:3001` | Public web URL |
+| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:3000` | Browser-side fetcher base |
+
+## CORS
+
+| Variable | Default | Notes |
+|---|---|---|
+| `CORS_ORIGIN` | `http://localhost:3001` | The web origin allowed to call the API. Set to your production web URL |
+
+## Database
+
+| Variable | Default | Notes |
+|---|---|---|
+| `DATABASE_URL` | — **required** | `postgresql://user:pass@host:port/db?schema=public`. In production use a PgBouncer URL with `?pgbouncer=true` for the API; direct URL for the worker |
+| `POSTGRES_USER` | `wakijo` | Read by Docker Compose |
+| `POSTGRES_PASSWORD` | `wakijo_dev_password` | Read by Docker Compose |
+| `POSTGRES_DB` | `wakijo` | Read by Docker Compose |
+| `POSTGRES_PORT` | `5434` | Non-default to avoid clash with system Postgres |
+
+## Redis
+
+| Variable | Default | Notes |
+|---|---|---|
+| `REDIS_URL` | `redis://localhost:6381` | Full URL including auth |
+| `REDIS_PORT` | `6381` | Non-default to avoid clash with system Redis |
+| `REDIS_PASSWORD` | — | Required in production |
+
+## Auth (Better Auth)
+
+| Variable | Default | Notes |
+|---|---|---|
+| `BETTER_AUTH_SECRET` | — **required** | 32+ char random — `openssl rand -base64 32`. Rotate quarterly |
+| `BETTER_AUTH_URL` | — **required** | Public API URL, no trailing slash |
+
+## Email (Resend)
+
+| Variable | Default | Notes |
+|---|---|---|
+| `RESEND_API_KEY` | — **required** | Starts with `re_` |
+| `EMAIL_FROM` | — **required** | Verified sender address in Resend |
+
+## Google OAuth (optional)
+
+| Variable | Default | Notes |
+|---|---|---|
+| `GOOGLE_CLIENT_ID` | — | Omit to disable Google sign-in |
+| `GOOGLE_CLIENT_SECRET` | — | Omit to disable Google sign-in |
+
+## Stripe (optional, Phase 6)
+
+| Variable | Default | Notes |
+|---|---|---|
+| `STRIPE_SECRET_KEY` | — | `sk_live_…` or `sk_test_…` |
+| `STRIPE_WEBHOOK_SECRET` | — | `whsec_…` from Stripe dashboard |
+| `STRIPE_PUBLISHABLE_KEY` | — | `pk_…` for the frontend |
+
+## Billplz (optional, Phase 6)
+
+| Variable | Default | Notes |
+|---|---|---|
+| `BILLPLZ_API_KEY` | — | Production or sandbox key |
+| `BILLPLZ_X_SIGNATURE_KEY` | — | Used to verify webhook signatures |
+| `BILLPLZ_COLLECTION_ID` | — | Default collection for new bills |
+| `BILLPLZ_SANDBOX` | `true` | Toggle sandbox vs production |
+
+## Observability
+
+| Variable | Default | Notes |
+|---|---|---|
+| `SENTRY_DSN` | — | Strongly recommended in production. Omit to disable Sentry |
+| `SENTRY_RELEASE` | — | Optional — usually set to the git SHA in your deploy pipeline |
+
+## Worker mode
+
+| Variable | Default | Notes |
+|---|---|---|
+| `WORKER_MODE` | `inline` | `inline` (API also runs jobs) \| `true` (this process is worker-only, no HTTP) |
+
+## What happens if a required variable is missing
+
+```
+[error]  EnvService — Failed to validate environment:
+  ✖ DATABASE_URL — Required
+  ✖ BETTER_AUTH_SECRET — Required
+Process exiting with code 1.
+```
+
+The Zod schema runs as the first thing in `main.ts`, before NestJS
+binds the HTTP port. A misconfigured deploy never starts serving — it
+fails the healthcheck and orchestrators (ECS, Railway, Compose) keep
+the previous container running.
+
+## Adding a new env var
+
+<Steps>
+  <Step title="Declare in Zod schema">
+    `packages/shared/src/env.schema.ts`:
+    ```ts
+    export const EnvSchema = z.object({
+      // ... existing entries ...
+      MY_NEW_VAR: z.string().min(1),  // required
+      // or:
+      MY_OPTIONAL: z.string().optional(),
+      // or with default:
+      MY_TIMEOUT_MS: z.coerce.number().int().min(1).default(5000),
+    });
+    ```
+  </Step>
+  <Step title="Add to .env.example">
+    Always with a comment explaining its purpose.
+  </Step>
+  <Step title="Read via EnvService (never process.env directly)">
+    ```ts
+    constructor(private env: EnvService) {}
+    // ...
+    const timeout = this.env.get('MY_TIMEOUT_MS');
+    ```
+  </Step>
+  <Step title="Document in this page">
+    Add a row to the relevant table above.
+  </Step>
+</Steps>
+
+Reading `process.env` directly bypasses validation and is forbidden by
+the linter (Phase 5+).

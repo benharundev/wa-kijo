@@ -1,0 +1,245 @@
+---
+title: "Customise billing"
+description: "Swap providers (Stripe, Billplz, ToyyibPay), add a new provider, or remove billing entirely."
+---
+
+wa'kijo's billing module sits behind a `BillingProvider` interface, so
+swapping providers is a matter of writing one adapter. This guide
+covers the three common cases.
+
+<Note>
+  The `BillingModule` is part of Phase 6 — currently in progress. The
+  shape and patterns described here are stable; the code lands in v0.6.0.
+</Note>
+
+## The interface
+
+`apps/api/src/modules/billing/billing.provider.ts`:
+
+```ts
+export interface BillingProvider {
+  // Checkout
+  createCheckoutSession(params: CreateCheckoutParams): Promise<CheckoutSession>;
+
+  // Subscriptions
+  cancelSubscription(subscriptionId: string): Promise<void>;
+  resumeSubscription(subscriptionId: string): Promise<void>;
+  updateSubscriptionPlan(subscriptionId: string, planId: string): Promise<void>;
+
+  // Webhooks
+  verifyWebhook(payload: Buffer, signature: string): Promise<BillingEvent>;
+
+  // Customer portal (Stripe-style)
+  createPortalSession(customerId: string, returnUrl: string): Promise<{ url: string }>;
+}
+
+export interface BillingEvent {
+  id: string;            // provider event ID — used as idempotency key
+  type: BillingEventType;
+  data: Record<string, unknown>;
+  receivedAt: Date;
+}
+
+export type BillingEventType =
+  | 'subscription.created'
+  | 'subscription.updated'
+  | 'subscription.deleted'
+  | 'invoice.paid'
+  | 'invoice.payment_failed';
+```
+
+The shape is small on purpose — most providers cover the same set of
+events with different naming.
+
+## Case 1 — Swap to a new provider (e.g. Paddle)
+
+<Steps>
+  <Step title="Install the SDK">
+    ```bash
+    pnpm --filter @wa-kijo/api add @paddle/paddle-node-sdk
+    ```
+  </Step>
+  <Step title="Implement the interface">
+    `apps/api/src/modules/billing/providers/paddle.provider.ts`:
+
+    ```ts
+    import { Injectable } from '@nestjs/common';
+    import { Paddle } from '@paddle/paddle-node-sdk';
+    import { EnvService } from '../../../config/env.service';
+    import type { BillingProvider, BillingEvent } from '../billing.provider';
+
+    @Injectable()
+    export class PaddleBillingProvider implements BillingProvider {
+      private readonly paddle: Paddle;
+
+      constructor(env: EnvService) {
+        this.paddle = new Paddle(env.get('PADDLE_API_KEY'));
+      }
+
+      async createCheckoutSession(params) { /* ... */ }
+      async cancelSubscription(id) { /* ... */ }
+      async verifyWebhook(payload, signature): Promise<BillingEvent> {
+        const event = this.paddle.webhooks.unmarshal(payload, signature, env.get('PADDLE_WEBHOOK_SECRET'));
+        // map Paddle event names → BillingEventType
+        return { id: event.id, type: mapType(event.type), data: event.data, receivedAt: new Date() };
+      }
+      // ... rest of the interface
+    }
+    ```
+  </Step>
+  <Step title="Wire into BillingModule">
+    ```ts
+    // apps/api/src/modules/billing/billing.module.ts
+    @Module({
+      providers: [
+        { provide: BILLING_PROVIDER, useClass: PaddleBillingProvider },
+        BillingService,
+      ],
+      controllers: [BillingController, BillingWebhookController],
+      exports: [BillingService],
+    })
+    export class BillingModule {}
+    ```
+  </Step>
+  <Step title="Add env vars">
+    `packages/shared/src/env.schema.ts`:
+    ```ts
+    PADDLE_API_KEY:        z.string(),
+    PADDLE_WEBHOOK_SECRET: z.string(),
+    ```
+    `.env.example`:
+    ```
+    PADDLE_API_KEY=
+    PADDLE_WEBHOOK_SECRET=
+    ```
+  </Step>
+  <Step title="Update the webhook URL">
+    Configure Paddle to send webhooks to
+    `https://api.your-saas.com/api/v1/webhooks/paddle`.
+  </Step>
+</Steps>
+
+The rest of the application is unchanged — `BillingService` consumes
+the provider through DI.
+
+## Case 2 — Use Billplz or ToyyibPay (Malaysian gateways)
+
+Both are included by default. Switch by changing the provider binding:
+
+```ts
+// apps/api/src/modules/billing/billing.module.ts
+{ provide: BILLING_PROVIDER, useClass: BillplzBillingProvider }
+// or
+{ provide: BILLING_PROVIDER, useClass: ToyyibPayBillingProvider }
+```
+
+You can also wire **multiple providers** keyed by region or feature
+flag — the `BillingService` accepts a `provider` discriminator on each
+call. See the source for the canonical pattern.
+
+## Case 3 — Remove billing entirely
+
+If you charge customers manually or use a third-party billing UI:
+
+<Steps>
+  <Step title="Remove the module">
+    Delete `apps/api/src/modules/billing/` and remove the
+    `BillingModule` import from `app.module.ts`.
+  </Step>
+  <Step title="Remove the frontend pages">
+    Delete `apps/web/src/app/(app)/orgs/[orgId]/billing/`.
+  </Step>
+  <Step title="Remove the permissions">
+    From `packages/shared/src/auth/permissions.ts`:
+    ```ts
+    // Remove these
+    'billing:manage': ['owner'],
+    'billing:view': ['owner', 'admin'],
+    ```
+  </Step>
+  <Step title="Drop the env vars">
+    Remove `STRIPE_*`, `BILLPLZ_*` from `env.schema.ts`,
+    `.env.example`, and your production secrets.
+  </Step>
+  <Step title="Drop the schema (optional)">
+    If you don't need the `Subscription` and `Invoice` tables, generate
+    a migration that drops them. Two-step: stop writing in one
+    release, drop in the next.
+  </Step>
+</Steps>
+
+The rest of the app keeps working. Billing is decoupled by design.
+
+## Idempotency
+
+Every webhook handler must be idempotent — providers retry. wa'kijo
+keys idempotency on the **provider's event ID**:
+
+```ts
+// apps/api/src/modules/billing/billing-webhook.service.ts
+async handle(event: BillingEvent) {
+  const seen = await this.cache.get(`billing:event:${event.id}`);
+  if (seen) return; // already processed
+  await this.cache.set(`billing:event:${event.id}`, '1', 'EX', 86400);
+  await this.process(event);
+}
+```
+
+24-hour TTL is plenty — providers don't retry that long.
+
+## Webhook signature verification
+
+**Mandatory.** Reject silently (HTTP 400, empty body) on invalid
+signatures — verbose errors help attackers fingerprint the
+verification logic.
+
+```ts
+@Post('stripe')
+async stripe(@RawBody() payload: Buffer, @Headers('stripe-signature') sig: string) {
+  let event: BillingEvent;
+  try {
+    event = await this.provider.verifyWebhook(payload, sig);
+  } catch {
+    throw new BadRequestException();        // empty body
+  }
+  await this.handler.handle(event);
+  return { received: true };
+}
+```
+
+Read [Security § Webhooks](https://github.com/wakijo/wa-kijo/blob/main/.claude/rules/security.md#webhooks)
+before you ship.
+
+## Plan & quota model
+
+Plans are **decoupled** from the provider. The `Plan` table:
+
+```prisma
+model Plan {
+  id           String @id @default(cuid())
+  slug         String @unique         // 'starter', 'pro', 'enterprise'
+  name         String
+  priceCents   Int
+  currency     String @default('MYR')
+  features     Json                    // { messageQuota: 1000, ... }
+  providerIds  Json                    // { stripe: 'price_xxx', billplz: 'plan_yyy' }
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+```
+
+This lets you swap providers without changing your customer-facing plan
+identifiers.
+
+## Test plan for any billing change
+
+Before merging:
+
+1. **Local** — Stripe CLI (or Billplz sandbox) end-to-end: create a
+   subscription, cancel it, mock a payment failure. Verify the
+   webhooks update the local DB correctly.
+2. **Integration tests** — assert the `BillingService` correctly
+   updates state for each `BillingEventType`.
+3. **Manual** — sign in as a real test user and walk through checkout.
+   Money is the most important thing your code touches; the unit-test
+   safety net is not enough alone.

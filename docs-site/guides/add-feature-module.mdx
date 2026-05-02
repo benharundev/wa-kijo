@@ -1,0 +1,517 @@
+---
+title: "Add a feature module"
+description: "Step-by-step walk-through for the most common task in wa'kijo: a new domain feature with API + UI."
+---
+
+This is the canonical "first feature" guide. We'll add an `Invoices`
+module — a list of invoices per organisation, with status (`draft`,
+`sent`, `paid`), CRUD, RBAC, tenant scoping, and a frontend table.
+
+By the end, you'll have:
+
+- A new Prisma model.
+- A Zod DTO shared between API and frontend.
+- New permissions in the RBAC catalogue.
+- A NestJS module with controller, service, repository, tests.
+- A Next.js page that lists and creates invoices.
+- A passing cross-tenant isolation test.
+
+Estimated time: **30–60 minutes**, depending on how much you customise.
+
+## Prerequisites
+
+- wa'kijo running locally per [Quickstart](/quickstart).
+- Familiarity with [Architecture](/concepts/architecture),
+  [Multi-tenancy](/concepts/multi-tenancy), and [RBAC](/concepts/rbac).
+
+## 1. Add the Prisma model
+
+Edit `packages/db/prisma/schema.prisma` — add at the bottom:
+
+```prisma
+model Invoice {
+  id             String   @id @default(cuid())
+  organizationId String
+  number         String                          // e.g. "INV-2026-001"
+  amountCents    Int                              // store money in the smallest unit
+  currency       String   @default("MYR")
+  status         String   @default("draft")      // draft | sent | paid | void
+  issuedAt       DateTime @default(now())
+  dueAt          DateTime?
+  metadata       Json?
+
+  // Conventions
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+  deletedBy      String?
+  createdBy      String?
+  updatedBy      String?
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, number])
+  @@index([organizationId, createdAt])
+  @@index([organizationId, status])
+  @@index([deletedAt])
+  @@map("invoice")
+}
+```
+
+Then add the back-reference to `Organization`:
+
+```prisma
+model Organization {
+  // ... existing fields ...
+  invoices  Invoice[]
+}
+```
+
+Run the migration:
+
+```bash
+pnpm db:migrate
+# Migration name prompt: add_invoices_table
+```
+
+Verify in Prisma Studio (`pnpm db:studio`) that the `invoice` table
+exists.
+
+## 2. Add the Zod DTO in `@wa-kijo/shared`
+
+Create `packages/shared/src/dto/invoice.ts`:
+
+```ts
+import { z } from 'zod';
+
+export const InvoiceStatusSchema = z.enum(['draft', 'sent', 'paid', 'void']);
+export type InvoiceStatus = z.infer<typeof InvoiceStatusSchema>;
+
+export const CreateInvoiceSchema = z.object({
+  number:      z.string().min(1).max(50),
+  amountCents: z.number().int().nonnegative(),
+  currency:    z.string().length(3).default('MYR'),
+  dueAt:       z.coerce.date().optional(),
+  metadata:    z.record(z.unknown()).optional(),
+});
+export type CreateInvoiceDto = z.infer<typeof CreateInvoiceSchema>;
+
+export const UpdateInvoiceSchema = CreateInvoiceSchema.partial().extend({
+  status: InvoiceStatusSchema.optional(),
+});
+export type UpdateInvoiceDto = z.infer<typeof UpdateInvoiceSchema>;
+
+export const InvoiceQuerySchema = z.object({
+  cursor: z.string().cuid().optional(),
+  limit:  z.coerce.number().int().min(1).max(100).default(25),
+  status: InvoiceStatusSchema.optional(),
+  q:      z.string().optional(),
+});
+export type InvoiceQueryDto = z.infer<typeof InvoiceQuerySchema>;
+```
+
+Re-export from the package index `packages/shared/src/index.ts`:
+
+```ts
+export * from './dto/invoice';
+```
+
+Build the shared package so the API picks up the new types:
+
+```bash
+pnpm --filter @wa-kijo/shared build
+```
+
+## 3. Add the permissions
+
+Edit `packages/shared/src/auth/permissions.ts`:
+
+```ts
+export const PERMISSIONS = {
+  // ... existing entries ...
+
+  // Invoices
+  'invoice:create': ['owner', 'admin'],
+  'invoice:read':   ['owner', 'admin', 'member'],
+  'invoice:update': ['owner', 'admin'],
+  'invoice:delete': ['owner'],
+  'invoice:send':   ['owner', 'admin'],
+} as const satisfies Record<string, readonly Role[]>;
+```
+
+Rebuild:
+
+```bash
+pnpm --filter @wa-kijo/shared build
+```
+
+## 4. Scaffold the NestJS module
+
+Create the four files under `apps/api/src/modules/invoices/`:
+
+### `invoices.module.ts`
+
+```ts
+import { Module } from '@nestjs/common';
+import { InvoicesController } from './invoices.controller';
+import { InvoicesService } from './invoices.service';
+import { InvoicesRepository } from './invoices.repository';
+
+@Module({
+  controllers: [InvoicesController],
+  providers: [InvoicesService, InvoicesRepository],
+  exports: [InvoicesService],
+})
+export class InvoicesModule {}
+```
+
+### `invoices.repository.ts`
+
+```ts
+import { Injectable } from '@nestjs/common';
+import { BaseRepository } from '../../base/base.repository';
+import { PrismaService } from '../../prisma/prisma.service';
+import type { RequestContext } from '../../common/context/request-context';
+
+@Injectable()
+export class InvoicesRepository extends BaseRepository<any> {
+  constructor(prisma: PrismaService) {
+    super(prisma);
+  }
+
+  protected get model() {
+    return 'invoice';
+  }
+
+  protected tenantWhere(ctx: RequestContext) {
+    return { organizationId: ctx.orgId };
+  }
+}
+```
+
+### `invoices.service.ts`
+
+```ts
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import type { CreateInvoiceDto, UpdateInvoiceDto, InvoiceQueryDto } from '@wa-kijo/shared';
+import type { RequestContext } from '../../common/context/request-context';
+import { InvoicesRepository } from './invoices.repository';
+
+@Injectable()
+export class InvoicesService {
+  constructor(private readonly repo: InvoicesRepository) {}
+
+  list(ctx: RequestContext, query: InvoiceQueryDto) {
+    return this.repo.findAll(ctx, {
+      cursor: query.cursor,
+      limit:  query.limit,
+      filter: query.status ? { status: query.status } : {},
+    });
+  }
+
+  async findOne(ctx: RequestContext, id: string) {
+    const invoice = await this.repo.findById(ctx, id);
+    if (!invoice) throw new NotFoundException('Invoice not found');
+    return invoice;
+  }
+
+  async create(ctx: RequestContext, dto: CreateInvoiceDto) {
+    try {
+      return await this.repo.create(ctx, dto);
+    } catch (e: any) {
+      if (e?.code === 'P2002') {
+        throw new ConflictException('Invoice number already exists');
+      }
+      throw e;
+    }
+  }
+
+  update(ctx: RequestContext, id: string, dto: UpdateInvoiceDto) {
+    return this.repo.update(ctx, id, dto);
+  }
+
+  remove(ctx: RequestContext, id: string) {
+    return this.repo.softDelete(ctx, id);
+  }
+}
+```
+
+### `invoices.controller.ts`
+
+```ts
+import {
+  Body, Controller, Delete, Get, HttpCode, HttpStatus,
+  Param, Patch, Post, Query,
+} from '@nestjs/common';
+import {
+  ApiCookieAuth, ApiCreatedResponse, ApiNoContentResponse,
+  ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags,
+} from '@nestjs/swagger';
+import { ZodValidationPipe } from 'nestjs-zod';
+import {
+  CreateInvoiceSchema, InvoiceQuerySchema, UpdateInvoiceSchema,
+  type CreateInvoiceDto, type InvoiceQueryDto, type UpdateInvoiceDto,
+} from '@wa-kijo/shared';
+import { RequirePermission } from '../../common/decorators/require-permission.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { RequestContext } from '../../common/context/request-context';
+import { InvoicesService } from './invoices.service';
+
+@ApiTags('Invoices')
+@ApiCookieAuth()
+@Controller('invoices')
+export class InvoicesController {
+  constructor(private readonly invoices: InvoicesService) {}
+
+  @Get()
+  @RequirePermission('invoice:read')
+  @ApiOperation({ summary: 'List invoices', description: 'Cursor-paginated list of invoices for the active organisation, optionally filtered by status.' })
+  @ApiOkResponse({ description: 'Paginated invoice list' })
+  list(
+    @CurrentUser() ctx: RequestContext,
+    @Query(new ZodValidationPipe(InvoiceQuerySchema)) query: InvoiceQueryDto,
+  ) {
+    return this.invoices.list(ctx, query);
+  }
+
+  @Get(':id')
+  @RequirePermission('invoice:read')
+  @ApiOperation({ summary: 'Get invoice by ID' })
+  @ApiOkResponse({ description: 'Invoice' })
+  @ApiNotFoundResponse({ description: 'Invoice not found' })
+  findOne(@CurrentUser() ctx: RequestContext, @Param('id') id: string) {
+    return this.invoices.findOne(ctx, id);
+  }
+
+  @Post()
+  @RequirePermission('invoice:create')
+  @ApiOperation({ summary: 'Create invoice', description: 'Creates a new draft invoice. Number must be unique within the organisation.' })
+  @ApiCreatedResponse({ description: 'Invoice created' })
+  create(
+    @CurrentUser() ctx: RequestContext,
+    @Body(new ZodValidationPipe(CreateInvoiceSchema)) dto: CreateInvoiceDto,
+  ) {
+    return this.invoices.create(ctx, dto);
+  }
+
+  @Patch(':id')
+  @RequirePermission('invoice:update')
+  @ApiOperation({ summary: 'Update invoice' })
+  @ApiOkResponse({ description: 'Updated invoice' })
+  @ApiNotFoundResponse({ description: 'Invoice not found' })
+  update(
+    @CurrentUser() ctx: RequestContext,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(UpdateInvoiceSchema)) dto: UpdateInvoiceDto,
+  ) {
+    return this.invoices.update(ctx, id, dto);
+  }
+
+  @Delete(':id')
+  @RequirePermission('invoice:delete')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Soft-delete invoice' })
+  @ApiNoContentResponse({ description: 'Invoice deleted' })
+  @ApiNotFoundResponse({ description: 'Invoice not found' })
+  async remove(@CurrentUser() ctx: RequestContext, @Param('id') id: string) {
+    await this.invoices.remove(ctx, id);
+  }
+}
+```
+
+## 5. Register the module
+
+Add to `apps/api/src/app.module.ts`:
+
+```ts
+import { InvoicesModule } from './modules/invoices/invoices.module';
+
+@Module({
+  imports: [
+    // ... existing modules ...
+    InvoicesModule,
+  ],
+})
+export class AppModule {}
+```
+
+Restart the dev server (`pnpm dev` should auto-reload). Visit
+`http://localhost:3000/api/docs` — the **Invoices** tag should appear
+with all five endpoints.
+
+## 6. Add unit tests
+
+Create `apps/api/src/modules/invoices/invoices.service.spec.ts`:
+
+```ts
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { ConflictException, NotFoundException } from '@nestjs/common';
+import { InvoicesService } from './invoices.service';
+
+const ctx = { orgId: 'org_a', userId: 'user_a' } as any;
+
+describe('InvoicesService', () => {
+  let repo: any;
+  let svc: InvoicesService;
+
+  beforeEach(() => {
+    repo = {
+      findAll: vi.fn(),
+      findById: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      softDelete: vi.fn(),
+    };
+    svc = new InvoicesService(repo);
+  });
+
+  it('throws NotFound for missing invoice', async () => {
+    repo.findById.mockResolvedValue(null);
+    await expect(svc.findOne(ctx, 'cmg_missing')).rejects.toThrow(NotFoundException);
+  });
+
+  it('translates Prisma P2002 to Conflict on create', async () => {
+    repo.create.mockRejectedValue({ code: 'P2002' });
+    await expect(svc.create(ctx, { number: 'INV-1', amountCents: 100, currency: 'MYR' }))
+      .rejects.toThrow(ConflictException);
+  });
+});
+```
+
+Add an integration test under
+`apps/api/test/integration/invoices/tenant-isolation.itest.ts` covering
+the cross-tenant case (use the helpers in `test/utils/db.ts` and
+`test/fixtures/org.fixture.ts`).
+
+Run them:
+
+```bash
+pnpm --filter @wa-kijo/api test -- --run src/modules/invoices/invoices.service.spec.ts
+pnpm test:integration
+```
+
+## 7. Add the frontend page
+
+Create `apps/web/src/app/(app)/orgs/[orgId]/invoices/page.tsx`:
+
+```tsx
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
+import { fetcher } from '@/lib/fetcher';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Can } from '@/components/can';
+import Link from 'next/link';
+import type { z } from 'zod';
+
+interface Invoice {
+  id: string;
+  number: string;
+  amountCents: number;
+  currency: string;
+  status: 'draft' | 'sent' | 'paid' | 'void';
+  createdAt: string;
+}
+
+interface InvoiceList {
+  items: Invoice[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
+export default function InvoicesPage() {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['invoices'],
+    queryFn: () => fetcher<InvoiceList>('/api/v1/invoices'),
+  });
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Invoices</h1>
+        <Can do="invoice:create">
+          <Link href="invoices/new" className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground">
+            New invoice
+          </Link>
+        </Can>
+      </div>
+
+      {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+      {error && <p className="text-sm text-destructive">Failed to load invoices.</p>}
+
+      <Card>
+        <CardHeader><CardTitle>Recent</CardTitle></CardHeader>
+        <CardContent className="divide-y divide-border">
+          {data?.items.map((inv) => (
+            <div key={inv.id} className="flex items-center justify-between py-2">
+              <span className="font-mono text-sm">{inv.number}</span>
+              <span>{(inv.amountCents / 100).toFixed(2)} {inv.currency}</span>
+              <Badge variant={inv.status === 'paid' ? 'default' : 'secondary'}>{inv.status}</Badge>
+            </div>
+          ))}
+          {data && data.items.length === 0 && (
+            <p className="py-6 text-center text-sm text-muted-foreground">No invoices yet.</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+```
+
+Add a sidebar entry in `apps/web/src/components/layout/sidebar.tsx`:
+
+```tsx
+{ href: `/orgs/${activeOrgId}/invoices`, label: 'Invoices', icon: Receipt },
+```
+
+## 8. End-to-end smoke
+
+Sign in to the local web app, navigate to **Invoices**, then create one
+via Swagger UI:
+
+```bash
+curl -b cookies.txt \
+  -X POST http://localhost:3000/api/v1/invoices \
+  -H 'Content-Type: application/json' \
+  -d '{"number":"INV-2026-001","amountCents":12500,"currency":"MYR"}'
+```
+
+Refresh the Invoices page — your new invoice should appear with the
+`draft` badge.
+
+## 9. PR checklist
+
+The PR description for any new feature module should mirror this
+checklist (also in [`CONTRIBUTING.md`](https://github.com/wakijo/wa-kijo/blob/main/CONTRIBUTING.md#adding-a-feature-module--checklist)):
+
+```
+- [ ] Prisma model added to packages/db/prisma/schema.prisma
+- [ ] Migration generated with descriptive name
+- [ ] Zod DTO in packages/shared/src/dto/<feature>.ts
+- [ ] packages/shared rebuilt
+- [ ] Module/controller/service/repository scaffolded
+- [ ] Repository extends BaseRepository<T> with tenantWhere() implemented
+- [ ] Permissions added to permissions.ts
+- [ ] @RequirePermission applied to every controller method
+- [ ] Swagger decorators present
+- [ ] Unit tests covering happy path + permission denial
+- [ ] Integration test for cross-tenant isolation
+- [ ] Module imported in apps/api/src/app.module.ts
+- [ ] docs/api/openapi.yaml regenerated
+- [ ] CHANGELOG entry under Unreleased
+- [ ] Frontend page (if user-visible)
+```
+
+## What you just learned
+
+- The shape of every wa'kijo feature module.
+- How Zod DTOs, Prisma models, and the permission catalogue stay in
+  sync as you extend.
+- How `BaseRepository` removes the tenant scoping boilerplate.
+- The default test triplet: unit, integration tenant-isolation, and an
+  E2E smoke from the frontend.
+
+Use this guide as a template. Most features take 30–60 minutes to
+scaffold once you've done it once.

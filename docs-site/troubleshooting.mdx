@@ -1,0 +1,269 @@
+---
+title: "Troubleshooting"
+description: "The 20 most common issues, with diagnoses you can apply in under five minutes."
+---
+
+If you're stuck, the answer is probably here. Use Ctrl-F to search by
+the error message you're seeing.
+
+## Setup & install
+
+<AccordionGroup>
+  <Accordion title="`pnpm install` fails on a fresh clone">
+    Most common cause: wrong Node version. wa'kijo requires **Node 22 LTS**.
+
+    ```bash
+    node --version    # should be v22.x
+    nvm install 22 && nvm use 22
+    rm -rf node_modules pnpm-lock.yaml.bak
+    pnpm install
+    ```
+
+    If pnpm itself is the issue, re-enable Corepack:
+    ```bash
+    corepack enable
+    corepack prepare pnpm@9.15.0 --activate
+    ```
+  </Accordion>
+
+  <Accordion title="`pnpm install` says ENOENT for prisma generate">
+    The `postinstall` hook in `@wa-kijo/db` runs `prisma generate`, which
+    needs the schema file. If it can't find it, the install ran from
+    the wrong directory. Re-run from the repo root.
+  </Accordion>
+
+  <Accordion title="`pnpm dev` says `@wa-kijo/shared` not found">
+    The shared package needs to be built before the API resolves it:
+    ```bash
+    pnpm --filter @wa-kijo/shared build
+    pnpm --filter @wa-kijo/db build
+    pnpm dev
+    ```
+    `pnpm dev` does this automatically the first time, but only on a
+    clean tree.
+  </Accordion>
+
+  <Accordion title="Engine warning: WARN Unsupported engine">
+    You're on Node < 22. The app may run but production builds will
+    fail. Switch with `nvm use 22`.
+  </Accordion>
+</AccordionGroup>
+
+## Database
+
+<AccordionGroup>
+  <Accordion title="`pnpm db:migrate` says `connection refused`">
+    Postgres isn't running, or it's listening on a different port. Check:
+    ```bash
+    docker compose -f docker-compose.dev.yml ps
+    ```
+    If `postgres` isn't in the list:
+    ```bash
+    pnpm docker:up
+    ```
+    If it is in the list but you still can't connect, your `.env` may
+    point at a different port. wa'kijo defaults to **5434**, not 5432.
+  </Accordion>
+
+  <Accordion title="`prisma migrate dev` fails with `P3014` (shadow database)">
+    Your dev Postgres is missing permission to create a shadow database.
+    Add `?shadowDatabase=…` to the URL or grant the user `CREATE
+    DATABASE`. The Docker Compose default user has this permission.
+  </Accordion>
+
+  <Accordion title="`P2002` Unique constraint failed in production">
+    A row already exists with the same value for a `@@unique` constraint.
+    The service should translate this to a `409 CONFLICT` — see
+    [Reference → Error codes](/reference/error-codes). If you're seeing
+    a 500 instead, the controller is missing the `try/catch` that maps
+    `P2002` → `ConflictException`.
+  </Accordion>
+
+  <Accordion title="`P2025` Record to update not found">
+    Either the row doesn't exist, or it exists in **another tenant**.
+    Both look identical from the API surface (`404 NOT_FOUND`) — that's
+    by design. If you genuinely expected the row to exist, check
+    `ctx.orgId` matches the row's `organizationId`.
+  </Accordion>
+
+  <Accordion title="Prisma client out of date after pulling main">
+    Schema changed; client needs to regenerate.
+    ```bash
+    pnpm --filter @wa-kijo/db generate
+    pnpm --filter @wa-kijo/db build
+    ```
+  </Accordion>
+
+  <Accordion title="Reset the dev DB completely">
+    ```bash
+    pnpm docker:down
+    docker volume rm wa-kijo_postgres-data
+    pnpm docker:up
+    pnpm db:migrate
+    pnpm db:seed
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Auth
+
+<AccordionGroup>
+  <Accordion title="Sign-in returns 401 with valid credentials">
+    `User.emailVerified` is `false`. Either:
+    - Click the verification email link.
+    - Set `emailVerified = true` in Prisma Studio.
+    - Re-run `pnpm db:seed` (seed users are created with
+      `emailVerified: true`).
+
+    To temporarily disable verification for development, set
+    `requireEmailVerification: false` in
+    `apps/api/src/auth/auth.module.ts`.
+  </Accordion>
+
+  <Accordion title="Cookie isn't being set in production">
+    `BETTER_AUTH_URL` must match the **public** API URL exactly: no
+    trailing slash, correct protocol (`https://`). The cookie's
+    `Secure` flag requires HTTPS in production.
+  </Accordion>
+
+  <Accordion title="CORS error on /api/auth/*">
+    `/api/auth/*` routes need CORS set on `reply.raw` (this happens in
+    the second Fastify hook in `main.ts`). Verify `CORS_ORIGIN` matches
+    the web URL exactly. After updating, redeploy — the value is read
+    at boot.
+  </Accordion>
+
+  <Accordion title="OAuth callback URL mismatch">
+    Better Auth derives the OAuth callback URL from `BETTER_AUTH_URL`.
+    If the API is behind a reverse proxy, set `BETTER_AUTH_URL` to the
+    **external** URL, not the internal one.
+  </Accordion>
+
+  <Accordion title="403 Forbidden on a route I expect to access">
+    The route has `@RequirePermission('something')` and your active
+    role doesn't hold that permission. Check
+    [Reference → Permissions](/reference/permissions) and your active
+    org's role.
+  </Accordion>
+</AccordionGroup>
+
+## Email
+
+<AccordionGroup>
+  <Accordion title="No verification email arrives in dev">
+    1. `RESEND_API_KEY` must start with `re_`.
+    2. `EMAIL_FROM` must be a verified sender in your Resend account.
+    3. Check the API logs for `Failed to send verification email`.
+    4. Check Resend dashboard for delivery status.
+  </Accordion>
+
+  <Accordion title="Resend rate-limited at 100 emails/day">
+    Free tier limit. Upgrade Resend plan or use a dedicated domain.
+  </Accordion>
+</AccordionGroup>
+
+## Frontend
+
+<AccordionGroup>
+  <Accordion title="Hydration mismatch warning in dev">
+    Almost always a server/client time mismatch (rendering `new Date()`
+    in a server component and again in a client component). Move
+    timestamps into `useEffect` or pass them as ISO strings.
+  </Accordion>
+
+  <Accordion title="`useSession()` returns null after sign-in">
+    The session cookie didn't reach the API. Check `credentials:
+    'include'` is set on every fetch (the shipped `fetcher` does this).
+    Cross-origin: also confirm `CORS_ORIGIN` and
+    `Access-Control-Allow-Credentials: true`.
+  </Accordion>
+
+  <Accordion title="shadcn/ui component looks unstyled">
+    Tailwind's content paths are missing your file. Confirm
+    `apps/web/tailwind.config.ts` includes `./src/**/*.{ts,tsx}`.
+  </Accordion>
+
+  <Accordion title="`pnpm --filter @wa-kijo/web build` fails with type errors">
+    Usually a stale Prisma type. Rebuild the workspace packages first:
+    ```bash
+    pnpm --filter @wa-kijo/db build
+    pnpm --filter @wa-kijo/shared build
+    pnpm --filter @wa-kijo/web build
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Background jobs
+
+<AccordionGroup>
+  <Accordion title="Bull-Board at /admin/queues returns 403">
+    You don't hold `admin:queues` permission. Sign in as a SYSTEM-org
+    owner, or temporarily widen the permission map for testing.
+  </Accordion>
+
+  <Accordion title="Jobs accumulate but never process">
+    The worker isn't running. Either:
+    - Set `WORKER_MODE=inline` to process jobs in the API (fine for
+      small deployments).
+    - Run a separate worker process with `WORKER_MODE=true`.
+  </Accordion>
+
+  <Accordion title="Job retries forever">
+    The processor throws an error that's not caught. Look at the DLQ
+    in Bull-Board — every failed-after-3-attempts job ends up there
+    with the stack trace.
+  </Accordion>
+
+  <Accordion title="Long-running job is killed mid-execution">
+    Jobs without a progress report > 60 s get evicted by Redis. Call
+    `await job.updateProgress(N)` periodically, or split the job into
+    smaller chunks.
+  </Accordion>
+</AccordionGroup>
+
+## Performance
+
+<AccordionGroup>
+  <Accordion title="API is slow on a specific endpoint">
+    Walk the layers in [Concepts → Observability § Performance debugging](/concepts/observability#performance-debugging-playbook).
+    Most cases are a missing index or an N+1 query.
+  </Accordion>
+
+  <Accordion title="Postgres connection pool exhausted">
+    Connection slots > `max_connections`. Either bump
+    `max_connections`, add PgBouncer in front, or reduce pool size on
+    the API. In production, **always** use PgBouncer (see
+    [Deploy to AWS § RDS Proxy](/guides/deploy-to-aws#rds-proxy)).
+  </Accordion>
+</AccordionGroup>
+
+## Tests
+
+<AccordionGroup>
+  <Accordion title="Tests pass locally but fail in CI">
+    Most common cause: a test depends on a fixture another test
+    created. Tests must be independent — recreate the world in
+    `beforeEach`. See [Testing § Common pitfalls](https://github.com/wakijo/wa-kijo/blob/main/docs/testing.md#10-common-pitfalls).
+  </Accordion>
+
+  <Accordion title="Integration tests time out">
+    Testcontainers is slow on first run (Docker pulls the Postgres
+    image). Subsequent runs use the cache. If consistently slow,
+    check Docker resource allocation.
+  </Accordion>
+
+  <Accordion title="Playwright says webServer didn't start">
+    Ports 3000 / 3001 are in use:
+    ```bash
+    lsof -ti :3000 :3001 | xargs kill -9
+    pnpm test:e2e
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Still stuck?
+
+- Check the customer Discord — answer is often there.
+- File a support ticket per [Support](/support).
+- For security-sensitive issues, follow [SECURITY.md](https://github.com/wakijo/wa-kijo/blob/main/SECURITY.md)
+  instead of the regular support channel.

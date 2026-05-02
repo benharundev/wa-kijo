@@ -10,7 +10,7 @@
   <img alt="Prisma" src="https://img.shields.io/badge/Prisma-5-2D3748?logo=prisma&logoColor=white">
   <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white">
   <img alt="License" src="https://img.shields.io/badge/license-Commercial-blue">
-  <img alt="Status" src="https://img.shields.io/badge/status-Phase%204%20%E2%80%94%20feature%20modules%20WIP-yellow">
+  <img alt="Status" src="https://img.shields.io/badge/status-Phase%205%20complete%20%E2%80%94%20billing%20WIP-yellow">
 </p>
 
 **wa'kijo** is the foundation of the wa' product portfolio. `wa-kiro` (WhatsApp Business SaaS) and `wa-lawe` (chess tournament manager) are both forked from this repo. Customers who purchase wa'kijo receive a private GitHub repo, Mintlify docs, and 6–24 months of updates depending on tier.

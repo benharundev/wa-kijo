@@ -66,6 +66,70 @@ least one major upgrade within their support window.
 
 ---
 
+## v0.5.0 (released 2026-05-02)
+
+> **Phase 5 milestone — domain feature modules complete.**
+
+### What changed
+
+- New modules: `contacts`, `tags`, `conversations`, `messages` mounted
+  under `/api/v1/`.
+- New `AuditLog` model and `AuditService`. Sensitive mutations (member
+  role changes, org config updates, bulk operations) are recorded
+  automatically.
+- Cross-tenant access fuzz tests in CI.
+- Bull-Board admin UI at `/admin/queues`, RBAC-gated.
+- Scheduled jobs for soft-delete cleanup and audit log partitioning.
+- CI workflow at `.github/workflows/ci.yml` runs typecheck, lint, unit,
+  integration, e2e, and coverage thresholds.
+- Static OpenAPI snapshot at `docs/api/openapi.yaml` regenerated via
+  `pnpm api:openapi:dump`.
+- Mintlify customer docs scaffolded under `docs-site/`.
+
+### Required action
+
+1. **Run migrations** to apply the new `Contact`, `Tag`, `Conversation`,
+   `Message`, and `AuditLog` tables:
+   ```bash
+   pnpm db:migrate:deploy
+   ```
+2. **Add the new permissions** if you've customised
+   `packages/shared/src/auth/permissions.ts`:
+   - `contact:create`, `contact:read`, `contact:update`,
+     `contact:delete`, `contact:import`, `contact:block`
+   - `tag:create`, `tag:update`, `tag:delete`
+   - `conversation:create`, `conversation:read`, `conversation:assign`,
+     `conversation:close`, `conversation:delete`
+   - `message:send`, `message:read`
+   - `admin:queues` (for Bull-Board access)
+3. **Seed dev** to repopulate the example data:
+   ```bash
+   pnpm db:seed
+   ```
+4. **Rebuild shared packages** after pulling — schema changes mean the
+   Prisma client and shared DTOs both regenerate:
+   ```bash
+   pnpm --filter @wa-kijo/db build
+   pnpm --filter @wa-kijo/shared build
+   ```
+
+### Optional
+
+- Wire the new CI workflow into your fork's branch protection rules.
+- Replace any wa'kijo placeholder copy under
+  `apps/api/src/modules/contacts/` with your own product terminology
+  before showing it to a customer.
+- If you operate Bull-Board behind a reverse proxy, configure it to
+  forward the session cookie — the admin UI requires a wa'kijo session
+  to load.
+
+### No breaking changes
+
+This release is purely additive. v0.4.0 customers can pull and migrate
+without touching application code.
+
+---
+
 ## v0.5.0 → 1.0.0 (planned, not yet released)
 
 Tentative release notes for the first stable release. Will be finalised

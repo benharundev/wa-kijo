@@ -1,0 +1,135 @@
+---
+title: "CLI reference"
+description: "Every pnpm script defined at the root of the repo, what it does, and when to use it."
+---
+
+wa'kijo's "CLI" is a set of pnpm scripts in the root `package.json` and
+the per-app `package.json`s. There is no bespoke wrapper — pnpm is the
+interface.
+
+## Day-to-day
+
+| Command | What it does |
+|---|---|
+| `pnpm install` | Install dependencies. Auto-runs `prisma generate` via `postinstall` in `@wa-kijo/db` |
+| `pnpm dev` | Start API (port 3000) + web (port 3001) with hot reload, in parallel |
+| `pnpm build` | Production build of every package and app |
+| `pnpm lint` | ESLint + Prettier check across the workspace |
+| `pnpm typecheck` | `tsc --noEmit` across every package |
+| `pnpm format` | Auto-format every supported file via Prettier |
+| `pnpm format:check` | Same as `format` but read-only — fails CI on uncommitted formatting |
+| `pnpm clean` | Remove every `dist`, `.next`, `.turbo`, and `node_modules`. Nuclear option |
+
+## Tests
+
+| Command | What it does |
+|---|---|
+| `pnpm test` | Run Vitest unit suites in every package, in parallel |
+| `pnpm test:integration` | Run integration tests via Testcontainers (real Postgres + Redis). Requires Docker running |
+| `pnpm test:e2e` | Run Playwright E2E suite. Auto-starts the API and web servers |
+
+Single test file:
+
+```bash
+pnpm --filter @wa-kijo/api test -- --run src/modules/contacts/contacts.service.spec.ts
+pnpm --filter @wa-kijo/web test:e2e -- tests/e2e/sign-in.spec.ts
+```
+
+Coverage:
+
+```bash
+pnpm --filter @wa-kijo/api test:coverage
+```
+
+## Database
+
+| Command | What it does |
+|---|---|
+| `pnpm db:generate` | Regenerate the Prisma client (rare — `pnpm install` does it for you) |
+| `pnpm db:migrate` | Local dev: prompts for a migration name, generates and applies the migration |
+| `pnpm db:seed` | Seed three users + a 3-org hierarchy. Idempotent — safe to re-run |
+| `pnpm db:studio` | Launch Prisma Studio at http://localhost:5555 |
+
+Production-only (run on a worker / in a CI job, not by hand):
+
+```bash
+pnpm --filter @wa-kijo/db migrate:deploy
+```
+
+This applies pending migrations without prompting and never generates
+new ones.
+
+## Docker (dev stack)
+
+| Command | What it does |
+|---|---|
+| `pnpm docker:up` | Start Postgres 16 + Redis 7 in detached mode |
+| `pnpm docker:down` | Stop and remove the dev containers (data volumes preserved) |
+| `pnpm docker:logs` | Tail container logs |
+
+Reset the dev DB completely:
+
+```bash
+pnpm docker:down
+docker volume rm wa-kijo_postgres-data
+pnpm docker:up
+pnpm db:migrate
+pnpm db:seed
+```
+
+## Workspace-scoped commands
+
+The general pattern:
+
+```bash
+pnpm --filter <package> <script>
+```
+
+Common shortcuts:
+
+```bash
+# Just build the shared package after editing it
+pnpm --filter @wa-kijo/shared build
+
+# Just build the database package
+pnpm --filter @wa-kijo/db build
+
+# Just run the API in dev mode
+pnpm --filter @wa-kijo/api dev
+
+# Just typecheck the web app
+pnpm --filter @wa-kijo/web typecheck
+```
+
+## OpenAPI snapshot
+
+```bash
+# Regenerate docs/api/openapi.yaml from the running API
+pnpm api:openapi:dump
+```
+
+Run this whenever you add or change an endpoint, then commit the
+updated `openapi.yaml`. CI will fail if your PR adds an endpoint
+without updating the snapshot.
+
+## Common combinations
+
+| Goal | Sequence |
+|---|---|
+| Fresh local setup | `pnpm install && cp .env.example .env && pnpm docker:up && pnpm db:migrate && pnpm db:seed && pnpm dev` |
+| After pulling main | `pnpm install && pnpm db:migrate && pnpm dev` |
+| After editing `packages/shared` while dev is running | `pnpm --filter @wa-kijo/shared build` (the dev script auto-watches schema, but not workspace package builds) |
+| Pre-PR check | `pnpm typecheck && pnpm lint && pnpm test && pnpm test:integration && pnpm format:check` |
+| Wipe dev DB and start over | see "Docker (dev stack)" above |
+
+## Husky / commitlint
+
+Two git hooks ship enabled:
+
+- **`pre-commit`** runs `lint-staged` — formats staged files via
+  Prettier and runs ESLint on staged TS/TSX.
+- **`commit-msg`** runs `commitlint` — validates the commit message
+  matches Conventional Commits.
+
+Bypassing with `--no-verify` is allowed but discouraged. Document the
+reason in the PR description.

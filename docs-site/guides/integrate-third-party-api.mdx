@@ -1,0 +1,259 @@
+---
+title: "Integrate a third-party API"
+description: "The canonical pattern wa'kijo uses for every external integration — Resend, Stripe, WhatsApp, and yours."
+---
+
+You'll add at least one third-party integration to your wa'kijo
+deployment. This guide walks through the pattern we use across all of
+them so the next one looks the same as the last.
+
+## The pattern
+
+```
+apps/api/src/integrations/<provider>/
+├── <provider>.module.ts        # NestJS module
+├── <provider>.service.ts       # wraps the SDK; only this file imports the SDK
+├── <provider>.client.ts        # constructs and configures the SDK client
+├── <provider>.types.ts         # re-exports / extends SDK types as needed
+├── webhooks/                   # if the provider sends webhooks
+│   ├── <provider>-webhook.controller.ts
+│   └── <provider>-webhook.service.ts
+└── <provider>.service.spec.ts
+```
+
+Rules:
+
+1. **One provider, one module.** No mixed Stripe + Billplz code in the
+   same service.
+2. **Sensitive config from env only.** Never hard-code an API key.
+3. **Webhook signature verification is mandatory.** Reject silently on
+   invalid signatures.
+4. **Idempotency by event ID.** Webhooks retry; idempotency saves you.
+5. **No SDK imports outside this module.** Other modules call
+   `<Provider>Service`, never the SDK directly.
+
+## Worked example — adding a Slack notifier
+
+Let's add a Slack module that posts a message to a channel when a
+contact is created.
+
+### 1. Module skeleton
+
+```ts
+// apps/api/src/integrations/slack/slack.module.ts
+import { Module } from '@nestjs/common';
+import { SlackService } from './slack.service';
+import { SlackClient } from './slack.client';
+
+@Module({
+  providers: [SlackClient, SlackService],
+  exports: [SlackService],
+})
+export class SlackModule {}
+```
+
+### 2. Client wrapper
+
+```ts
+// apps/api/src/integrations/slack/slack.client.ts
+import { Injectable } from '@nestjs/common';
+import { WebClient } from '@slack/web-api';
+import { EnvService } from '../../config/env.service';
+
+@Injectable()
+export class SlackClient {
+  readonly api: WebClient;
+
+  constructor(env: EnvService) {
+    this.api = new WebClient(env.get('SLACK_BOT_TOKEN'));
+  }
+}
+```
+
+### 3. Service
+
+```ts
+// apps/api/src/integrations/slack/slack.service.ts
+import { Injectable, Logger } from '@nestjs/common';
+import { SlackClient } from './slack.client';
+
+@Injectable()
+export class SlackService {
+  private readonly logger = new Logger(SlackService.name);
+
+  constructor(private readonly client: SlackClient) {}
+
+  async postMessage(channel: string, text: string): Promise<void> {
+    try {
+      await this.client.api.chat.postMessage({ channel, text });
+      this.logger.log({ channel }, 'Slack message posted');
+    } catch (err: any) {
+      this.logger.error({ channel, error: err?.message }, 'Failed to post Slack message');
+      throw err;       // let the queue retry policy handle it
+    }
+  }
+}
+```
+
+### 4. Env vars
+
+```ts
+// packages/shared/src/env.schema.ts
+SLACK_BOT_TOKEN: z.string().startsWith('xoxb-'),
+SLACK_CHANNEL:   z.string().default('#sales'),
+```
+
+```bash
+# .env.example
+SLACK_BOT_TOKEN=xoxb-replace-me
+SLACK_CHANNEL=#sales
+```
+
+### 5. Hook into a domain event
+
+The recommended way to call third-party APIs is **from a queue
+processor**, not inline from the request path. This means a slow Slack
+API doesn't slow down the user's HTTP response, and a failed Slack
+call retries automatically.
+
+```ts
+// apps/api/src/modules/contacts/contacts.service.ts
+async create(ctx: RequestContext, dto: CreateContactDto) {
+  const contact = await this.repo.create(ctx, dto);
+  await this.events.add('contact.created', { contactId: contact.id, orgId: ctx.orgId });
+  return contact;
+}
+```
+
+```ts
+// apps/api/src/integrations/slack/processors/contact-created.processor.ts
+@Processor(QUEUE_NAMES.EVENTS)
+export class SlackContactCreatedProcessor extends WorkerHost {
+  constructor(
+    private readonly slack: SlackService,
+    private readonly contacts: ContactsService,
+    private readonly env: EnvService,
+  ) { super(); }
+
+  async process(job: Job) {
+    if (job.name !== 'contact.created') return;
+    const { contactId, orgId } = job.data;
+    const ctx = mockSystemContext({ orgId });
+    const contact = await this.contacts.findOne(ctx, contactId);
+    await this.slack.postMessage(this.env.get('SLACK_CHANNEL'), `New contact: *${contact.name}* (${contact.phone})`);
+  }
+}
+```
+
+### 6. Test
+
+Mock the SDK at the module boundary:
+
+```ts
+// apps/api/src/integrations/slack/slack.service.spec.ts
+import { describe, it, expect, vi } from 'vitest';
+import { SlackService } from './slack.service';
+
+describe('SlackService', () => {
+  it('posts a message via the SDK', async () => {
+    const postMessage = vi.fn().mockResolvedValue({ ok: true });
+    const client = { api: { chat: { postMessage } } } as any;
+    const svc = new SlackService(client);
+
+    await svc.postMessage('#test', 'hello');
+    expect(postMessage).toHaveBeenCalledWith({ channel: '#test', text: 'hello' });
+  });
+
+  it('rethrows on SDK failure (lets the queue retry)', async () => {
+    const postMessage = vi.fn().mockRejectedValue(new Error('rate_limited'));
+    const svc = new SlackService({ api: { chat: { postMessage } } } as any);
+    await expect(svc.postMessage('#test', 'x')).rejects.toThrow('rate_limited');
+  });
+});
+```
+
+## Inbound webhooks
+
+If the provider also sends **webhooks to you** (Stripe, WhatsApp,
+Billplz), follow this controller pattern:
+
+```ts
+// apps/api/src/integrations/<provider>/webhooks/<provider>-webhook.controller.ts
+@Controller('webhooks/slack')
+export class SlackWebhookController {
+  constructor(private readonly handler: SlackWebhookService) {}
+
+  @Public()                           // signed by Slack — not session-authenticated
+  @Post()
+  @HttpCode(HttpStatus.OK)
+  async receive(
+    @RawBody() payload: Buffer,
+    @Headers('x-slack-signature') signature: string,
+    @Headers('x-slack-request-timestamp') timestamp: string,
+  ) {
+    if (!this.handler.verify(payload, signature, timestamp)) {
+      throw new BadRequestException();    // empty body — don't help attackers
+    }
+    await this.handler.process(payload);
+    return { received: true };
+  }
+}
+```
+
+Rules:
+
+- `@Public()` because providers don't have session cookies.
+- **Always** verify the signature first.
+- Return `200` once the event is **persisted** to your queue, not
+  necessarily processed — providers stop retrying when they see 200.
+- Idempotency keyed on the provider's event ID.
+
+## Cost control
+
+External API calls are usually metered. To keep them under control:
+
+- **Cap per-tenant rate.** Add a Redis-backed rate limiter keyed on the
+  active `orgId`.
+- **Surface usage to the customer.** Expose a `/usage` endpoint that
+  shows their current month's consumption.
+- **Alert on spend.** Set an alert when the per-month cost exceeds a
+  threshold (most providers expose a billing API or webhook).
+
+## Common third-party integrations and where they live
+
+| Provider | Module path | Notes |
+|---|---|---|
+| Resend (email) | `apps/api/src/modules/email/` | Wraps Better Auth's `sendVerificationEmail` etc. |
+| Stripe (billing) | `apps/api/src/modules/billing/providers/stripe.provider.ts` | Implements `BillingProvider` |
+| Billplz / ToyyibPay (Malaysian billing) | `apps/api/src/modules/billing/providers/` | Same interface as Stripe |
+| WhatsApp Cloud API | `apps/api/src/modules/messaging/providers/whatsapp.provider.ts` | Phase 6+ |
+| Sentry (errors) | wired in `main.ts` | Standard SDK integration |
+
+## Anti-patterns
+
+<AccordionGroup>
+  <Accordion title="Importing the SDK in random services">
+    The SDK should be imported in exactly one file (`<provider>.client.ts`).
+    Other modules call your wrapper, never the SDK. This contains the
+    blast radius of an SDK upgrade.
+  </Accordion>
+
+  <Accordion title="Calling the API from the request path">
+    User-facing latency tracks the slowest external call. Always enqueue
+    a job and return; the worker calls the third party.
+  </Accordion>
+
+  <Accordion title="Hand-coded HTTP instead of the SDK">
+    Tempting for "just one endpoint", but you lose retry, signing,
+    pagination, and type safety. Use the SDK.
+  </Accordion>
+
+  <Accordion title="Hard-coding API keys">
+    Always via env. The Zod env schema rejects on boot if a required
+    key is missing — fail fast.
+  </Accordion>
+
+  <Accordion title="Skipping signature verification on webhooks">
+    The single most common security bug in B2B SaaS. Always verify.
+  </Accordion>
+</AccordionGroup>

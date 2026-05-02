@@ -1,0 +1,128 @@
+---
+title: "Permissions catalogue"
+description: "Every permission defined in the wa'kijo RBAC catalogue and which roles hold it."
+---
+
+The single source of truth for permissions is
+[`packages/shared/src/auth/permissions.ts`](https://github.com/wakijo/wa-kijo/blob/main/packages/shared/src/auth/permissions.ts).
+This page mirrors it for quick reference.
+
+## Roles
+
+Three default roles, in descending order of privilege:
+
+| Role | Numeric weight | Typical user |
+|---|---|---|
+| `owner` | 30 | Org founder; can do anything |
+| `admin` | 20 | Trusted operator; manages members and most config |
+| `member` | 10 | Day-to-day user; can read and create core entities |
+
+Roles are inherited up the org hierarchy — see
+[Concepts → Multi-tenancy](/concepts/multi-tenancy#role-inheritance).
+
+## Catalogue
+
+### Members
+
+| Permission | Roles |
+|---|---|
+| `member:list` | owner, admin, member |
+| `member:invite` | owner, admin |
+| `member:remove` | owner |
+| `member:update-role` | owner |
+
+### Organisation
+
+| Permission | Roles |
+|---|---|
+| `org:update` | owner, admin |
+| `org:delete` | owner |
+| `org:create-child` | owner |
+
+### Billing
+
+| Permission | Roles |
+|---|---|
+| `billing:view` | owner, admin |
+| `billing:manage` | owner |
+
+### Contacts
+
+| Permission | Roles |
+|---|---|
+| `contact:read` | owner, admin, member |
+| `contact:create` | owner, admin, member |
+| `contact:update` | owner, admin, member |
+| `contact:delete` | owner, admin |
+| `contact:import` | owner, admin |
+| `contact:block` | owner, admin |
+
+### Tags
+
+| Permission | Roles |
+|---|---|
+| `tag:create` | owner, admin |
+| `tag:update` | owner, admin |
+| `tag:delete` | owner, admin |
+
+### Conversations
+
+| Permission | Roles |
+|---|---|
+| `conversation:read` | owner, admin, member |
+| `conversation:create` | owner, admin, member |
+| `conversation:assign` | owner, admin |
+| `conversation:close` | owner, admin, member |
+| `conversation:delete` | owner, admin |
+
+### Messages
+
+| Permission | Roles |
+|---|---|
+| `message:read` | owner, admin, member |
+| `message:send` | owner, admin, member |
+
+### API keys (Phase 7)
+
+| Permission | Roles |
+|---|---|
+| `api-key:create` | owner, admin |
+| `api-key:revoke` | owner |
+
+### Admin
+
+| Permission | Roles |
+|---|---|
+| `admin:queues` | owner (typically gated by SYSTEM org type) |
+
+## Server enforcement
+
+Apply permissions on every controller method:
+
+```ts
+@Post()
+@RequirePermission('contact:create')
+create(@CurrentUser() ctx: RequestContext, @Body() dto: CreateContactDto) { ... }
+```
+
+Routes without `@RequirePermission` are **open to any authenticated
+user** — deliberate, so every permission decision is explicit.
+
+## Frontend UX
+
+```tsx
+const can = useCan();
+if (can('billing:manage')) { ... }
+
+<Can do="member:invite">
+  <InviteButton />
+</Can>
+```
+
+Both helpers read the same `PERMISSIONS` map at runtime, so the UX
+hint and the server check can never drift.
+
+## Adding a new permission
+
+See [Concepts → RBAC § Adding a new permission](/concepts/rbac#adding-a-new-permission)
+for the 5-step procedure.

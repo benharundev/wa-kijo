@@ -1,0 +1,249 @@
+---
+title: "Deploy to Railway"
+description: "The fastest path from `git clone` to a production deployment with managed Postgres and Redis."
+---
+
+[Railway](https://railway.app) is the recommended starting deployment.
+It handles TLS, builds from GitHub, environment groups, managed
+Postgres, and managed Redis with no infrastructure work on your part.
+
+Estimated setup time: **30 minutes for first deploy**, ~2 minutes per
+deploy thereafter.
+
+## Prerequisites
+
+- A wa'kijo fork in your GitHub.
+- A Railway account.
+- A Resend account with a verified sender domain.
+
+## 1. Create the project
+
+<Steps>
+  <Step title="New project from GitHub">
+    Railway dashboard → **New Project** → **Deploy from GitHub repo**.
+    Select your wa'kijo fork. Railway will detect it as a monorepo and
+    won't auto-create services — that's fine, we'll add them manually.
+  </Step>
+  <Step title="Add Postgres and Redis plugins">
+    From the project canvas: **+ New** → **Database** → **Postgres**.
+    Repeat for **Redis**.
+
+    Railway exposes `DATABASE_URL` and `REDIS_URL` env vars on these
+    services automatically.
+  </Step>
+</Steps>
+
+## 2. Add the services
+
+You'll add three services from the same repo, each with a different
+build/start command.
+
+<AccordionGroup>
+  <Accordion title="API service" icon="server">
+    **+ New** → **Empty Service** → name it `api`.
+
+    **Settings → Source:**
+    - Repo: your fork
+    - Branch: `main`
+    - Root directory: `/` (monorepo root, not `apps/api`)
+
+    **Settings → Build:**
+    - Build command:
+      ```bash
+      pnpm install --frozen-lockfile && pnpm --filter @wa-kijo/db build && pnpm --filter @wa-kijo/shared build && pnpm --filter @wa-kijo/api build && pnpm --filter @wa-kijo/db migrate:deploy
+      ```
+
+    **Settings → Deploy:**
+    - Start command:
+      ```bash
+      pnpm --filter @wa-kijo/api start
+      ```
+    - Healthcheck path: `/api/v1/health`
+    - Healthcheck timeout: `30 seconds`
+
+    **Settings → Networking:**
+    - Generate domain → e.g. `api.your-saas.com` (you can map a custom
+      domain later).
+  </Accordion>
+
+  <Accordion title="Web service" icon="globe">
+    **+ New** → **Empty Service** → name it `web`.
+
+    **Settings → Source:** same repo and branch as api.
+
+    **Settings → Build:**
+    ```bash
+    pnpm install --frozen-lockfile && pnpm --filter @wa-kijo/shared build && pnpm --filter @wa-kijo/web build
+    ```
+
+    **Settings → Deploy:**
+    - Start command:
+      ```bash
+      pnpm --filter @wa-kijo/web start
+      ```
+    - Healthcheck path: `/`
+
+    **Settings → Networking:**
+    - Generate domain → e.g. `app.your-saas.com`.
+  </Accordion>
+
+  <Accordion title="Worker service (optional, recommended past launch)" icon="bolt">
+    For low-traffic deployments you can skip the worker and run jobs
+    inline in the API process by setting `WORKER_MODE=inline`. Once
+    queue lag becomes a problem, add a separate worker service.
+
+    **+ New** → **Empty Service** → name it `worker`.
+
+    Same source and build command as `api`. Different start:
+    ```bash
+    WORKER_MODE=true pnpm --filter @wa-kijo/api start
+    ```
+
+    No domain (worker has no inbound HTTP).
+  </Accordion>
+</AccordionGroup>
+
+## 3. Environment variables
+
+<Steps>
+  <Step title="Create a shared environment group">
+    Project canvas → **Settings → Shared Variables** → create a group
+    named `production`.
+
+    Add the variables below. The Postgres and Redis plugin URLs are
+    referenced as `${{Postgres.DATABASE_URL}}` and
+    `${{Redis.REDIS_URL}}` so they update automatically if the plugin
+    is recreated.
+
+    ```bash
+    NODE_ENV=production
+    LOG_LEVEL=info
+
+    DATABASE_URL=${{Postgres.DATABASE_URL}}?pgbouncer=true
+    REDIS_URL=${{Redis.REDIS_URL}}
+
+    BETTER_AUTH_SECRET=<openssl rand -base64 32>
+    BETTER_AUTH_URL=https://api.your-saas.com
+    CORS_ORIGIN=https://app.your-saas.com
+
+    RESEND_API_KEY=re_<production_key>
+    EMAIL_FROM=hello@your-saas.com
+
+    SENTRY_DSN=https://...@sentry.io/...
+
+    # Optional integrations — leave blank to disable
+    GOOGLE_CLIENT_ID=
+    GOOGLE_CLIENT_SECRET=
+    STRIPE_SECRET_KEY=
+    STRIPE_WEBHOOK_SECRET=
+    STRIPE_PUBLISHABLE_KEY=
+    BILLPLZ_API_KEY=
+    BILLPLZ_X_SIGNATURE_KEY=
+    BILLPLZ_COLLECTION_ID=
+    ```
+
+    The web service additionally needs:
+    ```bash
+    NEXT_PUBLIC_API_BASE_URL=https://api.your-saas.com
+    ```
+  </Step>
+  <Step title="Attach the group to each service">
+    On each service: **Variables → Reference shared variables** →
+    select `production`.
+  </Step>
+</Steps>
+
+## 4. Deploy
+
+`git push origin main` triggers builds on every connected service.
+Railway runs the build command (which includes `migrate:deploy`) and
+swaps in the new container once the healthcheck passes.
+
+You can also deploy a specific commit from the Railway UI for hotfix
+rollbacks.
+
+## 5. Custom domains
+
+Per service: **Settings → Networking → Custom Domain**. Add the
+hostname, then set the CNAME at your DNS provider to the value Railway
+shows.
+
+After the certificate is issued (usually < 5 min), update:
+
+- `BETTER_AUTH_URL=https://api.your-saas.com`
+- `CORS_ORIGIN=https://app.your-saas.com`
+- `NEXT_PUBLIC_API_BASE_URL=https://api.your-saas.com`
+
+…and redeploy.
+
+## 6. Smoke test the deploy
+
+```bash
+curl -f https://api.your-saas.com/api/v1/health
+curl -f -I https://app.your-saas.com/
+```
+
+Then sign up for a real account through the web app and verify the
+verification email arrives via Resend.
+
+## 7. Cost guidance
+
+Indicative monthly cost for a small B2B SaaS (≤ 10 paying customers,
+modest traffic):
+
+| Component | Plan | $ / month |
+|---|---|---|
+| API + Web (2 × Hobby, 0.5 vCPU / 512 MB) | Hobby | ~ $10 |
+| Worker (Hobby) | Hobby | ~ $5 |
+| Postgres (Starter, 1 GB) | Starter | ~ $5 |
+| Redis (Starter, 0.25 GB) | Starter | ~ $5 |
+| **Total** | | **~ $25** |
+
+You'll outgrow these limits before you outgrow Railway as a platform.
+Bumping to Pro plans handles a few hundred customers comfortably.
+
+## Production checklist (Railway-specific)
+
+- [ ] Branch protection on `main` so deploys are gated by review.
+- [ ] Backup retention bumped on Postgres (default 7 days; bump to 30+).
+- [ ] Set up alerting on the Railway service health (uses Railway's own
+      uptime checks, or wire Better Uptime / Pingdom against
+      `/api/v1/health`).
+- [ ] Sentry release tracking — set `SENTRY_RELEASE=$RAILWAY_GIT_COMMIT_SHA`
+      in env vars.
+- [ ] Email security — DKIM, SPF, DMARC records for your `EMAIL_FROM`
+      domain.
+
+## When to leave Railway
+
+Railway is great until you need:
+
+- Sub-region availability guarantees (Multi-AZ Postgres).
+- Compliance (SOC 2, HIPAA, PCI) that requires specific cloud regions.
+- Very large scale (hundreds of millions of requests / month).
+
+For those cases, see [Deploy to AWS](/guides/deploy-to-aws).
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Build OOM during pnpm install">
+    Bump the build resources in **Settings → Build → Resources**, or
+    add `NODE_OPTIONS=--max-old-space-size=2048` to the build env.
+  </Accordion>
+  <Accordion title="Migration fails with `ECONNRESET`">
+    PgBouncer URL doesn't support `migrate:deploy` (it requires a
+    direct connection). Use the **direct** Postgres URL for the
+    migration step:
+
+    ```bash
+    DATABASE_URL=${{Postgres.DATABASE_URL}} pnpm --filter @wa-kijo/db migrate:deploy
+    ```
+
+    Then revert to the pgbouncer URL for the running app.
+  </Accordion>
+  <Accordion title="CORS errors on /api/auth/*">
+    `CORS_ORIGIN` must match the web URL exactly, including protocol.
+    No trailing slash. Redeploy after updating.
+  </Accordion>
+</AccordionGroup>

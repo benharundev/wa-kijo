@@ -1,0 +1,259 @@
+---
+title: "RBAC"
+description: "Role-based access control: a single permission catalogue used by both server enforcement and frontend UX."
+---
+
+wa'kijo uses **role-based access control** (RBAC) with a static
+permission catalogue. Three default roles, one source of truth, server
+enforcement on every endpoint.
+
+## The model
+
+```
+Member.role   ∈  { 'owner', 'admin', 'member' }
+                ↑
+                effective role after hierarchy inheritance
+                (see Multi-tenancy → Role inheritance)
+
+Permission    string of the form 'resource:action'
+              e.g. 'contact:create', 'billing:manage'
+
+PERMISSIONS   static map: Record<Permission, readonly Role[]>
+```
+
+The catalogue lives in
+[`packages/shared/src/auth/permissions.ts`](https://github.com/wakijo/wa-kijo/blob/main/packages/shared/src/auth/permissions.ts)
+and is the **single source of truth** consumed by both the API and the
+frontend.
+
+## The default catalogue
+
+| Permission | Roles that hold it |
+|---|---|
+| `member:invite` | owner, admin |
+| `member:remove` | owner |
+| `member:update-role` | owner |
+| `member:list` | owner, admin, member |
+| `org:update` | owner, admin |
+| `org:delete` | owner |
+| `org:create-child` | owner |
+| `billing:manage` | owner |
+| `billing:view` | owner, admin |
+| `contact:create` / `read` / `update` | owner, admin, member |
+| `contact:delete` / `import` / `block` | owner, admin |
+| `tag:create` / `update` / `delete` | owner, admin |
+| `conversation:create` / `read` / `close` | owner, admin, member |
+| `conversation:assign` / `delete` | owner, admin |
+| `message:send` / `read` | owner, admin, member |
+| `api-key:create` | owner, admin |
+| `api-key:revoke` | owner |
+| `admin:queues` | owner (typically also gated by SYSTEM org type) |
+
+The full live list is at [Reference → Permissions](/reference/permissions).
+
+## Server-side enforcement
+
+Every controller method that mutates state must declare the permission
+it requires:
+
+```ts
+@Post()
+@RequirePermission('contact:create')
+create(@CurrentUser() ctx: RequestContext, @Body() dto: CreateContactDto) {
+  return this.contacts.create(ctx, dto);
+}
+
+@Delete(':id')
+@RequirePermission('contact:delete')
+@HttpCode(204)
+async remove(@CurrentUser() ctx: RequestContext, @Param('id') id: string) {
+  await this.contacts.remove(ctx, id);
+}
+```
+
+`@RequirePermission()` is read by the global `PermissionGuard`
+(`APP_GUARD #2`). The guard:
+
+1. Reads the metadata.
+2. Looks up `PERMISSIONS[permission]`.
+3. Checks `ctx.userRole` is in the allowed list.
+4. Throws `ForbiddenException` if not (which the global filter shapes
+   into `403 FORBIDDEN`).
+
+Routes without `@RequirePermission()` are open to **any authenticated
+user**. This is deliberate — it forces every permission decision to be
+explicit.
+
+## Frontend UX hint
+
+The frontend uses two helpers to **show or hide** UI based on
+permissions. They are **UX hints only** — never the security boundary.
+
+```tsx
+import { Can } from '@/components/can';
+import { useCan } from '@/lib/use-can';
+
+// Imperative
+function ContactRow({ contact }) {
+  const can = useCan();
+  return (
+    <tr>
+      <td>{contact.name}</td>
+      <td>
+        {can('contact:delete') && <DeleteButton id={contact.id} />}
+      </td>
+    </tr>
+  );
+}
+
+// Declarative
+<Can do="member:invite" fallback={<span>Ask an owner to invite members.</span>}>
+  <InviteButton />
+</Can>
+```
+
+`useCan()` reads `session.user.role` (populated by Better Auth's org
+plugin). `<Can />` calls the same `hasPermission()` function the API
+uses, imported from `@wa-kijo/shared`. **One source of truth.**
+
+If a customer tampers with the JavaScript and presses the hidden
+button anyway, the API rejects the request with 403. The UX hint and
+the server check both rely on the same catalogue, so they can't drift.
+
+## Adding a new permission
+
+<Steps>
+  <Step title="Add to the catalogue">
+    ```ts
+    // packages/shared/src/auth/permissions.ts
+    export const PERMISSIONS = {
+      // ... existing entries
+      'invoice:export': ['owner', 'admin'],
+    } as const satisfies Record<string, readonly Role[]>;
+    ```
+  </Step>
+  <Step title="Rebuild the shared package">
+    ```bash
+    pnpm --filter @wa-kijo/shared build
+    ```
+  </Step>
+  <Step title="Apply to the controller">
+    ```ts
+    @Get('export')
+    @RequirePermission('invoice:export')
+    export(@CurrentUser() ctx: RequestContext) {
+      return this.invoices.export(ctx);
+    }
+    ```
+  </Step>
+  <Step title="Use in the frontend">
+    ```tsx
+    <Can do="invoice:export"><ExportButton /></Can>
+    ```
+  </Step>
+  <Step title="Add a test">
+    Cover both the allowed role and a denied role:
+    ```ts
+    it('rejects member role from exporting invoices', async () => {
+      await expect(controller.export(memberCtx)).rejects.toThrow(/forbidden/i);
+    });
+    ```
+  </Step>
+</Steps>
+
+That's it. No guard code changes. No cascading edits.
+
+## Resource-level checks
+
+Sometimes "can the user do this action" depends on the **specific
+resource**, not just the role. Examples:
+
+- "Can the user edit *this* invoice?" — only if it's still in `draft`
+  status.
+- "Can the user assign *this* conversation to themselves?" — only if
+  it's currently unassigned.
+
+These checks live in **policies** under `apps/api/src/common/policies/`
+(Phase 6+) and are called from the service layer:
+
+```ts
+// In InvoicesService.update()
+if (!this.policies.canEdit(ctx, invoice)) {
+  throw new ForbiddenException('Invoice locked for editing');
+}
+```
+
+Policies are not part of the static permission catalogue — they're
+runtime checks based on resource state. The two layers compose: the
+permission gate (decorator) handles "is this user a billing-permitted
+role?" while the policy handles "is *this specific resource* in a state
+that allows the operation?".
+
+## Custom roles per organisation (planned 1.1)
+
+The default model is fixed roles. For tenant-defined roles (e.g. each
+org creates "viewer", "editor", "approver"), see the customisation
+guide at [Custom roles per organisation](/guides/customise-branding#custom-roles).
+The migration path is non-trivial — most B2B SaaS products do fine
+with fixed roles.
+
+## Hierarchy interactions
+
+Recall from [Multi-tenancy](/concepts/multi-tenancy) that a user's
+**effective role** in an org is the highest role across the parent
+chain. The permission check uses the effective role:
+
+```
+alice — direct member of WORKSPACE "Client A"
+alice — owner of parent AGENCY "Acme"
+ctx.userRole — owner (inherited)
+@RequirePermission('billing:manage') — passes
+```
+
+This means an AGENCY owner can manage billing for every child
+WORKSPACE without being added to each one as a billing manager.
+
+## Anti-patterns to avoid
+
+<AccordionGroup>
+  <Accordion title="Inlining the permission check in the service">
+    ❌ Don't:
+    ```ts
+    if (ctx.userRole !== 'owner') throw new ForbiddenException();
+    ```
+
+    ✅ Do:
+    ```ts
+    @RequirePermission('contact:delete')
+    ```
+
+    The catalogue is the single source of truth. Inline checks bypass
+    it and silently drift.
+  </Accordion>
+
+  <Accordion title="Hard-coding role names in the frontend">
+    ❌ Don't:
+    ```tsx
+    if (session.user.role === 'owner') { ... }
+    ```
+
+    ✅ Do:
+    ```tsx
+    if (can('billing:manage')) { ... }
+    ```
+
+    The role list will change in 1.1 (custom roles). Permissions are
+    stable.
+  </Accordion>
+
+  <Accordion title="Relying on frontend `<Can />` for security">
+    Server-side `@RequirePermission` is the boundary. `<Can />` is a
+    cosmetic hint to avoid showing buttons that won't work. **Every**
+    sensitive action must be gated server-side.
+  </Accordion>
+
+  <Accordion title="Bypassing the catalogue with raw role checks in the API">
+    Same problem as the frontend version. If the catalogue changes, your
+    inline check doesn't.
+  </Accordion>
+</AccordionGroup>

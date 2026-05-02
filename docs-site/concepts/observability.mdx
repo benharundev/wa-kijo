@@ -1,0 +1,211 @@
+---
+title: "Observability"
+description: "Structured logging, error tracking, audit logging, and alerting — all wired by default."
+---
+
+This page is the customer-facing summary. The deeper internal version
+with playbooks and one-liners lives at
+[`docs/observability.md`](https://github.com/wakijo/wa-kijo/blob/main/docs/observability.md).
+
+## What you get out of the box
+
+| Layer | Stack | Default behaviour |
+|---|---|---|
+| **Logs** | [Pino](https://getpino.io) via `nestjs-pino` | JSON-structured, request-id correlated, PII-redacted |
+| **Errors** | [Sentry](https://sentry.io) (env-gated) | Auto-captures uncaught exceptions, scrubs cookies and auth headers |
+| **Traces** | OpenTelemetry (planned 1.0) | OTLP exporter, instrument NestJS / Prisma / BullMQ |
+| **Metrics** | Derived from logs (Phase 5) → `/metrics` (planned 1.1) | RPS, error rate, latency by route |
+| **Audit** | `AuditLog` Prisma model + `AuditService` | Records sensitive mutations |
+| **Health** | `GET /api/v1/health` | Liveness + Postgres + Redis |
+
+## Logs
+
+Every request logs two structured entries (on receipt, on completion):
+
+```jsonc
+{
+  "level": 30,
+  "time": 1714638600000,
+  "req": {
+    "id": "req_7f4a9c5e...",
+    "method": "POST",
+    "url": "/api/v1/contacts",
+    "remoteAddress": "10.0.0.5"
+  },
+  "res": { "statusCode": 201, "responseTime": 45 },
+  "msg": "request completed"
+}
+```
+
+Domain code adds events at the right moments:
+
+```ts
+this.logger.info(
+  { workspaceId, contactId, source: 'csv' },
+  'Contact created',
+);
+```
+
+### What is NOT logged
+
+PII redaction is enforced by Pino's `redact` config and reinforced in
+code review. **Never logged:**
+
+- Plaintext passwords, tokens, session cookies, API keys.
+- Full email or message bodies — log IDs and metadata.
+- Webhook signing secrets.
+- Phone numbers, except masked, where audit is required.
+
+If you find a log statement violating these rules, treat it as a P1
+security bug.
+
+## Error tracking with Sentry
+
+Set `SENTRY_DSN` to enable. Sentry captures:
+
+- Uncaught exceptions on the API and frontend.
+- All `error`-level Pino log entries.
+- Performance traces for the slowest 5% of requests.
+
+**Scrubbed before sending:** the entire `Cookie` request header,
+`Authorization` headers, anything matching the redaction allow-list.
+
+The `HttpExceptionFilter` shapes every error into the standard
+envelope (see [Reference → Error codes](/reference/error-codes)) and
+attaches the request ID + active org ID to the Sentry event for
+correlation.
+
+## Audit logging
+
+Sensitive mutations are recorded in the `AuditLog` Prisma model:
+
+| Field | Notes |
+|---|---|
+| `id` | cuid |
+| `organizationId` | The tenant the action affected |
+| `actorUserId` | The user who performed the action (nullable for system jobs) |
+| `action` | e.g. `member.role.changed`, `org.settings.updated`, `billing.subscription.cancelled` |
+| `entityType`, `entityId` | The thing that changed |
+| `metadata` | JSON: before/after diff, source IP, etc. |
+| `ipAddress`, `userAgent` | For audit trail completeness |
+| `createdAt` | Append-only — never updated |
+
+What we record (and don't):
+
+| Recorded | Not recorded |
+|---|---|
+| Member role changes | Contact CRUD (covered by per-row audit fields) |
+| Organisation settings updates | Conversation status changes |
+| Billing subscription changes | Tag CRUD |
+| Bulk operations (CSV imports, exports) | Search queries |
+| Hard deletes (rare) | Read access |
+
+**Retention:**
+
+- Billing-relevant entries: 7 years.
+- Everything else: 1 year.
+
+The `AuditLog` table is partitioned by `createdAt` quarter; old
+partitions are dropped by a scheduled cleanup job when their retention
+window expires.
+
+## Health checks
+
+```bash
+curl http://localhost:3000/api/v1/health
+```
+
+```jsonc
+{
+  "status": "ok",
+  "uptime": 12345.678,
+  "checks": {
+    "database": { "status": "ok", "latencyMs": 3 },
+    "redis":    { "status": "ok", "latencyMs": 1 }
+  }
+}
+```
+
+A failing dependency returns HTTP 503 with the same shape so load
+balancers remove the instance from rotation automatically.
+
+`GET /api/v1/health/ready` (Phase 5+) extends this to readiness checks
+— migrations applied, queues consuming.
+
+## Recommended alert pack
+
+Wire these up before going live. Severity is a guideline; tune to your
+on-call rotation.
+
+| Alert | Trigger | Severity |
+|---|---|---|
+| **API health failing** | `/api/v1/health` non-200 for 2 min | P1 |
+| **API error rate** | 5xx % > 1% over 5 min | P1 |
+| **API latency** | p95 > 500 ms for 10 min | P2 |
+| **Auth failure spike** | Sign-in 401 rate > 5× trailing 1-hr average | P2 |
+| **Database connections** | `numbackends` > 90% of `max_connections` | P1 |
+| **Database storage** | Free space < 20% | P2 |
+| **Redis memory** | Used > 80% of `maxmemory` | P2 |
+| **BullMQ queue lag** | Oldest waiting job age > 5 min | P2 |
+| **BullMQ DLQ growth** | New entry in any DLQ | P2 |
+| **Webhook signature failures** | > 10/min for any provider | P2 |
+| **Email delivery failures** | Resend `error` rate > 5% over 15 min | P2 |
+| **Sentry new issue** | Any new high-severity issue group | P3 |
+
+P1 = pages 24/7. P2 = pages business hours; ticket otherwise. P3 =
+ticket only.
+
+## Performance debugging playbook
+
+When a request is slow, walk the layers:
+
+<Steps>
+  <Step title="Find the request">
+    Use the request ID in the response header (`x-request-id`). Search
+    logs by that ID.
+  </Step>
+  <Step title="Check Postgres">
+    Was a query > 100 ms? Enable `DATABASE_LOG=query` temporarily; add
+    indexes or rewrite with explicit `select`.
+  </Step>
+  <Step title="Check Redis">
+    A blocking BullMQ producer can stall the request. Producers should
+    `add()` and return immediately.
+  </Step>
+  <Step title="Check outbound HTTP">
+    Stripe, Resend, WhatsApp can stall. Wrap external calls in
+    `Promise.race` against a timeout.
+  </Step>
+  <Step title="Check the worker">
+    If the slow path involves a job, find the job in Bull-Board
+    (`/admin/queues`) and walk the worker logs.
+  </Step>
+</Steps>
+
+For systemic slowness, run `EXPLAIN ANALYZE` on the suspect query
+against production-like data. Document the rationale in the PR.
+
+## What to monitor first
+
+If you have one hour to set up monitoring on a fresh deployment, do
+this in order:
+
+<Steps>
+  <Step title="Sentry">
+    Point `SENTRY_DSN` at a project. Done.
+  </Step>
+  <Step title="Uptime check">
+    External monitor pinging `/api/v1/health` (Better Uptime, Pingdom,
+    AWS CloudWatch synthetics).
+  </Step>
+  <Step title="Log retention">
+    Ship stdout somewhere searchable. Even
+    `docker logs > /var/log/api.jsonl &` is a start; better to use
+    Loki / Better Stack / CloudWatch.
+  </Step>
+  <Step title="Email alerts">
+    The four P1 alerts in the table above.
+  </Step>
+</Steps>
+
+Everything else is worth doing but won't bite you on day one.

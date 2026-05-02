@@ -1,0 +1,163 @@
+---
+title: "Changelog"
+description: "Customer-relevant release notes. Engineering-detail entries live in CHANGELOG.md in the repo."
+---
+
+This is the customer-facing changelog. The full engineering changelog
+lives at [`CHANGELOG.md`](https://github.com/wakijo/wa-kijo/blob/main/CHANGELOG.md)
+in the repo, and per-release upgrade steps are in
+[Upgrade guide](/upgrade-guide).
+
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
+versioning follows [SemVer](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## Unreleased
+
+Tracking work for the next release. Subscribe to release notifications
+via your customer Discord channel.
+
+---
+
+## 0.5.0 — 2026-05-02
+
+> **Phase 5 milestone — domain feature modules complete.**
+
+### Added
+
+- **Contacts module** — full CRUD with E.164 phone validation,
+  per-tenant uniqueness, search, tagging, blocked flag.
+- **Tags module** — per-organisation tag CRUD, reusable across the
+  contacts surface.
+- **Conversations module** — open / close / snooze state machine,
+  channel-agnostic, conversation-per-contact uniqueness.
+- **Messages module** — inbound + outbound, queued dispatch, status
+  lifecycle (`queued → sending → delivered | failed`).
+- **Bulk contact import** — CSV upload, per-row validation,
+  rate-limited.
+- **Audit log** — sensitive mutations recorded automatically (member
+  role changes, org config updates, bulk operations).
+- **Bull-Board admin UI** at `/admin/queues`, RBAC-gated.
+- **Scheduled jobs** — soft-delete cleanup, audit log partition rotation.
+- **CI pipeline** — typecheck + lint + unit + integration + e2e +
+  coverage, on every PR.
+- **Static OpenAPI snapshot** at `docs/api/openapi.yaml`, regenerable
+  via `pnpm api:openapi:dump`.
+- **Customer-facing Mintlify handbook** under `docs-site/`.
+
+### Changed
+
+- Default cursor pagination limit raised from 20 to 25.
+
+### Security
+
+- Cross-tenant access fuzz suite — closes the largest open risk class
+  identified in the Phase 4 review.
+
+[Full upgrade steps](/upgrade-guide#v0-5-0-released-2026-05-02)
+
+---
+
+## 0.4.0 — 2026-05-02
+
+> **Phase 4 milestone — frontend scaffold complete.**
+
+### Added
+
+- **Next.js 15 frontend** scaffold under `apps/web/`:
+  - Public auth pages: sign-in, sign-up, magic-link request and
+    verify, password reset request and confirm.
+  - Authenticated shell with sidebar, top bar, organisation switcher,
+    user menu, theme toggle.
+  - Dashboard, organisation settings (members, invites, billing),
+    user settings (profile, sessions, notifications, danger zone).
+- shadcn/ui primitives (button, input, card, dialog, dropdown,
+  select, label, badge, separator, avatar, toast, tooltip).
+- TanStack Query provider with auth-aware fetcher.
+- Server-side session guard in `(app)/layout.tsx`.
+- Better Auth client (`@/lib/auth-client`).
+- Frontend RBAC hint: `useCan()` hook and `<Can do="permission">`
+  component (UX only — server `@RequirePermission` remains the
+  security boundary).
+- Playwright E2E config that auto-starts API + web.
+
+### Changed
+
+- Bumped `better-auth` to `^1.6.9`.
+- Lowered Postgres dev port to `5434` and Redis to `6381` to avoid
+  clashes with locally-installed Postgres / Redis.
+
+[Full upgrade steps](/upgrade-guide#v0-4-0-released-2026-05-02)
+
+---
+
+## 0.3.0 — 2026-04-25
+
+> **Phase 3 milestone — auth and multi-tenancy complete.**
+
+### Added
+
+- **Better Auth ≥1.5** integration mounted via Fastify `onRequest`
+  hook at `/api/auth/*`, bypassing NestJS body parsing.
+- **Organisation plugin** with extended schema (`parentOrgId`,
+  `orgType`) supporting a 3-level `SYSTEM → AGENCY → WORKSPACE`
+  hierarchy.
+- **AsyncLocalStorage `RequestContext`** populated by `AuthGuard` and
+  consumed by `BaseRepository` for automatic tenant scoping.
+- **`AuthGuard`** (APP_GUARD #1) — validates session, resolves context.
+- **`PermissionGuard`** (APP_GUARD #2) — enforces
+  `@RequirePermission`.
+- **Hierarchy role inheritance** — owner of a parent AGENCY receives
+  owner authority in all child WORKSPACEs (depth limit: 3).
+- **Email module** using Resend for verification, magic link, and
+  invitation emails.
+- Decorators: `@Public()`, `@CurrentUser()`, `@RequirePermission()`.
+
+### Security
+
+- Per-IP rate limit of 5 requests / 15 minutes on auth endpoints.
+- Session cookies set HttpOnly, SameSite=Lax, Secure in production.
+
+[Full upgrade steps](/upgrade-guide#v0-3-0-released-2026-04-25)
+
+---
+
+## 0.2.0 — 2026-04-15
+
+> **Phase 2 milestone — NestJS API + Prisma scaffold complete.**
+
+### Added
+
+- NestJS 11 application with Fastify adapter.
+- Prisma 5 schema with Better Auth core models + Organisation
+  models extended for hierarchy support.
+- `BaseRepository<T>` — generic, tenant-scoped Prisma helper with
+  built-in soft delete, audit fields, cursor pagination.
+- `HttpExceptionFilter` (uniform error envelope) and
+  `TransformInterceptor` (uniform success envelope).
+- Pino structured logging with PII redaction allow-list.
+- Swagger UI at `/api/docs` with cookie-auth pre-configured.
+- BullMQ wiring for background jobs.
+- `HealthModule` with liveness check.
+
+[Full upgrade steps](/upgrade-guide#v0-2-0-released-2026-04-15)
+
+---
+
+## 0.1.0 — 2026-04-01
+
+> **Phase 1 milestone — repository skeleton.**
+
+### Added
+
+- pnpm 9 monorepo with `apps/*` and `packages/*` workspaces.
+- Strict TypeScript baseline.
+- Docker Compose dev stack (Postgres 16, Redis 7).
+- Prettier + commitlint + Husky + lint-staged.
+- `.env.example` with the full set of expected variables.
+
+---
+
+Subscribe to release notifications via the customer Discord
+`#announcements` channel.

@@ -1,0 +1,261 @@
+---
+title: "Data model"
+description: "Prisma schema conventions, soft delete, audit fields, indexing, and the BaseRepository abstraction."
+---
+
+The data model is the backbone of wa'kijo. Get the schema and the
+repository pattern right and everything downstream — APIs, UIs, jobs —
+becomes mechanical.
+
+## Schema conventions
+
+Every Prisma model follows these conventions:
+
+| Convention | Detail | Why |
+|---|---|---|
+| Primary key | `id String @id @default(cuid())` | URL-safe, sortable, globally unique |
+| Timestamps | `createdAt`, `updatedAt` on every model | Free `?orderBy=createdAt` and audit baseline |
+| Soft delete | `deletedAt`, `deletedBy` on user-facing models | Recoverable from accidental deletes |
+| Audit | `createdBy`, `updatedBy` on mutable models | Who did what, without a separate audit table for trivial mutations |
+| Tenant FK | `organizationId String` indexed | Required for `BaseRepository` tenant scoping |
+| Strings, not enums | `status String` instead of `enum Status` | Better Auth adapter compatibility; easier migrations |
+| Lowercase table names | `@@map("contact")` | Better Auth adapter convention; consistent with Postgres community style |
+
+A canonical example:
+
+```prisma
+model Contact {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  phone          String
+  blocked        Boolean  @default(false)
+  metadata       Json?
+
+  // Conventions
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+  deletedBy      String?
+  createdBy      String?
+  updatedBy      String?
+
+  // Relations
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  tags           ContactTag[]
+  conversations  Conversation[]
+
+  @@unique([organizationId, phone])
+  @@index([organizationId, createdAt])
+  @@index([deletedAt])
+  @@map("contact")
+}
+```
+
+## Soft delete
+
+The default delete is a **soft delete**: set `deletedAt = NOW()`,
+`deletedBy = ctx.userId`, leave the row in place. `BaseRepository`
+filters out `deletedAt != null` on every read.
+
+```ts
+// What you write
+await this.repo.softDelete(ctx, id);
+
+// What runs
+UPDATE contact
+   SET deleted_at = NOW(), deleted_by = $userId, updated_at = NOW(), updated_by = $userId
+ WHERE id = $id AND organization_id = $orgId AND deleted_at IS NULL;
+```
+
+To **include** soft-deleted records in a read (for an admin recovery
+view), pass `{ includeDeleted: true }`:
+
+```ts
+const all = await this.repo.findAll(ctx, { includeDeleted: true });
+```
+
+Hard deletes happen only in the **scheduled cleanup job** (Phase 5+),
+which runs nightly and permanently removes records soft-deleted more
+than 30 days ago. The window is configurable per model.
+
+## Audit fields
+
+Every mutation through `BaseRepository` automatically sets:
+
+- `createdBy = ctx.userId` on `create()`.
+- `updatedBy = ctx.userId, updatedAt = NOW()` on `update()` and
+  `softDelete()`.
+- `deletedBy = ctx.userId` on `softDelete()`.
+
+`createdAt` and `updatedAt` are managed by Prisma itself
+(`@default(now())` and `@updatedAt`).
+
+Why both audit fields and an `AuditLog` table? They serve different
+purposes:
+
+| Mechanism | Use for |
+|---|---|
+| Audit fields on the row | "Who last edited this contact?" — fast, in-row, accurate. |
+| `AuditLog` table | "What changed in our org last week?" — append-only event stream, queryable across entities. |
+
+`AuditLog` is populated by Prisma middleware for **flagged entities**
+(member changes, org config, billing, exports). It is not populated for
+every mutation — that would balloon the table. See
+[Observability → Audit logging](/concepts/observability#audit-logging).
+
+## The BaseRepository abstraction
+
+Every domain repository extends `BaseRepository<T>`. Subclasses provide:
+
+```ts
+export class ContactsRepository extends BaseRepository<Contact> {
+  protected get model() {
+    return 'contact';
+  }
+  protected tenantWhere(ctx: RequestContext) {
+    return { organizationId: ctx.orgId };
+  }
+}
+```
+
+In return, you get:
+
+| Method | What it does |
+|---|---|
+| `findAll(ctx, query)` | Cursor-paginated, tenant-scoped, soft-delete-aware |
+| `findById(ctx, id)` | Returns `null` if the record is in another tenant — never leaks existence |
+| `create(ctx, data)` | Populates `organizationId`, `createdBy`, `updatedBy` |
+| `update(ctx, id, data)` | Bumps `updatedBy`, `updatedAt`. Refuses cross-tenant updates |
+| `softDelete(ctx, id)` | Sets `deletedAt`, `deletedBy` |
+| `transaction(ctx, fn)` | Wraps a unit of work in a Prisma transaction |
+
+The full implementation is at [`apps/api/src/base/base.repository.ts`](https://github.com/wakijo/wa-kijo/blob/main/apps/api/src/base/base.repository.ts).
+
+## When to call Prisma directly
+
+Direct calls (`this.prisma.contact.findUnique(...)`) **bypass tenant
+scoping** and are forbidden by the linter, except for explicitly-marked
+admin/system queries:
+
+```ts
+// EXEMPT: cross-tenant report for SYSTEM admin dashboard.
+// Caller is gated by @RequirePermission('admin:reports').
+const allContacts = await this.prisma.contact.findMany({
+  where: { createdAt: { gte: cutoff } },
+});
+```
+
+Adding the `// EXEMPT:` comment is a **deliberate friction point** —
+it shows up in every diff and triggers an extra reviewer requirement
+on the PR (configured via CODEOWNERS).
+
+## Pagination
+
+### Cursor pagination (default)
+
+For any list endpoint that could grow past ~1k rows, cursor pagination
+is mandatory:
+
+```jsonc
+GET /api/v1/contacts?limit=25
+{
+  "items": [ /* 25 records */ ],
+  "nextCursor": "cmgz1k0g0099def",
+  "hasMore": true
+}
+
+GET /api/v1/contacts?limit=25&cursor=cmgz1k0g0099def
+{ "items": [...], "nextCursor": "...", "hasMore": false }
+```
+
+`BaseRepository.findAll()` implements this with `take: limit + 1`,
+checking the extra item to set `hasMore` and using the last item's `id`
+as the next cursor.
+
+### Offset pagination (admin only)
+
+Allowed only on admin endpoints with small tables:
+
+```jsonc
+GET /api/v1/admin/audit-logs?page=3&pageSize=50
+{
+  "items": [...],
+  "page": 3,
+  "pageSize": 50,
+  "totalItems": 1247,
+  "totalPages": 25
+}
+```
+
+Forbidden on hot paths — `OFFSET N` walks the index and degrades fast
+past 100k rows.
+
+## Indexing
+
+Index every column you filter or order by. The standard pattern:
+
+```prisma
+model Contact {
+  // ...
+  @@unique([organizationId, phone])           // uniqueness within tenant
+  @@index([organizationId, createdAt])        // tenant-scoped time-ordered queries
+  @@index([organizationId, name])             // for `?q=name` search
+  @@index([deletedAt])                        // soft-delete filter
+}
+```
+
+Conventions:
+
+- Compound index starting with `organizationId` for any tenant-scoped query.
+- Unique constraints scoped to `organizationId` — no global uniqueness on
+  user data.
+- A separate `deletedAt` index so the soft-delete filter is fast.
+
+For queries against tables > 100k rows, run `EXPLAIN ANALYZE` and add
+indexes guided by the actual plan. Document the rationale in the
+migration file.
+
+## Migrations
+
+```bash
+pnpm db:migrate           # local dev — prompts for migration name
+pnpm db:migrate:deploy    # production — applies pending migrations only
+```
+
+Rules:
+
+- **Never hand-edit a migration file** except to convert `CREATE INDEX`
+  to `CREATE INDEX CONCURRENTLY` for large-table additions. Comment why
+  in the file.
+- **Two-step destructive changes.** Ship the new column, deploy,
+  backfill, then ship the drop in the next release.
+- **Migrations are forward-only.** Prisma doesn't generate
+  down-migrations. If a deploy goes wrong, restore from the
+  pre-migration snapshot (see [Deployment → Database operations](https://github.com/wakijo/wa-kijo/blob/main/docs/deployment.md#database-operations)).
+
+## Schema evolution
+
+| Change | Safe? | Notes |
+|---|---|---|
+| Add a nullable column | ✅ | Always |
+| Add a column with a default | ✅ | Postgres rewrites the table for non-null defaults; check size |
+| Rename a column | ❌ direct, ✅ two-step | Add new column → backfill → switch reads → drop old |
+| Drop a column | ❌ same release as new code | Two-step: stop writing → deploy → drop in next release |
+| Add an index on a large table | ⚠️ use `CONCURRENTLY` | Otherwise locks the table during build |
+| Add a unique constraint | ⚠️ check existing data | The migration fails if duplicates exist |
+| Change a column type | ❌ direct, ✅ via new column | Same pattern as rename |
+
+When in doubt, do the change in two releases. The cost of an extra
+deploy is far smaller than the cost of an unplanned outage.
+
+## Going deeper
+
+<CardGroup cols={2}>
+  <Card title="Background jobs" icon="bolt" href="/concepts/background-jobs">
+    BullMQ queues, retries, DLQ, and the Bull-Board admin UI.
+  </Card>
+  <Card title="Observability" icon="chart-line" href="/concepts/observability">
+    Logs, traces, metrics, and the audit log.
+  </Card>
+</CardGroup>

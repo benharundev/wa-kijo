@@ -1,0 +1,120 @@
+---
+title: "Support"
+description: "How to get help, by tier, with response-time guarantees."
+---
+
+The full support policy lives in the repo at [`SUPPORT.md`](https://github.com/wakijo/wa-kijo/blob/main/SUPPORT.md).
+This page is the shorter, customer-facing version with the bits you need
+day-to-day.
+
+## Self-serve first
+
+Before opening a ticket, the answer is probably already in:
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Local setup and "it didn't work the first time" answers.
+  </Card>
+  <Card title="Troubleshooting" icon="screwdriver-wrench" href="/troubleshooting">
+    The 20 most common issues with diagnoses.
+  </Card>
+  <Card title="Concepts" icon="book" href="/concepts/architecture">
+    How and why the pieces fit together.
+  </Card>
+  <Card title="Guides" icon="signs-post" href="/guides/add-feature-module">
+    Walk-throughs for the common tasks.
+  </Card>
+</CardGroup>
+
+## Channels by tier
+
+| Tier | Primary channel | First-response SLA (Asia/Kuala Lumpur business hours) |
+|---|---|---|
+| **Solo** | [Discord — `#help`](https://discord.gg/wakijo) | Best-effort, community-supported |
+| **Team** | `support@wakijo.dev` | **2 business days** |
+| **Agency** | `support@wakijo.dev` + private Discord channel | **1 business day** + 1 hr onboarding call |
+| **Enterprise** | Slack Connect channel + named CSM | **Same business day**, named engineer for incidents |
+
+A "business day" is Mon–Fri, 09:00–18:00 Asia/Kuala Lumpur, excluding
+Malaysian public holidays.
+
+## What we support
+
+<AccordionGroup>
+  <Accordion title="In scope" icon="check">
+    - Bugs in the wa'kijo source code on the version you're licensed for.
+    - Documentation errors and gaps.
+    - Guidance on the intended usage patterns documented under
+      [Concepts](/concepts/architecture) and [Guides](/guides/add-feature-module).
+    - Help reading the included observability output (logs, Sentry, queues).
+  </Accordion>
+
+  <Accordion title="Best-effort" icon="circle-half-stroke">
+    - One-off questions about deploying to a specific cloud or platform we
+      don't document.
+    - Code review of significant customisations (Agency / Enterprise).
+  </Accordion>
+
+  <Accordion title="Out of scope" icon="xmark">
+    - Bugs in your own customisations or third-party integrations.
+    - Bugs in third-party dependencies — we'll route you to upstream.
+    - Architectural redesigns or feature requests outside the published
+      roadmap.
+    - Performance tuning of your specific cloud configuration.
+    - Onboarding to other tools in your stack.
+  </Accordion>
+</AccordionGroup>
+
+## How to file a great ticket
+
+A well-written ticket gets resolved 5× faster.
+
+<Steps>
+  <Step title="Version and commit hash">
+    `git rev-parse HEAD` and the top of your local `CHANGELOG.md`.
+  </Step>
+  <Step title="Environment">
+    Node version (`node --version`), pnpm version, OS, dev or production.
+  </Step>
+  <Step title="What you did">
+    Exact commands or HTTP requests.
+  </Step>
+  <Step title="What you expected — and what happened">
+    Logs, stack traces, full error envelope from the API:
+    ```json
+    { "success": false, "statusCode": 422, "error": "VALIDATION_ERROR", ... }
+    ```
+  </Step>
+  <Step title="Minimal repro">
+    A failing test, a curl command, or a 5-line snippet beats a 200-line
+    dump.
+  </Step>
+</Steps>
+
+<Warning>
+  For security-sensitive reports, follow the [SECURITY.md disclosure process](https://github.com/wakijo/wa-kijo/blob/main/SECURITY.md)
+  instead of the regular support channel. Do not paste secrets, tokens,
+  or PII into a shared support thread.
+</Warning>
+
+## Severity matrix
+
+| Severity | Description | Time-to-fix (Agency / Enterprise) |
+|---|---|---|
+| **S1 — Critical** | Production down or data at risk. No workaround. | Same business day, hotfix |
+| **S2 — High** | Major feature broken; painful workaround. | 5 business days |
+| **S3 — Medium** | Bug with a clear workaround. | Next minor release |
+| **S4 — Low** | Cosmetic / docs / quality of life. | Best-effort |
+
+## Office hours
+
+Open office hours **every other Thursday, 14:00–15:00 Asia/Kuala Lumpur**
+on the customer Discord voice channel. Anyone on Team tier or above can
+join with no agenda.
+
+## Refunds and seat changes
+
+Email `billing@wakijo.dev` for invoices, seat counts, tier changes, or
+refunds. Refund window: **14 days from purchase**, no questions asked,
+provided the source has not been pushed to a public repository or
+distributed externally.

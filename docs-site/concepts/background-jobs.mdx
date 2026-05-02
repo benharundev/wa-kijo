@@ -1,0 +1,271 @@
+---
+title: "Background jobs"
+description: "BullMQ on Redis 7 with retries, dead-letter queues, and an admin UI."
+---
+
+Anything that doesn't need to block the HTTP response runs as a
+background job. Outbound message dispatch, webhook fan-out, scheduled
+cleanups, billing reconciliation — all of these enqueue jobs and return.
+
+wa'kijo uses [BullMQ](https://docs.bullmq.io) backed by Redis 7,
+integrated via `@nestjs/bullmq`. The full rationale is in
+[ADR-0007](https://github.com/wakijo/wa-kijo/blob/main/docs/decisions/0007-bullmq-for-background-jobs.md).
+
+## The mental model
+
+```
+Producer (controller / service)
+   │ queue.add('job-name', payload, options)
+   ▼
+Redis (BullMQ stream)
+   │
+   ▼
+Consumer (Processor class) — runs in API process or separate worker
+   │ retry on throw (3 attempts, exponential backoff)
+   ▼
+Result: completed | failed → DLQ
+```
+
+Producers `add()` a job and return immediately. They never `await` the
+processor.
+
+## Default settings
+
+Every queue inherits these defaults unless overridden:
+
+| Setting | Value |
+|---|---|
+| Attempts | 3 |
+| Backoff | Exponential — 1 s, 5 s, 30 s |
+| Removal | Completed jobs after 24 h, failed jobs after 7 days |
+| DLQ | Failed-after-all-attempts jobs persist for manual replay |
+| Concurrency | 1 per queue (override per processor) |
+
+Jobs that fail terminally end up in the dead-letter queue. **Never
+silently dropped.**
+
+## Defining a queue
+
+Queue names are centralised so producers and consumers reference the
+same string:
+
+```ts
+// apps/api/src/queues/queue.names.ts
+export const QUEUE_NAMES = {
+  MESSAGE_DISPATCH: 'message-dispatch',
+  EVENTS:           'events',
+  WEBHOOKS_INBOUND: 'webhooks-inbound',
+  CLEANUP:          'cleanup',
+} as const;
+```
+
+## Producing a job
+
+```ts
+@Injectable()
+export class MessagesService {
+  constructor(
+    @InjectQueue(QUEUE_NAMES.MESSAGE_DISPATCH) private dispatch: Queue,
+  ) {}
+
+  async send(ctx: RequestContext, dto: SendMessageDto) {
+    const message = await this.repo.create(ctx, { ...dto, status: 'queued' });
+
+    await this.dispatch.add('dispatch', {
+      messageId: message.id,
+      orgId: ctx.orgId,
+    }, {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 1000 },
+    });
+
+    return message;
+  }
+}
+```
+
+The producer call is synchronous from the user's perspective —
+`MessagesService.send` returns once the row is persisted and the job
+is in Redis.
+
+## Consuming a job
+
+```ts
+@Processor(QUEUE_NAMES.MESSAGE_DISPATCH)
+export class MessageDispatchProcessor extends WorkerHost {
+  async process(job: Job<{ messageId: string; orgId: string }>) {
+    const { messageId, orgId } = job.data;
+
+    const ctx = mockSystemContext({ orgId });    // for system-initiated work
+    const message = await this.messagesRepo.findById(ctx, messageId);
+
+    try {
+      await this.whatsapp.send(message);
+      await this.messagesRepo.update(ctx, messageId, { status: 'delivered' });
+    } catch (err) {
+      // Throwing triggers the retry policy
+      throw err;
+    }
+  }
+}
+```
+
+If the processor throws, BullMQ re-enqueues the job with the configured
+backoff. After all attempts fail, the job moves to the DLQ.
+
+## Domain events
+
+For "I want to do something when X happens", emit a domain event
+instead of coupling services together:
+
+```ts
+// In ContactsService.create()
+const contact = await this.repo.create(ctx, dto);
+await this.events.add('contact.created', { contactId: contact.id, orgId: ctx.orgId });
+return contact;
+```
+
+Any number of processors can subscribe:
+
+```ts
+@Processor(QUEUE_NAMES.EVENTS)
+export class CrmSyncProcessor extends WorkerHost {
+  async process(job: Job) {
+    if (job.name !== 'contact.created') return;
+    // Sync to your CRM, send an internal notification, whatever.
+  }
+}
+```
+
+This is the recommended way for **customers extending wa'kijo** to hook
+in without modifying core services. See
+[Customisation → Hooking into core events](/guides/customise-branding#core-events).
+
+## Bull-Board admin UI
+
+Mounted at `/admin/queues` and gated by
+`@RequirePermission('admin:queues')`. From the UI you can:
+
+- Inspect waiting / active / completed / failed / delayed jobs per
+  queue.
+- Replay a failed job manually after diagnosing the root cause.
+- Promote a delayed job to run immediately.
+- Drain the DLQ after fixing the underlying bug.
+
+In production, put Bull-Board behind your VPN or admin-only IP allow
+list — the RBAC gate is the second line of defence, not the only one.
+
+## Scheduled jobs
+
+For cron-style jobs, register a repeatable job at module init:
+
+```ts
+@Injectable()
+export class CleanupScheduler implements OnModuleInit {
+  constructor(@InjectQueue(QUEUE_NAMES.CLEANUP) private queue: Queue) {}
+
+  async onModuleInit() {
+    await this.queue.add(
+      'soft-delete-cleanup',
+      {},
+      {
+        repeat: { pattern: '0 3 * * *' }, // 03:00 every day
+        jobId: 'soft-delete-cleanup',     // idempotent registration
+      },
+    );
+  }
+}
+```
+
+The named `jobId` makes the registration idempotent — restarting the
+process won't accumulate duplicates.
+
+## Performance
+
+| Pitfall | Symptom | Fix |
+|---|---|---|
+| Producer awaits the result | API latency tracks job latency | `add()` and return; never `await job.waitUntilFinished()` |
+| Processor blocks on a slow HTTP call | Queue lag, worker concurrency = 1 doesn't help | Bump per-queue concurrency; wrap external calls in `Promise.race` against a timeout |
+| Long-running job > 60 s without progress reports | Redis evicts the job; BullMQ stalls it | `await job.updateProgress(N)` periodically |
+| Massive payloads in `job.data` | Redis memory bloat | Pass only IDs; processor re-reads from Postgres |
+| Unbounded retry on a permanently-broken external call | Job loops forever | Use `attempts: 3` (the default) and route to DLQ |
+
+## Worker mode
+
+In a small deployment, the API process can also be the worker — set
+`WORKER_MODE=inline`. The same code, just one process.
+
+For larger deployments, run the worker as a **separate process** with
+the same image but a different command:
+
+```bash
+# API process
+node dist/main.js
+
+# Worker process
+WORKER_MODE=true node dist/main.js
+```
+
+In `WORKER_MODE=true`, NestJS still bootstraps every module but
+**does not** open the HTTP port — saving RAM and removing an attack
+surface.
+
+See [Deployment → Architectural shape](https://github.com/wakijo/wa-kijo/blob/main/docs/deployment.md#2-architectural-shape)
+for when to split.
+
+## Replaying a failed job
+
+The standard playbook when a DLQ entry appears:
+
+<Steps>
+  <Step title="Read the job's stack trace and payload">
+    In Bull-Board, click the failed job. Note the exception, the input
+    payload, and the request ID (if propagated).
+  </Step>
+  <Step title="Diagnose the root cause">
+    Search logs by the request ID. Determine whether the failure was
+    transient (retry would have succeeded) or permanent (code or data
+    bug).
+  </Step>
+  <Step title="Fix the underlying bug if permanent">
+    Ship the fix. Don't replay against broken code — you'll just create
+    new DLQ entries.
+  </Step>
+  <Step title="Replay">
+    From Bull-Board, click "Retry" on the failed job. The job is
+    re-enqueued with attempt count reset.
+  </Step>
+  <Step title="Audit">
+    If the fix was security-relevant or affected data integrity, file an
+    incident report and update the runbook with the lessons.
+  </Step>
+</Steps>
+
+## When to *not* use a job
+
+Not everything needs to be async. Use a job when:
+
+- ✅ The work takes more than ~100 ms and the user doesn't need the
+  result inline.
+- ✅ The work is unreliable (external HTTP, third-party API).
+- ✅ The work needs to be retried on failure.
+- ✅ The work is bursty and you need backpressure.
+
+Don't use a job when:
+
+- ❌ The user is waiting for the result. Just do it inline.
+- ❌ The work is fast and reliable (in-memory operation, simple Postgres
+  insert).
+- ❌ You're tempted to use it as a fire-and-forget log mechanism. Use
+  Pino for that.
+
+## Going deeper
+
+<CardGroup cols={2}>
+  <Card title="Observability" icon="chart-line" href="/concepts/observability">
+    How to alert on queue lag, DLQ growth, and worker health.
+  </Card>
+  <Card title="Customisation" icon="puzzle-piece" href="/guides/customise-branding">
+    Hooking your own logic into core events.
+  </Card>
+</CardGroup>

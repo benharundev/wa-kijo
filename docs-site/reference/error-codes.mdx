@@ -1,0 +1,112 @@
+---
+title: "Error codes"
+description: "Stable machine-readable error codes returned by the wa'kijo API."
+---
+
+Every error response from the wa'kijo API follows the same shape:
+
+```jsonc
+{
+  "success": false,
+  "statusCode": 422,
+  "error": "VALIDATION_ERROR",
+  "message": "Validation failed",
+  "details": {
+    "fieldErrors": {
+      "phone": ["Invalid E.164 format"]
+    }
+  },
+  "timestamp": "2026-05-02T08:30:00.000Z",
+  "path": "/api/v1/contacts"
+}
+```
+
+The `error` field is a **stable code**. New codes are additive;
+renaming is a breaking change and triggers a major version bump.
+
+## Catalogue
+
+| Code | HTTP | When | `details` |
+|---|---|---|---|
+| `VALIDATION_ERROR` | 422 | Zod schema rejection on body, query, or path params | `fieldErrors` map |
+| `BAD_REQUEST` | 400 | Malformed request that didn't reach Zod (invalid JSON, unsupported `Content-Type`) | — |
+| `UNAUTHENTICATED` | 401 | Session missing, expired, or invalid; or email not yet verified | — |
+| `FORBIDDEN` | 403 | Permission check failed (`@RequirePermission` denied) | `requiredPermission` |
+| `NOT_FOUND` | 404 | Resource does not exist within the active organisation. **Indistinguishable from cross-tenant access** | — |
+| `CONFLICT` | 409 | Unique constraint violation, duplicate state transition, optimistic-concurrency conflict | `field`, `existingId` |
+| `RATE_LIMITED` | 429 | Per-IP or per-tenant rate limit hit | `retryAfterSeconds` (also in `Retry-After` header) |
+| `QUOTA_EXCEEDED` | 402 | Tenant has hit a paid-tier limit (e.g. message quota for the month) | `quota`, `usage`, `resetAt` |
+| `INTEGRATION_ERROR` | 502 | Upstream provider returned an error (Stripe, WhatsApp, Resend) | `provider`, `providerCode` |
+| `INTERNAL_ERROR` | 500 | Catch-all. `message` is generic in production; `details` is omitted in production responses (logged in full server-side) | — |
+
+## How clients should handle each code
+
+| Code | Recommended client behaviour |
+|---|---|
+| `VALIDATION_ERROR` | Show field-level errors in the form. Don't retry. |
+| `BAD_REQUEST` | Surface a generic "something went wrong" — this is a bug |
+| `UNAUTHENTICATED` | Redirect to `/sign-in`. The fetcher already does this |
+| `FORBIDDEN` | Show a "you don't have permission" message. Don't retry as a different user automatically |
+| `NOT_FOUND` | Show "not found" (or "moved"). Don't retry |
+| `CONFLICT` | Show the conflict to the user — they likely need to refresh and try again with new info |
+| `RATE_LIMITED` | Wait `retryAfterSeconds` and retry, with exponential backoff if it persists |
+| `QUOTA_EXCEEDED` | Show the upgrade CTA. Don't retry until `resetAt` |
+| `INTEGRATION_ERROR` | Treat as transient. Retry once with backoff; surface to the user if it persists |
+| `INTERNAL_ERROR` | Treat as transient. Retry once with backoff; report to support if it persists |
+
+## Validation error shape
+
+`VALIDATION_ERROR.details.fieldErrors` is keyed by field path (dot
+notation for nested objects):
+
+```jsonc
+"details": {
+  "fieldErrors": {
+    "name": ["Required"],
+    "metadata.locale": ["Must be one of: en, ms-MY"],
+    "tags.0": ["Must be a valid CUID"]
+  }
+}
+```
+
+Each value is an array of human-readable messages — there can be more
+than one per field. Display all of them.
+
+## Adding a new error code
+
+If you find yourself wanting to add a new code:
+
+<Steps>
+  <Step title="Confirm none of the existing codes fit">
+    Re-read the catalogue. The codes are intentionally broad.
+  </Step>
+  <Step title="Add a typed exception class">
+    `apps/api/src/common/errors/<name>.exception.ts`:
+    ```ts
+    export class WorkspaceQuotaExceededException extends HttpException {
+      constructor(quota: number, usage: number, resetAt: Date) {
+        super({
+          error: 'QUOTA_EXCEEDED',
+          message: 'Workspace message quota exceeded',
+          details: { quota, usage, resetAt },
+        }, HttpStatus.PAYMENT_REQUIRED);
+      }
+    }
+    ```
+  </Step>
+  <Step title="Throw it from the service">
+    The global `HttpExceptionFilter` shapes the envelope automatically.
+  </Step>
+  <Step title="Document">
+    Add a row to the catalogue above. Mention in the PR description and
+    `CHANGELOG.md` under "Added".
+  </Step>
+</Steps>
+
+Renaming an existing code is a **breaking change** — bump the major
+version and add an entry to the [upgrade guide](/upgrade-guide).
+
+## Where to look in the source
+
+- Filter: [`apps/api/src/common/filters/http-exception.filter.ts`](https://github.com/wakijo/wa-kijo/blob/main/apps/api/src/common/filters/http-exception.filter.ts)
+- Custom exceptions: `apps/api/src/common/errors/`

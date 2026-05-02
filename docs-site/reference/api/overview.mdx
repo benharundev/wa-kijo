@@ -1,0 +1,99 @@
+---
+title: "API reference overview"
+description: "REST API for the wa'kijo SaaS boilerplate — endpoints, auth, conventions."
+---
+
+The wa'kijo API is a REST API mounted under `/api/v1/`. Authentication
+is via the `wa-kijo.session_token` cookie set by Better Auth on
+sign-in.
+
+## Quick links
+
+<CardGroup cols={2}>
+  <Card title="Live Swagger UI" icon="play" href="http://localhost:3000/api/docs">
+    Interactive try-it-out for every endpoint while the API runs locally.
+  </Card>
+  <Card title="OpenAPI snapshot" icon="code" href="https://github.com/wakijo/wa-kijo/blob/main/docs/api/openapi.yaml">
+    Static `openapi.yaml` checked into the repo — versioned with releases.
+  </Card>
+  <Card title="API conventions" icon="book" href="https://github.com/wakijo/wa-kijo/blob/main/docs/api-conventions.md">
+    URL structure, response envelope, pagination, idempotency.
+  </Card>
+  <Card title="Error codes" icon="triangle-exclamation" href="/reference/error-codes">
+    Stable codes returned by every error response.
+  </Card>
+</CardGroup>
+
+## Authentication
+
+```bash
+# 1. Sign in via Better Auth — sets the wa-kijo.session_token cookie
+curl -c cookies.txt \
+  -X POST http://localhost:3000/api/auth/sign-in/email \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"member@example.com","password":"password123"}'
+
+# 2. All subsequent calls send the cookie
+curl -b cookies.txt http://localhost:3000/api/v1/contacts
+```
+
+Browsers send the cookie automatically once set. Server-to-server
+clients pass it explicitly via the `Cookie` header. Public API key
+authentication is on the [roadmap](/roadmap) for 1.0.
+
+## Response envelope
+
+Every non-`/health`, non-`/api/auth` endpoint returns one of:
+
+```jsonc
+// Success
+{
+  "success": true,
+  "data": { ... },
+  "timestamp": "2026-05-02T08:30:00.000Z"
+}
+
+// Error
+{
+  "success": false,
+  "statusCode": 422,
+  "error": "VALIDATION_ERROR",
+  "message": "Validation failed",
+  "details": { "fieldErrors": { "phone": ["Invalid E.164 format"] } },
+  "timestamp": "2026-05-02T08:30:00.000Z",
+  "path": "/api/v1/contacts"
+}
+```
+
+See [Error codes](/reference/error-codes) for the stable list.
+
+## Pagination
+
+Cursor pagination is the default for list endpoints:
+
+```jsonc
+GET /api/v1/contacts?take=25
+{
+  "data": {
+    "items": [ /* up to 25 records */ ],
+    "nextCursor": "cmgz1k0g0099def",
+    "hasMore": true
+  }
+}
+
+GET /api/v1/contacts?take=25&cursor=cmgz1k0g0099def
+```
+
+## Endpoint groups
+
+Browse the per-tag pages in this section for endpoint-by-endpoint
+documentation:
+
+- **Health** — liveness / readiness probes
+- **Contacts** — per-organisation contact CRUD with tagging
+- **Tags** — per-organisation contact tags
+- **Conversations** — open / close / snooze inbox
+- **Messages** — inbound + outbound, queued dispatch
+
+Mintlify auto-generates the per-endpoint pages from the OpenAPI spec
+at [`docs/api/openapi.yaml`](https://github.com/wakijo/wa-kijo/blob/main/docs/api/openapi.yaml).

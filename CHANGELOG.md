@@ -40,6 +40,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.0] - 2026-05-02
+
+> **Phase 5 milestone — domain feature modules complete.**
+
+### Added
+
+- **Contacts module** — `apps/api/src/modules/contacts/` with CRUD,
+  search, tag assignment, blocked-flag handling. E.164 phone validation
+  via the shared `CreateContactSchema`.
+- **Tags module** — per-organisation tag CRUD, exposed at `/api/v1/tags`,
+  reusable across the contacts surface.
+- **Conversations module** — `/api/v1/conversations` with open / close /
+  snooze state machine, channel-agnostic, conversation-per-contact
+  uniqueness enforced.
+- **Messages module** — `/api/v1/conversations/:id/messages` with
+  inbound/outbound direction, status lifecycle (`queued → sending →
+  delivered | failed`), and BullMQ-dispatched outbound delivery.
+- **Bulk contact import** — CSV upload endpoint with per-row validation,
+  rate-limited to 5 imports / org / hour.
+- **Audit log** — `AuditLog` Prisma model and `AuditService`. Member
+  role changes, org-level config updates, and bulk operations are
+  recorded automatically via Prisma middleware.
+- **Cross-tenant access fuzz suite** — every repository now ships with
+  an integration test asserting that requests from org A cannot read,
+  update, or soft-delete data in org B. Wired into `pnpm test:integration`
+  and CI.
+- **CI pipeline** — `.github/workflows/ci.yml` runs typecheck, lint,
+  unit, integration (with Postgres + Redis service containers), e2e,
+  and coverage threshold checks on every PR.
+- **OpenAPI snapshot** — static `docs/api/openapi.yaml` exported on
+  every release (and reviewable in PRs that add or change endpoints)
+  via the new `pnpm api:openapi:dump` script.
+- **Bull-Board** — mounted at `/admin/queues`, gated by
+  `@RequirePermission('admin:queues')`.
+- **Scheduled jobs** — cron-triggered cleanup of soft-deleted records
+  older than 30 days and daily audit log partition rotation.
+
+### Changed
+
+- `Member.role` change events are now persisted to `AuditLog` in
+  addition to the existing log line.
+- Default cursor pagination limit raised from 20 to 25 across list
+  endpoints.
+
+### Documentation
+
+- Customer-facing **Mintlify handbook** scaffolded under `docs-site/`
+  (concepts, guides, reference, troubleshooting).
+- New ADRs: `0002` (pnpm monorepo), `0003` (Fastify over Express),
+  `0004` (Zod end-to-end), `0005` (BaseRepository tenant scoping),
+  `0006` (Mintlify for customer docs), `0007` (BullMQ for jobs).
+- New internal docs: `docs/prd.md`, `docs/api-conventions.md`,
+  `docs/deployment.md`, `docs/observability.md`,
+  `docs/customization.md`, `docs/upgrade-guide.md`,
+  `docs/glossary.md`, `docs/testing.md`.
+- Repo policy files: `CONTRIBUTING.md`, `SECURITY.md`,
+  `CODE_OF_CONDUCT.md`, `SUPPORT.md`, `LICENSE` (commercial draft).
+
+### Security
+
+- Cross-tenant access fuzz suite (above) — closes the largest open
+  risk class identified in the Phase 4 review.
+- Webhook ingest helper utility added in preparation for Phase 6
+  billing webhooks.
+
+---
+
 ## [0.4.0] - 2026-05-02
 
 > **Phase 4 milestone — frontend scaffold complete.**
@@ -156,7 +223,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/your-org/wa-kijo/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/your-org/wa-kijo/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/your-org/wa-kijo/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/your-org/wa-kijo/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/your-org/wa-kijo/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/your-org/wa-kijo/compare/v0.1.0...v0.2.0

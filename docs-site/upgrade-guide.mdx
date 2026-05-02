@@ -1,0 +1,251 @@
+---
+title: "Upgrade guide"
+description: "Step-by-step upgrade procedures for every wa'kijo release."
+---
+
+This page mirrors the engineering [`docs/upgrade-guide.md`](https://github.com/wakijo/wa-kijo/blob/main/docs/upgrade-guide.md)
+in a customer-friendly format. **Read every section between your
+current version and the target version, in order.** Patch releases
+rarely need upgrade steps beyond `git pull && pnpm install`.
+
+## How to upgrade — the canonical procedure
+
+```bash
+# 1. Clean working tree
+git status
+
+# 2. Take a database snapshot (production)
+pg_dump -Fc $DATABASE_URL > pre-upgrade-$(date +%F).dump
+
+# 3. Pull the new release
+git fetch origin && git checkout v<X.Y.Z>
+
+# 4. Install dependencies
+pnpm install
+
+# 5. Apply manual steps from the section(s) below
+
+# 6. Run migrations
+pnpm db:migrate          # local
+pnpm db:migrate:deploy   # production
+
+# 7. Rebuild + restart
+pnpm --filter @wa-kijo/shared build
+pnpm --filter @wa-kijo/db build
+pnpm dev                 # local
+# or your production deploy command
+```
+
+## Versioning policy
+
+- **Major (X.0.0)** — breaking changes that require customer action.
+  Released rarely.
+- **Minor (X.Y.0)** — new functionality, additive schema changes.
+  Backwards-compatible.
+- **Patch (X.Y.Z)** — bug fixes only. Always safe.
+
+Solo and Team tiers receive minor + patch updates. Agency and
+Enterprise tiers also receive at least one major upgrade per support
+window.
+
+---
+
+## v0.5.0 (released 2026-05-02)
+
+> **Phase 5 — domain feature modules complete.**
+
+### What changed
+
+- New modules: `contacts`, `tags`, `conversations`, `messages` mounted
+  under `/api/v1/`.
+- New `AuditLog` model + `AuditService` recording sensitive mutations.
+- Cross-tenant access fuzz tests in CI.
+- Bull-Board admin UI at `/admin/queues`, RBAC-gated.
+- Scheduled jobs for soft-delete cleanup and audit log partitioning.
+- CI workflow added at `.github/workflows/ci.yml`.
+- Static OpenAPI snapshot at `docs/api/openapi.yaml`.
+- Mintlify customer docs scaffolded under `docs-site/`.
+
+### Required action
+
+<Steps>
+  <Step title="Run migrations">
+    ```bash
+    pnpm db:migrate:deploy
+    ```
+    Applies new tables: `Contact`, `Tag`, `Conversation`, `Message`,
+    `AuditLog`.
+  </Step>
+  <Step title="Add the new permissions">
+    If you've customised
+    `packages/shared/src/auth/permissions.ts`, append:
+    - `contact:create`, `contact:read`, `contact:update`,
+      `contact:delete`, `contact:import`, `contact:block`
+    - `tag:create`, `tag:update`, `tag:delete`
+    - `conversation:create`, `conversation:read`, `conversation:assign`,
+      `conversation:close`, `conversation:delete`
+    - `message:send`, `message:read`
+    - `admin:queues`
+  </Step>
+  <Step title="Re-seed dev (optional)">
+    ```bash
+    pnpm db:seed
+    ```
+  </Step>
+  <Step title="Rebuild shared packages">
+    ```bash
+    pnpm --filter @wa-kijo/db build
+    pnpm --filter @wa-kijo/shared build
+    ```
+  </Step>
+</Steps>
+
+### Optional
+
+- Wire the new CI workflow into your fork's branch protection rules.
+- Replace any wa'kijo placeholder copy under
+  `apps/api/src/modules/contacts/` with your own product
+  terminology.
+- If you operate Bull-Board behind a reverse proxy, configure it to
+  forward the session cookie.
+
+### No breaking changes
+
+Purely additive. v0.4.0 customers can pull and migrate without
+touching application code.
+
+---
+
+## v0.4.0 (released 2026-05-02)
+
+> **Phase 4 — frontend scaffold.**
+
+### What changed
+
+- Full Next.js 15 frontend scaffold under `apps/web/`.
+- shadcn/ui primitives, TanStack Query, Better Auth client, app shell.
+- All auth pages and settings pages.
+- `useCan()` and `<Can />` for client-side permission UX.
+- Playwright E2E config.
+
+### Required action
+
+```bash
+pnpm install         # picks up apps/web dependencies
+```
+
+If you only want the API service:
+```bash
+pnpm --filter @wa-kijo/api dev
+```
+
+### Optional
+
+Replace `--color-primary` and the logo for your brand before showing
+the web app to a customer — see [Customise branding](/guides/customise-branding).
+
+### No schema changes
+
+Frontend-only. No database migrations.
+
+---
+
+## v0.3.0 (released 2026-04-25)
+
+> **Phase 3 — auth and multi-tenancy.**
+
+### What changed
+
+- Better Auth ≥1.5 integrated.
+- Organisation models, hierarchy, role inheritance.
+- `AuthGuard` and `PermissionGuard` registered globally.
+- Email module via Resend.
+- Decorators: `@Public()`, `@CurrentUser()`, `@RequirePermission()`.
+
+### Required action
+
+<Steps>
+  <Step title="Add new env vars">
+    `BETTER_AUTH_SECRET` (32+ char random),
+    `BETTER_AUTH_URL`, `RESEND_API_KEY`, `EMAIL_FROM`. Optionally
+    `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
+  </Step>
+  <Step title="Run migrations">
+    ```bash
+    pnpm db:migrate:deploy
+    ```
+    Adds Better Auth + organisation tables. No data loss.
+  </Step>
+  <Step title="Add @RequirePermission to your controllers">
+    Without it, every authenticated user can access the route. This is
+    a deliberate behaviour change.
+  </Step>
+  <Step title="Replace direct Prisma calls with BaseRepository">
+    Direct calls bypass tenant scoping.
+  </Step>
+</Steps>
+
+### Breaking change
+
+`User.emailVerified` defaults to `false`. If you have existing users
+from v0.2.0:
+```sql
+UPDATE "user" SET "emailVerified" = true WHERE "emailVerified" = false;
+```
+
+---
+
+## v0.2.0 (released 2026-04-15)
+
+> **Phase 2 — NestJS + Prisma scaffold.**
+
+### What changed
+
+- NestJS 11 + Fastify adapter.
+- Prisma 5 schema, BaseRepository, HttpExceptionFilter,
+  TransformInterceptor, Pino, BullMQ, Swagger.
+- Workspace packages `@wa-kijo/db` and `@wa-kijo/shared`.
+
+### Required action
+
+1. Update Node to 22 LTS.
+2. Install pnpm 9 via Corepack.
+3. `pnpm db:migrate` to create the initial schema.
+4. Build the workspace packages on first dev run:
+   ```bash
+   pnpm --filter @wa-kijo/shared build
+   pnpm --filter @wa-kijo/db build
+   ```
+
+### No breaking changes from v0.1.0
+
+v0.1.0 was repo skeleton only.
+
+---
+
+## v0.1.0 (released 2026-04-01)
+
+Initial private release. Starting point.
+
+---
+
+## Skipping versions
+
+If you're upgrading across multiple versions (e.g. v0.2.0 → v0.5.0),
+apply each section's required actions in order. The
+`pnpm db:migrate:deploy` step rolls every pending migration forward in
+sequence — you don't need to run it once per version, just once at the
+end. Apply manual code/env changes in version order regardless.
+
+## Rollback
+
+If anything looks off after an upgrade:
+
+```bash
+pg_restore -d $DATABASE_URL --clean --if-exists pre-upgrade-YYYY-MM-DD.dump
+git checkout v<previous>
+pnpm install
+# restart with previous deploy command
+```
+
+Test rollback procedure in staging before relying on it in production.
