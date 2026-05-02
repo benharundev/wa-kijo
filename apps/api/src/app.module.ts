@@ -6,6 +6,8 @@ import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
 import { HealthModule } from './modules/health/health.module';
 import { EmailModule } from './modules/email/email.module';
+import { ContactsModule } from './modules/contacts/contacts.module';
+import { ConversationsModule } from './modules/conversations/conversations.module';
 import { AuthModule } from './auth/auth.module';
 import { AuthGuard } from './common/guards/auth.guard';
 import { PermissionGuard } from './common/guards/permission.guard';
@@ -40,9 +42,11 @@ import { EnvService } from './config/env.service';
 
     PrismaModule,
     RedisModule,
-    EmailModule,   // @Global() — EmailService injectable everywhere
-    AuthModule,    // @Global() — BETTER_AUTH token + AuthService injectable everywhere
+    EmailModule,          // @Global() — EmailService injectable everywhere
+    AuthModule,           // @Global() — BETTER_AUTH token + AuthService injectable everywhere
     HealthModule,
+    ContactsModule,
+    ConversationsModule,
   ],
   providers: [
     // AuthGuard runs first on every route. @Public() skips validation.

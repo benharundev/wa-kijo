@@ -29,6 +29,30 @@ export const PERMISSIONS = {
   'billing:manage': ['owner'],
   'billing:view': ['owner', 'admin'],
 
+  // Contacts
+  'contact:create': ['owner', 'admin', 'member'],
+  'contact:read':   ['owner', 'admin', 'member'],
+  'contact:update': ['owner', 'admin', 'member'],
+  'contact:delete': ['owner', 'admin'],
+  'contact:import': ['owner', 'admin'],
+  'contact:block':  ['owner', 'admin'],
+
+  // Tags
+  'tag:create': ['owner', 'admin'],
+  'tag:update': ['owner', 'admin'],
+  'tag:delete': ['owner', 'admin'],
+
+  // Conversations
+  'conversation:create': ['owner', 'admin', 'member'],
+  'conversation:read':   ['owner', 'admin', 'member'],
+  'conversation:assign': ['owner', 'admin'],
+  'conversation:close':  ['owner', 'admin', 'member'],
+  'conversation:delete': ['owner', 'admin'],
+
+  // Messages
+  'message:send': ['owner', 'admin', 'member'],
+  'message:read': ['owner', 'admin', 'member'],
+
   // API keys (future)
   'api-key:create': ['owner', 'admin'],
   'api-key:revoke': ['owner'],

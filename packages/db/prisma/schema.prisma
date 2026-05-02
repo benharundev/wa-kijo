@@ -125,13 +125,152 @@ model Organization {
   createdBy String?
   updatedBy String?
 
-  members     Member[]
-  invitations Invitation[]
+  members       Member[]
+  invitations   Invitation[]
+  contacts      Contact[]
+  tags          Tag[]
+  conversations Conversation[]
 
   @@index([slug])
   @@index([parentOrgId])
   @@index([deletedAt])
   @@map("organization")
+}
+
+// ── Domain models ─────────────────────────────────────────────────────────────
+
+// A person or business the organisation communicates with.
+// phone must be in E.164 format (+601XXXXXXXX) and is unique per org.
+model Contact {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  phone     String
+  name      String
+  email     String?
+  notes     String?
+  source    String?   // manual | import | api | whatsapp
+  isBlocked Boolean   @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  deletedBy String?
+  createdBy String?
+  updatedBy String?
+
+  tags          ContactTag[]
+  conversations Conversation[]
+
+  @@unique([organizationId, phone])
+  @@index([organizationId])
+  @@index([phone])
+  @@index([name])
+  @@index([deletedAt])
+  @@map("contact")
+}
+
+// Label for grouping contacts within an organisation.
+model Tag {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name  String
+  color String @default("#6B7280")  // hex colour displayed in the UI
+  slug  String                      // URL-safe identifier, auto-derived from name
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contacts ContactTag[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@map("tag")
+}
+
+// Junction table linking contacts to tags (many-to-many).
+model ContactTag {
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  tagId String
+  tag   Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([contactId, tagId])
+  @@map("contact_tag")
+}
+
+// A communication thread between the organisation and a single contact.
+// status:  open | closed | snoozed
+// channel: whatsapp | email | sms
+model Conversation {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  status  String @default("open")
+  channel String @default("whatsapp")
+
+  assignedToUserId String?
+  lastMessageAt    DateTime?
+  unreadCount      Int       @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  deletedBy String?
+  createdBy String?
+
+  messages Message[]
+
+  @@index([organizationId])
+  @@index([contactId])
+  @@index([status])
+  @@index([lastMessageAt])
+  @@index([assignedToUserId])
+  @@index([deletedAt])
+  @@map("conversation")
+}
+
+// A single message within a conversation.
+// organizationId is denormalised for tenant-scoped queries without a join.
+// type:      text | image | document | audio | video | template
+// direction: inbound | outbound
+// status:    queued | sent | delivered | read | failed
+model Message {
+  id             String       @id @default(cuid())
+  organizationId String
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  type      String @default("text")
+  direction String
+  status    String @default("queued")
+
+  body       String?   // null for media-only messages
+  mediaUrl   String?   // hosted URL for image / document / audio / video
+  externalId String?   // provider message ID — used for dedup and delivery receipts
+  metadata   String?   // JSON string — provider-specific payload
+  sentAt     DateTime?
+  createdBy  String?   // userId for outbound; null for inbound
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([conversationId])
+  @@index([organizationId])
+  @@index([externalId])
+  @@index([direction])
+  @@index([status])
+  @@map("message")
 }
 
 // role: owner | admin | member — lowercase strings, Better Auth default role names
