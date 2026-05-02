@@ -123,7 +123,7 @@
       {
         "tab": "API reference",
         "openapi": {
-          "source": "../docs/api/openapi.yaml",
+          "source": "api/openapi.yaml",
           "directory": "reference/api"
         }
       }

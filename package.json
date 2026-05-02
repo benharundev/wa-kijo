@@ -26,6 +26,8 @@
     "docker:up": "docker compose -f docker-compose.dev.yml up -d",
     "docker:down": "docker compose -f docker-compose.dev.yml down",
     "docker:logs": "docker compose -f docker-compose.dev.yml logs -f",
+    "docs:dev": "cd docs-site && pnpm dlx mintlify dev --port 3010",
+    "docs:pdf": "node scripts/generate-docs-pdf.mjs",
     "clean": "pnpm -r exec rm -rf dist .next .turbo node_modules && rm -rf node_modules"
   },
   "devDependencies": {
