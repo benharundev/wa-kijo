@@ -2,7 +2,20 @@
 
 > Production-grade, opinionated SaaS boilerplate for NestJS-first developers building multi-tenant B2B SaaS.
 
+<p>
+  <img alt="Node" src="https://img.shields.io/badge/node-22%20LTS-339933?logo=node.js&logoColor=white">
+  <img alt="pnpm" src="https://img.shields.io/badge/pnpm-9.x-F69220?logo=pnpm&logoColor=white">
+  <img alt="NestJS" src="https://img.shields.io/badge/NestJS-11-E0234E?logo=nestjs&logoColor=white">
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-15-000000?logo=next.js&logoColor=white">
+  <img alt="Prisma" src="https://img.shields.io/badge/Prisma-5-2D3748?logo=prisma&logoColor=white">
+  <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white">
+  <img alt="License" src="https://img.shields.io/badge/license-Commercial-blue">
+  <img alt="Status" src="https://img.shields.io/badge/status-Phase%204%20%E2%80%94%20feature%20modules%20WIP-yellow">
+</p>
+
 **wa'kijo** is the foundation of the wa' product portfolio. `wa-kiro` (WhatsApp Business SaaS) and `wa-lawe` (chess tournament manager) are both forked from this repo. Customers who purchase wa'kijo receive a private GitHub repo, Mintlify docs, and 6–24 months of updates depending on tier.
+
+> 📚 **Looking for the customer-facing docs?** See [`docs-site/`](docs-site/) — the full Mintlify handbook covers concepts, guides, API reference, and troubleshooting.
 
 ---
 
@@ -190,6 +203,48 @@ See [`.env.example`](.env.example) for the full reference with descriptions.
 
 ---
 
+## Documentation
+
+| Path | Audience | Purpose |
+|---|---|---|
+| [`docs-site/`](docs-site/) | Customers | Mintlify-rendered handbook — concepts, guides, API reference |
+| [`docs/architecture.md`](docs/architecture.md) | Engineers | System design, request lifecycle, tenant model |
+| [`docs/prd.md`](docs/prd.md) | Engineers, PM | Product requirements, scoped features, FR catalogue |
+| [`docs/api-conventions.md`](docs/api-conventions.md) | Engineers | REST conventions, response envelope, error shape |
+| [`docs/deployment.md`](docs/deployment.md) | Ops, Customers | Production deployment recipes (Railway, AWS, self-hosted) |
+| [`docs/observability.md`](docs/observability.md) | Ops | Logging, tracing, metrics, alerting playbook |
+| [`docs/customization.md`](docs/customization.md) | Customers | How to brand, extend, and remove parts you don't need |
+| [`docs/upgrade-guide.md`](docs/upgrade-guide.md) | Customers | Upgrading between wa'kijo releases |
+| [`docs/runbook.md`](docs/runbook.md) | Engineers | Day-to-day local dev operations |
+| [`docs/glossary.md`](docs/glossary.md) | Everyone | Plain-English definitions of every term used |
+| [`docs/decisions/`](docs/decisions/) | Engineers | Architecture Decision Records (ADRs) |
+| [`docs/api/openapi.yaml`](docs/api/openapi.yaml) | Engineers, integrators | Static OpenAPI 3.1 snapshot of the API |
+
+## Project policies
+
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — branching, commit conventions, PR process
+- [`SECURITY.md`](SECURITY.md) — vulnerability disclosure policy
+- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) — community expectations
+- [`SUPPORT.md`](SUPPORT.md) — how to get help (by tier)
+- [`CHANGELOG.md`](CHANGELOG.md) — release history (Keep a Changelog format)
+
+## Support tiers
+
+| Tier | Repo access | Updates | Support SLA | Indicative price |
+|---|---|---|---|---|
+| **Solo** | Private repo, single seat | 6 months of patches | Community (Discord) | from MYR 1,499 |
+| **Team** | Private repo, up to 5 seats | 12 months of patches & minor releases | 48-hr business email | from MYR 4,999 |
+| **Agency** | Private repo, unlimited seats per legal entity | 24 months incl. major upgrades | 24-hr business email + 1 onboarding call | from MYR 12,999 |
+| **Enterprise** | Private repo + custom CLA | 24 months + roadmap influence | Same-business-day Slack Connect | Contact sales |
+
+> Pricing and SLAs are indicative. The current commercial terms ship with the
+> repo as `LICENSE` — read it before redistributing.
+
 ## License
 
-UNLICENSED. License terms will be set when wa'kijo ships publicly.
+Commercial license. See [`LICENSE`](LICENSE) for the full terms.
+
+In summary: each purchased seat may use wa'kijo to build and operate one
+private commercial product. Redistribution of the source — verbatim or
+modified — is not permitted. Open-source dependencies retain their original
+licenses.

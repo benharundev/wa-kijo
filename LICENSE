@@ -1,0 +1,141 @@
+wa'kijo Commercial License Agreement
+====================================
+
+Version 1.0 — effective 2026-05-02
+
+This is a draft commercial license. Final wording will be reviewed by
+counsel before wa'kijo is offered to the public. Until then, treat this
+file as the working agreement between the wa'kijo authors and any
+licensee with repository access.
+
+----------------------------------------------------------------------
+
+1. DEFINITIONS
+
+   "Licensor"  — the legal entity that owns the wa'kijo source code and
+                 distributes private repository access (the "wa'kijo
+                 authors", currently registered in Malaysia).
+
+   "Licensee"  — the natural person or legal entity that has paid for
+                 access to the wa'kijo private repository under one of
+                 the published support tiers (Solo, Team, Agency,
+                 Enterprise).
+
+   "Software"  — the source code, configuration, documentation, and any
+                 patches or releases distributed in the wa'kijo private
+                 repository under this License.
+
+   "Derivative Product" — any software product, hosted service, or
+                 internal tool built by the Licensee that incorporates
+                 the Software in whole or in part.
+
+----------------------------------------------------------------------
+
+2. GRANT OF LICENSE
+
+   Subject to the terms below, the Licensor grants the Licensee a
+   non-exclusive, non-transferable, worldwide right to:
+
+   (a) Use the Software to build and operate Derivative Products,
+       subject to the seat count of the purchased tier.
+   (b) Modify the Software for the Licensee's own use within Derivative
+       Products.
+   (c) Receive updates and patches for the period covered by the
+       purchased tier (6, 12, or 24 months).
+
+----------------------------------------------------------------------
+
+3. RESTRICTIONS
+
+   The Licensee MUST NOT:
+
+   (a) Redistribute, sublicense, sell, lease, rent, or otherwise make
+       available the Software (verbatim or modified) to any third party
+       outside of the seat count of the purchased tier.
+   (b) Publish the Software, or substantial portions of it, in any
+       public repository, package registry, or hosting platform.
+   (c) Use the Software to build a product that is itself substantially
+       a software boilerplate or starter kit, or that competes
+       directly with wa'kijo.
+   (d) Remove, obscure, or alter copyright notices, trademarks, or this
+       License file from the Software.
+
+   Sharing the Software with employees, contractors, or contracted
+   developers of the Licensee for the purpose of building Derivative
+   Products is permitted, provided every such individual is informed of
+   and complies with this License.
+
+----------------------------------------------------------------------
+
+4. THIRD-PARTY COMPONENTS
+
+   The Software depends on third-party open-source packages
+   (NestJS, Prisma, Next.js, Better Auth, etc.). Each such package
+   retains its own license, and nothing in this License modifies those
+   terms. A complete list of dependencies and their licenses is
+   available via:
+
+       pnpm licenses list
+
+----------------------------------------------------------------------
+
+5. UPDATES AND SUPPORT
+
+   The Licensee is entitled to updates released during their support
+   window, per the tier purchased. Support response times are described
+   in SUPPORT.md. The Licensor may amend SUPPORT.md from time to time,
+   but will not reduce the SLAs for any active support window.
+
+----------------------------------------------------------------------
+
+6. WARRANTY DISCLAIMER
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+   NON-INFRINGEMENT.
+
+----------------------------------------------------------------------
+
+7. LIMITATION OF LIABILITY
+
+   TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT
+   SHALL THE LICENSOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE
+   OR INABILITY TO USE THE SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+   OF SUCH DAMAGE. THE LICENSOR'S TOTAL CUMULATIVE LIABILITY SHALL NOT
+   EXCEED THE FEES PAID BY THE LICENSEE FOR THE CURRENT SUPPORT WINDOW.
+
+----------------------------------------------------------------------
+
+8. TERMINATION
+
+   This License terminates automatically if the Licensee breaches any
+   material term and does not cure the breach within 30 days of written
+   notice. On termination, the Licensee must cease using the Software
+   and destroy all copies in their possession, except for compiled
+   binaries already deployed to production at the time of termination,
+   which may continue to operate.
+
+----------------------------------------------------------------------
+
+9. GOVERNING LAW
+
+   This License shall be governed by and construed in accordance with
+   the laws of Malaysia. Any disputes arising under this License shall
+   be subject to the exclusive jurisdiction of the courts of Kuala
+   Lumpur, Malaysia.
+
+----------------------------------------------------------------------
+
+10. ENTIRE AGREEMENT
+
+    This License, together with SUPPORT.md and any ordering document
+    referencing this License, constitutes the entire agreement between
+    the parties regarding the Software and supersedes all prior or
+    contemporaneous communications and proposals, whether oral or
+    written.
+
+----------------------------------------------------------------------
+
+For licensing inquiries, contact: licensing@wakijo.dev

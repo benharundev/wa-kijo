@@ -1,0 +1,153 @@
+---
+title: "Introduction"
+description: "wa'kijo is a production-grade, opinionated SaaS boilerplate for NestJS-first developers building multi-tenant B2B SaaS."
+---
+
+## What is wa'kijo?
+
+wa'kijo is a code-first SaaS boilerplate. You buy the source. You own the
+deployment. You ship a multi-tenant B2B product on day one without
+spending six weeks on the parts that every SaaS needs but nobody wants
+to write twice — auth, organisation hierarchies, RBAC, billing
+abstractions, tenant isolation, queues, structured logging, and the
+shadcn/ui skeleton that everyone copies anyway.
+
+The stack is **opinionated on purpose**. We chose every piece for
+production B2B SaaS, not for tutorial writability. NestJS 11 on Fastify.
+Prisma 5 on Postgres 16. Better Auth ≥1.5 with parent–child
+organisation hierarchies. Next.js 15 App Router with shadcn/ui. BullMQ
+on Redis 7. Stripe + Billplz + ToyyibPay billing behind a single
+interface. Pino structured logs. Sentry. Resend.
+
+<CardGroup cols={2}>
+  <Card title="Quickstart in 6 commands" icon="rocket" href="/quickstart">
+    From `git clone` to localhost in under 10 minutes.
+  </Card>
+  <Card title="What you get" icon="boxes-stacked" href="/what-you-get">
+    The full bill of materials — features, files, defaults.
+  </Card>
+  <Card title="Architecture" icon="diagram-project" href="/concepts/architecture">
+    How the layers fit together and why.
+  </Card>
+  <Card title="API reference" icon="code" href="/reference/api/overview">
+    Every endpoint, request shape, and error code.
+  </Card>
+</CardGroup>
+
+## Who wa'kijo is for
+
+<CardGroup cols={2}>
+  <Card title="Solo founders">
+    You're shipping a B2B SaaS MVP. You want to spend the first month on
+    your unique value proposition, not on auth boilerplate.
+  </Card>
+  <Card title="Small agencies (2–10 devs)">
+    You're building client SaaS products and want one hardened foundation
+    you can reuse across projects.
+  </Card>
+  <Card title="Internal tools teams">
+    You're building a multi-tenant internal tool and want production-quality
+    auth, RBAC, and observability without owning all of it.
+  </Card>
+  <Card title="NestJS shops">
+    You've already standardised on NestJS and don't want to switch. We've
+    wired the surrounding ecosystem (Prisma, Better Auth, Next.js,
+    Stripe) the way it's meant to be wired.
+  </Card>
+</CardGroup>
+
+## Who wa'kijo is *not* for
+
+We're going to save you the click.
+
+- You want an unopinionated starter ("just give me Express and a Postgres
+  connection string"). This is the wrong product for you. Try
+  [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack)
+  or roll your own.
+- You want a Next.js fullstack app with API routes. wa'kijo's backend is
+  a separable NestJS service, on purpose. If you don't want a separate
+  backend, you don't want wa'kijo.
+- You want MongoDB / Drizzle / Auth.js / Express. The stack is fixed.
+  Substituting parts is supported but not recommended for the
+  unfamiliar.
+- You want a free tier. wa'kijo is a commercial product. See
+  [pricing](https://wakijo.dev/pricing).
+
+## What you do *not* have to build
+
+A non-exhaustive list of things wa'kijo handles so you don't have to:
+
+| Concern | Where it lives |
+|---|---|
+| Email + password sign-up, sign-in | Better Auth |
+| Email verification flow | Better Auth + Resend |
+| Magic-link sign-in (15 min, single use) | Better Auth |
+| Password reset | Better Auth |
+| Google OAuth (optional, env-gated) | Better Auth |
+| Session cookies (HttpOnly, SameSite, Secure) | Better Auth |
+| Per-IP login rate limit | Better Auth |
+| Multi-org membership | Better Auth org plugin (extended) |
+| 3-level org hierarchy with role inheritance | wa'kijo `AuthService` |
+| RBAC catalogue + `@RequirePermission` decorator | `@wa-kijo/shared` + `PermissionGuard` |
+| Frontend `<Can do="…" />` UX hint | `@wa-kijo/shared` + `useCan()` |
+| Soft delete + audit fields on every model | `BaseRepository<T>` |
+| Tenant scoping on every query | `BaseRepository<T>` |
+| Cursor pagination | `BaseRepository<T>` |
+| Cross-tenant access fuzz tests | Phase 5 — already wired in CI |
+| Structured logs with PII redaction | nestjs-pino + redact allow-list |
+| Webhook signature verification | shared utility |
+| Email templates (verify, magic link, invitation) | `EmailModule` + Resend |
+| Stripe checkout, subscriptions, webhooks | `BillingProvider` (Phase 6) |
+| Billplz / ToyyibPay (Malaysian gateways) | same `BillingProvider` interface |
+| BullMQ queues, retries, DLQ, admin UI | wired by default |
+| shadcn/ui app shell with org switcher | `apps/web` |
+| Auth pages (sign-in, sign-up, magic, reset) | `apps/web/app/(auth)/` |
+| Settings, members, invites, billing pages | `apps/web/app/(app)/orgs/[orgId]/` |
+| Dark mode, theme tokens, system preference | `next-themes` + Tailwind |
+| Docker Compose dev stack | `docker-compose.dev.yml` |
+| Vitest + Testcontainers + Playwright | wired and running |
+
+## How to read this handbook
+
+<Steps>
+  <Step title="Start at Quickstart">
+    Get the repo running locally. Six commands. Should take you less than
+    ten minutes.
+  </Step>
+  <Step title="Skim Concepts">
+    Read [Architecture](/concepts/architecture) and [Multi-tenancy](/concepts/multi-tenancy)
+    before you write any code. The other concept pages are reference
+    material — come back when you need them.
+  </Step>
+  <Step title="Follow a Guide">
+    [Add a feature module](/guides/add-feature-module) is the single most
+    common task. Walk through it once before designing your own modules.
+  </Step>
+  <Step title="Bookmark Reference">
+    The [API reference](/reference/api/overview), [error codes](/reference/error-codes),
+    and [configuration](/reference/configuration) pages are the
+    "during-development lookup" surface.
+  </Step>
+  <Step title="Subscribe to Changelog">
+    [Release notes](/changelog) and the [upgrade guide](/upgrade-guide)
+    are how we communicate behaviour changes between versions. Read them
+    before each upgrade.
+  </Step>
+</Steps>
+
+## Getting help
+
+<CardGroup cols={2}>
+  <Card title="Read the troubleshooting page" icon="circle-question" href="/troubleshooting">
+    The 20 most common "it's not working" answers.
+  </Card>
+  <Card title="Customer Discord" icon="discord" href="https://discord.gg/wakijo">
+    Solo / Team / Agency / Enterprise tiers all welcome.
+  </Card>
+  <Card title="Support" icon="headset" href="/support">
+    Tier-by-tier SLAs, channels, and escalation paths.
+  </Card>
+  <Card title="Email support" icon="envelope" href="mailto:support@wakijo.dev">
+    For Team tier and above with a guaranteed response window.
+  </Card>
+</CardGroup>

@@ -1,0 +1,140 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "wa'kijo",
+  "description": "Production-grade SaaS boilerplate for NestJS-first developers building multi-tenant B2B SaaS.",
+  "colors": {
+    "primary": "#FF5A1F",
+    "light": "#FF7A4C",
+    "dark": "#D63E08"
+  },
+  "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo-light.svg",
+    "dark": "/logo-dark.svg",
+    "href": "https://wakijo.dev"
+  },
+  "navbar": {
+    "links": [
+      { "label": "Support", "href": "mailto:support@wakijo.dev" },
+      { "label": "Changelog", "href": "/changelog" }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Buy a license",
+      "href": "https://wakijo.dev/pricing"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/wakijo",
+      "x": "https://x.com/wakijodev",
+      "discord": "https://discord.gg/wakijo"
+    },
+    "links": [
+      {
+        "header": "Product",
+        "items": [
+          { "label": "Pricing", "href": "https://wakijo.dev/pricing" },
+          { "label": "Changelog", "href": "/changelog" },
+          { "label": "Roadmap", "href": "/roadmap" }
+        ]
+      },
+      {
+        "header": "Resources",
+        "items": [
+          { "label": "Quickstart", "href": "/quickstart" },
+          { "label": "API reference", "href": "/reference/api/overview" },
+          { "label": "Troubleshooting", "href": "/troubleshooting" }
+        ]
+      },
+      {
+        "header": "Legal",
+        "items": [
+          { "label": "License", "href": "https://github.com/wakijo/wa-kijo/blob/main/LICENSE" },
+          { "label": "Security", "href": "https://github.com/wakijo/wa-kijo/blob/main/SECURITY.md" },
+          { "label": "Privacy", "href": "https://wakijo.dev/privacy" }
+        ]
+      }
+    ]
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "what-you-get",
+              "support"
+            ]
+          },
+          {
+            "group": "Concepts",
+            "pages": [
+              "concepts/architecture",
+              "concepts/multi-tenancy",
+              "concepts/authentication",
+              "concepts/rbac",
+              "concepts/data-model",
+              "concepts/background-jobs",
+              "concepts/observability"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/add-feature-module",
+              "guides/customize-billing",
+              "guides/integrate-third-party-api",
+              "guides/deploy-to-railway",
+              "guides/deploy-to-aws",
+              "guides/customise-branding"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/configuration",
+              "reference/cli",
+              "reference/error-codes",
+              "reference/permissions"
+            ]
+          },
+          {
+            "group": "Release",
+            "pages": [
+              "changelog",
+              "upgrade-guide",
+              "roadmap"
+            ]
+          },
+          {
+            "group": "Troubleshooting",
+            "pages": [
+              "troubleshooting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API reference",
+        "openapi": {
+          "source": "../docs/api/openapi.yaml",
+          "directory": "reference/api"
+        }
+      }
+    ]
+  },
+  "search": {
+    "prompt": "Search the wa'kijo handbook"
+  },
+  "feedback": {
+    "thumbsRating": true,
+    "suggestEdit": true,
+    "raiseIssue": true
+  }
+}
