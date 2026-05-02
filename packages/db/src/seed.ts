@@ -21,6 +21,73 @@
 import { hashPassword } from '@better-auth/utils/password';
 import { PrismaClient } from '@prisma/client';
 
+// ── Subscription plans ───────────────────────────────────────────────────────
+
+const PLANS = [
+  {
+    name: 'Starter',
+    slug: 'starter',
+    description: 'For small teams getting started with WhatsApp automation.',
+    priceMonthly: 4900,    // MYR 49.00
+    priceYearly: 47040,    // MYR 470.40 (~2 months free)
+    currency: 'MYR',
+    features: JSON.stringify([
+      '1 WhatsApp number',
+      'Up to 1,000 contacts',
+      '5,000 messages/month',
+      '2 agents',
+      'Basic inbox',
+      'Email support',
+    ]),
+    limits: JSON.stringify({ contacts: 1000, messages: 5000, agents: 2, numbers: 1 }),
+    isActive: true,
+    sortOrder: 0,
+  },
+  {
+    name: 'Growth',
+    slug: 'growth',
+    description: 'For growing businesses that need more scale and automation.',
+    priceMonthly: 14900,   // MYR 149.00
+    priceYearly: 143040,   // MYR 1,430.40
+    currency: 'MYR',
+    features: JSON.stringify([
+      '3 WhatsApp numbers',
+      'Up to 10,000 contacts',
+      '50,000 messages/month',
+      '10 agents',
+      'Priority inbox + assignments',
+      'Broadcast campaigns',
+      'Chatbot builder (basic)',
+      'Priority email support',
+    ]),
+    limits: JSON.stringify({ contacts: 10000, messages: 50000, agents: 10, numbers: 3 }),
+    isActive: true,
+    sortOrder: 1,
+  },
+  {
+    name: 'Enterprise',
+    slug: 'enterprise',
+    description: 'For large organisations that need unlimited scale and white-glove support.',
+    priceMonthly: 49900,   // MYR 499.00
+    priceYearly: 479040,   // MYR 4,790.40
+    currency: 'MYR',
+    features: JSON.stringify([
+      'Unlimited WhatsApp numbers',
+      'Unlimited contacts',
+      'Unlimited messages',
+      'Unlimited agents',
+      'Advanced chatbot builder',
+      'API access',
+      'Custom integrations',
+      'Dedicated account manager',
+      'SLA 99.9% uptime',
+    ]),
+    limits: JSON.stringify({ contacts: -1, messages: -1, agents: -1, numbers: -1 }),
+    isActive: true,
+    sortOrder: 2,
+  },
+] as const;
+
 const prisma = new PrismaClient();
 
 // ── Seed data ────────────────────────────────────────────────────────────────
@@ -106,7 +173,7 @@ async function main(): Promise<void> {
   // Users
   const [adminUser, agencyUser, memberUser] = await Promise.all(
     USERS.map(upsertUser),
-  );
+  ) as [Awaited<ReturnType<typeof upsertUser>>, Awaited<ReturnType<typeof upsertUser>>, Awaited<ReturnType<typeof upsertUser>>];
   console.log('  ✓ Users');
   USERS.forEach((u) => console.log(`      ${u.email}  /  ${u.password}`));
 
@@ -133,6 +200,28 @@ async function main(): Promise<void> {
   console.log(`  ✓ ${adminUser.email}   → owner  of "${hqOrg.name}" + "${agencyOrg.name}"`);
   console.log(`  ✓ ${agencyUser.email}  → owner  of "${agencyOrg.name}"`);
   console.log(`  ✓ ${memberUser.email}  → member of "${workspaceOrg.name}"`);
+
+  // Plans (upsert so re-runs are safe)
+  console.log('');
+  for (const plan of PLANS) {
+    await prisma.plan.upsert({
+      where: { slug: plan.slug },
+      update: {
+        name: plan.name,
+        description: plan.description,
+        priceMonthly: plan.priceMonthly,
+        priceYearly: plan.priceYearly,
+        features: plan.features,
+        limits: plan.limits,
+        isActive: plan.isActive,
+        sortOrder: plan.sortOrder,
+      },
+      create: plan,
+    });
+    const monthly = (plan.priceMonthly / 100).toFixed(2);
+    const yearly = (plan.priceYearly / 100).toFixed(2);
+    console.log(`  ✓ Plan [${plan.slug.toUpperCase().padEnd(10)}]  MYR ${monthly}/mo  MYR ${yearly}/yr`);
+  }
 
   console.log('\n✅ Seed complete.\n');
   console.log('  Organisation hierarchy:');

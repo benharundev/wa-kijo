@@ -27,11 +27,12 @@ rationale.**
 | 2 | NestJS API scaffold, Prisma schema, BaseRepository | ✅ Complete |
 | 3 | Better Auth, multi-tenant org hierarchy | ✅ Complete |
 | 4 | Next.js frontend scaffold | ✅ Complete |
+| 5 | BullMQ jobs, billing (Stripe + Billplz + Curlec) | ✅ Complete |
 
-All four phases are complete. The API currently has `health/` and `email/`
-modules plus the full auth/context infrastructure. **Domain feature modules
-(contacts, conversations, billing, etc.) do not exist yet** — Phase 5+ builds
-those on top of the existing scaffold.
+All five phases are complete. The API has: `health/`, `contacts/`,
+`conversations/`, `billing/`, `queues/` (BullMQ) plus the full auth/context
+infrastructure. Phase 6 will add provider integrations (Meta WhatsApp Business
+API, SMTP relay, SMS gateway) and the frontend billing UI.
 
 ## Tech stack — non-negotiable
 
@@ -43,8 +44,8 @@ those on top of the existing scaffold.
 - **Validation:** Zod end-to-end (DTOs, env, forms — single source of truth)
 - **Jobs:** BullMQ + Redis 7
 - **Email:** Resend + React Email
-- **Billing:** Stripe (default) + Billplz / ToyyibPay (Malaysian) behind a
-  common `BillingProvider` interface
+- **Billing:** Stripe (default) + Billplz + Curlec/Razorpay (Malaysian) behind
+  a common `BillingProvider` interface
 - **Package manager:** pnpm 9. Always.
 - **Node:** 22 LTS. Enforced via `engines`.
 

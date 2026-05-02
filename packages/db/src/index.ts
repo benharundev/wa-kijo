@@ -7,4 +7,11 @@ export type {
   Organization,
   Member,
   Invitation,
+  Contact,
+  Tag,
+  ContactTag,
+  Conversation,
+  Message,
+  Plan,
+  Subscription,
 } from '@prisma/client';

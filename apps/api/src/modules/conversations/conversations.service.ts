@@ -4,6 +4,8 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import type { Queue } from 'bullmq';
 import type {
   ConversationQueryDto,
   CreateConversationDto,
@@ -13,6 +15,8 @@ import type {
 } from '@wa-kijo/shared';
 import type { RequestContext } from '../../common/context/request-context';
 import { PrismaService } from '../../prisma/prisma.service';
+import { QUEUE_NAMES } from '../../queues/queue.names';
+import type { MessageDispatchJobData } from '../../queues/jobs/message-dispatch.job';
 import { ConversationsRepository } from './conversations.repository';
 import { MessagesRepository } from './messages.repository';
 
@@ -32,6 +36,8 @@ export class ConversationsService {
     private readonly convRepo: ConversationsRepository,
     private readonly msgRepo: MessagesRepository,
     private readonly prisma: PrismaService,
+    @InjectQueue(QUEUE_NAMES.MESSAGE_DISPATCH)
+    private readonly messageQueue: Queue<MessageDispatchJobData>,
   ) {}
 
   // ── Conversations ────────────────────────────────────────────────────────────
@@ -152,7 +158,15 @@ export class ConversationsService {
       'Message queued',
     );
 
-    // TODO: enqueue BullMQ job to dispatch to provider (Phase 5)
+    // Enqueue the dispatch job — MessageDispatchProcessor picks this up and
+    // forwards to the provider (WhatsApp / email / SMS). Status is updated
+    // to 'sent' on success or 'failed' after max retries.
+    await this.messageQueue.add('dispatch', {
+      messageId: message.id,
+      conversationId,
+      organizationId: ctx.orgId,
+      channel: conv.channel,
+    });
 
     return message;
   }

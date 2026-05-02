@@ -8,6 +8,8 @@ import { HealthModule } from './modules/health/health.module';
 import { EmailModule } from './modules/email/email.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
 import { ConversationsModule } from './modules/conversations/conversations.module';
+import { QueuesModule } from './queues/queues.module';
+import { BillingModule } from './modules/billing/billing.module';
 import { AuthModule } from './auth/auth.module';
 import { AuthGuard } from './common/guards/auth.guard';
 import { PermissionGuard } from './common/guards/permission.guard';
@@ -47,6 +49,8 @@ import { EnvService } from './config/env.service';
     HealthModule,
     ContactsModule,
     ConversationsModule,
+    QueuesModule,
+    BillingModule,
   ],
   providers: [
     // AuthGuard runs first on every route. @Public() skips validation.

@@ -130,6 +130,7 @@ model Organization {
   contacts      Contact[]
   tags          Tag[]
   conversations Conversation[]
+  subscription  Subscription?
 
   @@index([slug])
   @@index([parentOrgId])
@@ -271,6 +272,85 @@ model Message {
   @@index([direction])
   @@index([status])
   @@map("message")
+}
+
+// ── Billing models ─────────────────────────────────────────────────────────────
+
+// A subscription tier offered to organisations.
+// Seeded via pnpm db:seed — do not edit pricing here without a matching migration.
+// interval:  month | year
+model Plan {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique // starter | growth | enterprise
+  description String?
+
+  priceMonthly Int    // cents (e.g. MYR 4900 = 4900)
+  priceYearly  Int    // cents — typically 2 months free
+  currency     String @default("MYR")
+
+  features String? // JSON array of feature strings shown in pricing table
+  limits   String? // JSON object: { contacts: 1000, messages: 10000, agents: 5 }
+
+  // Stripe
+  stripePriceMonthlyId String?
+  stripePriceYearlyId  String?
+  stripeProductId      String?
+
+  // Billplz (collection is shared; amount is taken from priceMonthly/priceYearly)
+  billplzCollectionId String?
+
+  // Curlec / Razorpay
+  curlecPlanId String? // Razorpay plan ID
+
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions Subscription[]
+
+  @@map("plan")
+}
+
+// One subscription row per organisation. Upserted by webhook handlers.
+// status: trialing | active | past_due | canceled | paused | incomplete
+// interval: month | year
+model Subscription {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  planId String
+  plan   Plan   @relation(fields: [planId], references: [id])
+
+  status   String @default("trialing") // trialing | active | past_due | canceled | paused | incomplete
+  interval String @default("month")    // month | year
+
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  trialEndsAt        DateTime?
+  cancelAt           DateTime?
+  canceledAt         DateTime?
+
+  // Stripe
+  stripeCustomerId     String? @unique
+  stripeSubscriptionId String? @unique
+
+  // Billplz (latest bill ID — Billplz is per-bill, not a subscription object)
+  billplzBillId String?
+
+  // Curlec / Razorpay
+  curlecCustomerId     String?
+  curlecSubscriptionId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([status])
+  @@map("subscription")
 }
 
 // role: owner | admin | member — lowercase strings, Better Auth default role names

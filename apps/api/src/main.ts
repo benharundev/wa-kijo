@@ -5,6 +5,11 @@ import { Logger } from 'nestjs-pino';
 import type { FastifyInstance } from 'fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { patchNestJsSwagger } from 'nestjs-zod';
+import { createBullBoard } from '@bull-board/api';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { FastifyAdapter as BullBoardFastifyAdapter } from '@bull-board/fastify';
+import { getQueueToken } from '@nestjs/bullmq';
+import type { Queue } from 'bullmq';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
@@ -12,6 +17,7 @@ import { EnvService } from './config/env.service';
 import { BETTER_AUTH, type BetterAuthInstance } from './auth/better-auth.token';
 import { requestContextStorage } from './common/context/request-context';
 import { FilteredLogger } from './common/logger/filtered-logger';
+import { QUEUE_NAMES } from './queues/queue.names';
 
 // Patches Swagger schema generation to understand nestjs-zod DTOs.
 // Must be called before SwaggerModule.createDocument().
@@ -21,7 +27,12 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter({ logger: false }), // Pino handles logging via nestjs-pino
-    { bufferLogs: true },
+    {
+      bufferLogs: true,
+      // rawBody: true stores the raw request body buffer on req.rawBody.
+      // Required for webhook signature verification (Stripe, Curlec, Billplz).
+      rawBody: true,
+    },
   );
 
   // Replace NestJS default logger with Pino (wrapped to suppress the
@@ -122,6 +133,48 @@ async function bootstrap(): Promise<void> {
     SwaggerModule.setup('api/docs', app, document, {
       jsonDocumentUrl: 'api/docs/json',
     });
+  }
+
+  // ── Bull Board (non-production only) ────────────────────────────────────────
+  // Mounts a real-time queue dashboard at /admin/queues.
+  // Protected by HTTP Basic Auth when BULL_BOARD_PASSWORD is set.
+  // In production, set BULL_BOARD_PASSWORD or place /admin/* behind a VPN/IP
+  // allowlist at the load-balancer level.
+  if (env.get('NODE_ENV') !== 'production') {
+    const messageQueue = app.get<Queue>(getQueueToken(QUEUE_NAMES.MESSAGE_DISPATCH));
+    const serverAdapter = new BullBoardFastifyAdapter();
+
+    createBullBoard({
+      queues: [new BullMQAdapter(messageQueue)],
+      serverAdapter,
+    });
+
+    serverAdapter.setBasePath('/admin/queues');
+
+    const bullBoardUser = env.get('BULL_BOARD_USERNAME');
+    const bullBoardPass = env.get('BULL_BOARD_PASSWORD');
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const registerOpts: Record<string, any> = { prefix: '/admin/queues', logLevel: 'warn' };
+
+    if (bullBoardPass) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      registerOpts['preHandler'] = async (request: any, reply: any) => {
+        const auth = (request.headers['authorization'] as string | undefined) ?? '';
+        const [type, encoded] = auth.split(' ');
+        if (type !== 'Basic' || !encoded) {
+          void reply.code(401).header('WWW-Authenticate', 'Basic realm="Bull Board"').send('Unauthorized');
+          return;
+        }
+        const decoded = Buffer.from(encoded, 'base64').toString('utf8');
+        const [user, pass] = decoded.split(':');
+        if (user !== bullBoardUser || pass !== bullBoardPass) {
+          void reply.code(401).header('WWW-Authenticate', 'Basic realm="Bull Board"').send('Unauthorized');
+        }
+      };
+    }
+
+    await fastifyInstance.register(serverAdapter.registerPlugin(), registerOpts);
   }
 
   const port = env.get('PORT');
