@@ -1,0 +1,12 @@
+import type { ReactNode } from 'react';
+
+/**
+ * Auth pages layout — full-screen centered card, no sidebar.
+ */
+export default function AuthLayout({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+      <div className="w-full max-w-sm">{children}</div>
+    </div>
+  );
+}

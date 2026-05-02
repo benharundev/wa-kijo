@@ -9,6 +9,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import { EnvService } from './config/env.service';
 import { BETTER_AUTH, type BetterAuthInstance } from './auth/better-auth.token';
 import { requestContextStorage } from './common/context/request-context';
+import { FilteredLogger } from './common/logger/filtered-logger';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -17,8 +18,9 @@ async function bootstrap(): Promise<void> {
     { bufferLogs: true },
   );
 
-  // Replace NestJS default logger with Pino
-  app.useLogger(app.get(Logger));
+  // Replace NestJS default logger with Pino (wrapped to suppress the
+  // LegacyRouteConverter noise — see FilteredLogger for the full rationale).
+  app.useLogger(new FilteredLogger(app.get(Logger)));
   app.flushLogs();
 
   const env = app.get(EnvService);
