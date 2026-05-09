@@ -1,6 +1,7 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with
+code in this repository.
 
 > **What this is:** Persistent project context loaded by Claude Code at every
 > session. Keep it lean. Ad-hoc context goes in `docs/` and is referenced via
@@ -21,18 +22,20 @@ rationale.**
 
 ## Current phase status
 
-| Phase | Scope | Status |
-|-------|-------|--------|
-| 1 | Repo skeleton, tooling, Docker Compose, tsconfig | ✅ Complete |
-| 2 | NestJS API scaffold, Prisma schema, BaseRepository | ✅ Complete |
-| 3 | Better Auth, multi-tenant org hierarchy | ✅ Complete |
-| 4 | Next.js frontend scaffold | ✅ Complete |
-| 5 | BullMQ jobs, billing (Stripe + Billplz + Curlec) | ✅ Complete |
+| Phase | Scope                                                                                                   | Status         |
+| ----- | ------------------------------------------------------------------------------------------------------- | -------------- |
+| 1     | Repo skeleton, tooling, Docker Compose, tsconfig                                                        | ✅ Complete    |
+| 2     | NestJS API scaffold, Prisma schema, BaseRepository                                                      | ✅ Complete    |
+| 3     | Better Auth, multi-tenant org hierarchy                                                                 | ✅ Complete    |
+| 4     | Next.js frontend scaffold                                                                               | ✅ Complete    |
+| 5     | BullMQ jobs, billing (Stripe + Billplz + Curlec)                                                        | ✅ Complete    |
+| 6     | Channel integrations (Meta WhatsApp, SMTP, SMS — **not started**) + frontend billing UI (**stub only**) | 🚧 In progress |
 
-All five phases are complete. The API has: `health/`, `contacts/`,
-`conversations/`, `billing/`, `queues/` (BullMQ) plus the full auth/context
-infrastructure. Phase 6 will add provider integrations (Meta WhatsApp Business
-API, SMTP relay, SMS gateway) and the frontend billing UI.
+Phases 1–5 are complete. The API has: `health/`, `contacts/`, `conversations/`,
+`billing/`, `queues/` (BullMQ) plus the full auth/context infrastructure. Phase
+6 billing API is **done** — the frontend billing UI at
+`apps/web/src/app/(app)/orgs/[orgId]/billing/page.tsx` is currently a stub
+awaiting the plan selection and checkout flow.
 
 ## Tech stack — non-negotiable
 
@@ -44,8 +47,8 @@ API, SMTP relay, SMS gateway) and the frontend billing UI.
 - **Validation:** Zod end-to-end (DTOs, env, forms — single source of truth)
 - **Jobs:** BullMQ + Redis 7
 - **Email:** Resend + React Email
-- **Billing:** Stripe (default) + Billplz + Curlec/Razorpay (Malaysian) behind
-  a common `BillingProvider` interface
+- **Billing:** Stripe (default) + Billplz + Curlec/Razorpay (Malaysian) behind a
+  common `BillingProvider` interface
 - **Package manager:** pnpm 9. Always.
 - **Node:** 22 LTS. Enforced via `engines`.
 
@@ -64,16 +67,23 @@ wa-kijo/
 │   │   │   ├── decorators/       # @Public(), @CurrentUser(), @RequirePermission()
 │   │   │   ├── filters/          # HttpExceptionFilter
 │   │   │   ├── guards/           # AuthGuard (APP_GUARD #1), PermissionGuard (#2)
-│   │   │   └── interceptors/     # TransformInterceptor
+│   │   │   ├── interceptors/     # TransformInterceptor
+│   │   │   └── logger/           # Pino-based logger; suppresses noisy wildcard-route warning
 │   │   ├── config/               # EnvService (Zod-validated, @Global)
-│   │   ├── prisma/               # PrismaModule (@Global)
+│   │   ├── prisma/               # PrismaModule + PrismaService (@Global)
+│   │   ├── queues/
+│   │   │   ├── jobs/             # Job payload types (TypeScript interfaces only)
+│   │   │   ├── processors/       # BullMQ Processor classes (one per queue)
+│   │   │   ├── queue.names.ts    # QUEUE_NAMES constant — single source of queue name strings
+│   │   │   └── queues.module.ts  # BullModule.forRootAsync + registerQueue + re-exports
 │   │   ├── redis/                # RedisModule (@Global)
-│   │   └── modules/              # Feature modules (health/, email/ exist; add yours here)
+│   │   └── modules/              # health/, email/, contacts/, conversations/, billing/
 │   └── web/src/
 │       ├── app/(auth)/           # sign-in, sign-up, magic-link, reset-password
 │       ├── app/(app)/            # authenticated shell: dashboard, orgs/[orgId], settings
 │       ├── components/layout/    # Sidebar, TopBar, OrgSwitcher, UserMenu
 │       ├── components/ui/        # shadcn/ui primitives
+│       ├── hooks/                # use-can.ts, use-session.ts, use-toast.ts
 │       ├── lib/                  # auth-client.ts, fetcher.ts
 │       └── providers/            # QueryProvider, ThemeProvider
 ├── packages/
@@ -81,7 +91,8 @@ wa-kijo/
 │   └── shared/src/
 │       ├── auth/                 # roles.ts, permissions.ts, can.types.ts
 │       └── dto/                  # Zod schemas reused by API and web
-├── docs/decisions/               # ADRs — NNNN-title.md (see 0001-better-auth-with-org-hierarchy.md)
+├── docs/decisions/               # ADRs — 0001 through 0007 (see list in docs/decisions/)
+├── docs-site/                    # Mintlify customer-facing docs site
 └── .claude/rules/                # backend.md, frontend.md, testing.md, security.md
 ```
 
@@ -134,6 +145,8 @@ pnpm test:e2e             # Playwright (starts api + web servers automatically)
 pnpm lint                 # ESLint + Prettier check
 pnpm typecheck            # tsc --noEmit
 pnpm format               # auto-format all files
+pnpm format:check         # Prettier check only (no writes — CI-safe)
+pnpm clean                # rm -rf all dist/, .next/, .turbo/, node_modules/ across the monorepo
 
 # Run a single test file
 pnpm --filter @wa-kijo/api test -- --run src/modules/contacts/contacts.service.spec.ts
@@ -147,6 +160,10 @@ pnpm db:studio            # open Prisma Studio
 pnpm docker:up            # start dev containers (detached)
 pnpm docker:down          # stop dev containers
 pnpm docker:logs          # tail container logs
+
+# Docs site (Mintlify)
+pnpm docs:dev             # Mintlify dev server
+pnpm docs:pdf             # generate PDF handbook
 ```
 
 ## Auth & request context architecture
@@ -168,24 +185,132 @@ BaseRepository             → auto-scopes every query to ctx.orgId
 ```
 
 **Key files:**
+
 - `apps/api/src/main.ts` — Fastify hook setup (hooks #1 and #2)
-- `apps/api/src/common/context/request-context.ts` — AsyncLocalStorage store shape
-- `apps/api/src/auth/auth.service.ts` — `resolveContext()` + `resolveEffectiveRole()`
-- `apps/api/src/common/guards/auth.guard.ts` — session validation, store population
+- `apps/api/src/common/context/request-context.ts` — AsyncLocalStorage store
+  shape
+- `apps/api/src/auth/auth.service.ts` — `resolveContext()` +
+  `resolveEffectiveRole()`
+- `apps/api/src/common/guards/auth.guard.ts` — session validation, store
+  population
 - `apps/api/src/common/guards/permission.guard.ts` — RBAC enforcement
 
 **Hierarchy role resolution:** a user with `owner` role in a parent AGENCY org
 automatically receives `owner` authority in all child WORKSPACEs. Depth limit is
 3 levels (enforced in `AuthService`). `@Public()` bypasses both guards.
 
+## API response envelope
+
+All responses are wrapped by `TransformInterceptor`. Frontend `fetcher.ts`
+expects this shape:
+
+```json
+// Success
+{ "success": true, "data": { ... }, "timestamp": "2026-05-02T..." }
+
+// Error (HttpExceptionFilter)
+{ "success": false, "statusCode": 422, "error": "VALIDATION_ERROR", "message": "...", "timestamp": "..." }
+```
+
+`fetcher.ts` throws `ApiError` (with `code`, `message`, `fields`) on non-2xx. On
+401 it auto-redirects to `/sign-in`.
+
+## Prisma data models
+
+18 models in `packages/db/prisma/schema.prisma`, grouped by domain:
+
+| Group                                             | Models                                                    |
+| ------------------------------------------------- | --------------------------------------------------------- |
+| Auth (Better Auth — field names fixed by adapter) | `User`, `Session`, `Account`, `Verification`              |
+| Tenancy                                           | `Organization`, `Member`, `Invitation`                    |
+| Domain                                            | `Contact`, `Tag`, `ContactTag`, `Conversation`, `Message` |
+| Billing                                           | `Plan`, `Subscription`                                    |
+
+Key schema conventions:
+
+- All soft-deletable models carry `deletedAt DateTime?` + `deletedBy String?`.
+- `role` and `status` fields are `String`, not Prisma enums — required for
+  Better Auth adapter compatibility.
+- `organizationId` is denormalized onto `Message` so tenant-scoped queries never
+  need a join through `Conversation`.
+- `Plan` stores provider price IDs (`stripePriceMonthlyId`,
+  `stripePriceYearlyId`, `curlecPlanId`, `billplzCollectionId`) — one row covers
+  all three payment providers.
+- `Subscription` has `@unique(organizationId)` — one subscription per org,
+  upserted by webhook handlers.
+- `Contact.phone` uniqueness is enforced per-org in the service layer (E.164
+  format), not at the DB level.
+
+## BillingProvider interface (Phase 6 extension point)
+
+`apps/api/src/modules/billing/billing.provider.interface.ts` defines the
+contract every payment gateway must implement. Three concrete providers are
+complete:
+
+| Symbol                     | Implementation           | Notes                                         |
+| -------------------------- | ------------------------ | --------------------------------------------- |
+| `BILLING_STRIPE_PROVIDER`  | `StripeBillingProvider`  | Subscriptions + Customer Portal, 14-day trial |
+| `BILLING_BILLPLZ_PROVIDER` | `BillplzBillingProvider` | Malaysian FPX bills, no portal concept        |
+| `BILLING_CURLEC_PROVIDER`  | `CurlecBillingProvider`  | Razorpay direct debit                         |
+
+All providers implement `ensureCustomer`, `createCheckoutSession`,
+`createPortalSession`, and `handleWebhook`. `BillingService.getProvider(name)`
+selects the correct instance at runtime and throws `BadRequestException` if the
+provider's env vars are not configured.
+
+**Phase 6 channel providers (Meta WhatsApp, SMTP, SMS) are separate from
+billing.** The stub to replace is `MessageDispatchProcessor` in
+`apps/api/src/queues/processors/message-dispatch.processor.ts` — it routes by
+`job.data.channel` (`whatsapp | email | sms`) and currently marks every job
+`sent` with a placeholder `externalId`.
+
+## Integration test patterns
+
+Integration tests live in `apps/api/test/integration/` and run against a real
+Postgres container. Use `pnpm test:integration` (serial — one container at a
+time).
+
+**Setup (`setup/testcontainers.ts`):** Launches `postgres:16-alpine` via
+Testcontainers, runs `prisma migrate deploy`, returns `{ prisma, container }`.
+Call `teardownTestDb(db)` in `afterAll`.
+
+**Factories (`setup/test-factories.ts`):** Write directly via Prisma (bypass
+Better Auth HTTP). Never import in production code.
+
+- `createTestTenant(prisma, opts?)` — one call creates org + user + member,
+  returns `{ org, user, member }`. Use this by default.
+- `createTestOrg`, `createTestUser`, `createTestMember` — lower-level primitives
+  for edge cases.
+
+**`makeCtx` helper (copy into each spec file):**
+
+```typescript
+function makeCtx(userId: string, orgId: string): RequestContext {
+  return {
+    userId,
+    orgId,
+    orgType: 'WORKSPACE',
+    userRole: 'admin',
+    globalRole: 'user',
+    requestId: 'test-request',
+  };
+}
+```
+
+**Tenant isolation tests:**
+`apps/api/test/integration/tenant-isolation/cross-tenant.spec.ts` is the
+canonical reference. Every new repository must assert that cross-org `findById`
+returns `null` (not an error) and `findAll` returns only own-org records.
+
 ## Workspace package build pattern
 
-`packages/shared` and `packages/db` are source-first packages. They use **conditional
-exports**: TypeScript resolves the `types` condition (`.ts` source), Node.js resolves
-the `require` condition (`dist/` CJS build). Before starting the API in dev mode, both
-packages are auto-built by the dev script (`pnpm dev` handles this). After editing code
-in a workspace package, run `pnpm --filter @wa-kijo/shared build` (or `@wa-kijo/db`) to
-update the CJS output — otherwise the running API still sees the old compiled version.
+`packages/shared` and `packages/db` are source-first packages. They use
+**conditional exports**: TypeScript resolves the `types` condition (`.ts`
+source), Node.js resolves the `require` condition (`dist/` CJS build). Before
+starting the API in dev mode, both packages are auto-built by the dev script
+(`pnpm dev` handles this). After editing code in a workspace package, run
+`pnpm --filter @wa-kijo/shared build` (or `@wa-kijo/db`) to update the CJS
+output — otherwise the running API still sees the old compiled version.
 
 ## TypeScript config
 
@@ -215,6 +340,12 @@ Claude instances must know when scaffolding backend code:
 
 - Architecture rationale → `@docs/architecture.md`
 - Specific feature requirements → `@docs/prd.md` (search by FR-XXX ID)
-- API design conventions → `@.claude/rules/backend.md`
+- API design conventions → `@docs/api-conventions.md` (URL structure,
+  pagination, HTTP status codes)
+- Backend code rules → `@.claude/rules/backend.md`
 - Security patterns → `@.claude/rules/security.md`
+- Observability (logs, metrics, tracing) → `@docs/observability.md`
 - Operational procedures → `@docs/runbook.md`
+- Customizing the boilerplate → `@docs/customization.md`
+- Upgrading between releases → `@docs/upgrade-guide.md`
+- Term definitions → `@docs/glossary.md`
