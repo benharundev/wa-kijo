@@ -1,17 +1,19 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue } from 'bullmq';
-import type {
-  ConversationQueryDto,
-  CreateConversationDto,
-  MessageQueryDto,
-  SendMessageDto,
-  UpdateConversationDto,
+import {
+  hasPermission,
+  type ConversationQueryDto,
+  type CreateConversationDto,
+  type MessageQueryDto,
+  type SendMessageDto,
+  type UpdateConversationDto,
 } from '@wa-kijo/shared';
 import type { RequestContext } from '../../common/context/request-context';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -92,6 +94,29 @@ export class ConversationsService {
 
   async update(ctx: RequestContext, id: string, dto: UpdateConversationDto) {
     await this.findOne(ctx, id);
+
+    if (
+      dto.assignedToUserId !== undefined &&
+      !hasPermission(ctx.userRole, 'conversation:assign')
+    ) {
+      throw new ForbiddenException(
+        `Role '${ctx.userRole}' does not have permission 'conversation:assign'`,
+      );
+    }
+
+    if (dto.assignedToUserId) {
+      const assignee = await this.prisma.member.findUnique({
+        where: {
+          organizationId_userId: {
+            organizationId: ctx.orgId,
+            userId: dto.assignedToUserId,
+          },
+        },
+      });
+      if (!assignee) {
+        throw new NotFoundException(`Assignee ${dto.assignedToUserId} not found`);
+      }
+    }
 
     const conv = await this.prisma.conversation.update({
       where: { id },

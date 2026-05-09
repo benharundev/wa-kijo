@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   Logger,
@@ -57,6 +58,7 @@ export class ContactsService {
     }
 
     const { tagIds, ...rest } = dto;
+    await this.assertTagsBelongToOrg(ctx, tagIds);
 
     const contact = await this.prisma.contact.create({
       data: {
@@ -79,6 +81,9 @@ export class ContactsService {
     await this.findOne(ctx, id); // throws 404 if not found / wrong tenant
 
     const { tagIds, ...rest } = dto;
+    if (tagIds !== undefined) {
+      await this.assertTagsBelongToOrg(ctx, tagIds);
+    }
 
     const contact = await this.prisma.contact.update({
       where: { id },
@@ -97,6 +102,23 @@ export class ContactsService {
 
     this.logger.log({ contactId: id, orgId: ctx.orgId }, 'Contact updated');
     return contact;
+  }
+
+  private async assertTagsBelongToOrg(ctx: RequestContext, tagIds: string[]) {
+    if (!tagIds.length) return;
+
+    const uniqueTagIds = [...new Set(tagIds)];
+    const tenantTags = await this.prisma.tag.findMany({
+      where: {
+        id: { in: uniqueTagIds },
+        organizationId: ctx.orgId,
+      },
+      select: { id: true },
+    });
+
+    if (tenantTags.length !== uniqueTagIds.length) {
+      throw new BadRequestException('All tags must belong to the active organisation');
+    }
   }
 
   async remove(ctx: RequestContext, id: string) {
