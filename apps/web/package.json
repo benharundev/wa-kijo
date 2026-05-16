@@ -1,6 +1,6 @@
 {
   "name": "@wa-kijo/web",
-  "version": "0.0.1",
+  "version": "0.6.1",
   "private": true,
   "description": "Next.js 15 frontend for wa-kijo SaaS boilerplate",
   "engines": {

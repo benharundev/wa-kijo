@@ -125,20 +125,18 @@ extension point over elegance. Future consumers will tell you what was actually
 needed.
 
 **Shared engines packaging (locked 2026-05-17):** none of the 11 engines ship as
-workspace packages in v1.0. All live as in-API NestJS modules under
-`apps/api/src/modules/`. The existing `@wa-kijo/booking-core` workspace package
-is rolled back into `apps/api/src/modules/booking/`. Workspace-package promotion
-is a post-v1.0 decision triggered by an actual second module needing independent
-SemVer.
+workspace packages in v1.0. All will land as in-API NestJS modules under
+`apps/api/src/modules/` when their phase arrives. The `@wa-kijo/booking-core`
+workspace package that existed pre-2026-05-17 was removed from Community in the
+v0.6.0 cleanup; its code is preserved on the `wa-kijo-pro` archive branch.
+Workspace-package promotion is a post-v1.0 decision triggered by an actual
+second module needing independent SemVer.
 
 **Open decisions:**
 
 - **SSO/SCIM build vs buy** — WorkOS ($125/connection/month, ships SSO + SCIM +
   Directory Sync + Audit Logs as one integration, ~6–8 weeks faster to
   enterprise-ready) vs roll-your-own. No ADR yet.
-- **ADR-0011 follow-up** — write a new ADR that formally supersedes the
-  platform-thesis portions of ADR-0008, 0009, 0010 and records the (b) + Path 2
-  decision with rationale.
 - **Speculative-engine scope** — Workflow, Report, Inventory Core, Invoice Core
   have no in-scope consumer. Open question: build them as thin abstract-stub
   kernels (cheap, may need refactor) or as fuller speculative designs

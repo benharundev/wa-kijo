@@ -16,8 +16,10 @@ out/
 !.env.example
 
 # Personal Claude Code memory + agent skills (gitignored)
+# `.claude/rules/` is intentionally kept tracked — referenced by CLAUDE.md.
 CLAUDE.local.md
-.claude/
+.claude/*
+!.claude/rules/
 .agents/
 
 # Coverage

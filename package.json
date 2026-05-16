@@ -1,9 +1,9 @@
 {
   "name": "wa-kijo",
-  "version": "0.0.1",
+  "version": "0.6.1",
   "private": true,
   "description": "Production-grade SaaS boilerplate — NestJS + Prisma + Better Auth + Next.js",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "packageManager": "pnpm@9.15.0",
   "engines": {
     "node": ">=22.0.0",

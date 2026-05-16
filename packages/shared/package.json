@@ -1,6 +1,6 @@
 {
   "name": "@wa-kijo/shared",
-  "version": "0.0.1",
+  "version": "0.6.1",
   "private": true,
   "description": "Zod schemas and types shared between api and web",
   "exports": {

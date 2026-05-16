@@ -1,6 +1,6 @@
 {
   "name": "@wa-kijo/api",
-  "version": "0.0.1",
+  "version": "0.6.1",
   "private": true,
   "description": "NestJS 11 API with Fastify adapter",
   "engines": {
