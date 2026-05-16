@@ -587,22 +587,23 @@ drive upgrades, useful enough that people actually adopt it.
 
 ### 8.2 Commercial tiers (A–E)
 
-Pricing is placeholder — calibrate against ShipFast ($299), Boilerplate.dev
-($199–499), SaaS Pegasus ($249–999), Bullet Train ($249–999). Enterprise
-boilerplate vendors charge $2k–5k+ for SSO/SCIM tiers.
+Pricing is intentionally omitted from this document — it is calibrated and
+published on the wa-kijo-pro repo at sale time, not committed to public OSS
+sources. The table below captures the **structural** shape of each tier (license
+scope, update window, buyer profile).
 
-| Tier  | Name                       | Price (placeholder)   | License scope                                           | Update window               | Buyer profile                                 |
-| ----- | -------------------------- | --------------------- | ------------------------------------------------------- | --------------------------- | --------------------------------------------- |
-| **A** | **wa'kijo Starter**        | $199 one-time         | 1 developer, 1 production project                       | 6 months                    | Solo founders, side projects                  |
-| **B** | **wa'kijo Pro**            | $499 one-time         | 1 developer, unlimited projects                         | 12 months                   | Indie devs, multiple SaaS attempts            |
-| **C** | **wa'kijo Team**           | $999 one-time         | Up to 5 developers, unlimited projects                  | 18 months                   | Small agencies, 2–5 dev teams                 |
-| **D** | **wa'kijo Enterprise**     | $2,499 one-time       | Unlimited developers in one organisation                | 24 months                   | Companies building internal multi-tenant apps |
-| **E** | **wa'kijo OEM / Reseller** | $9,999+ custom-quoted | White-label rights, source modification, reseller terms | Lifetime + priority support | Agencies reselling SaaS-in-a-box to clients   |
+| Tier  | Name                       | License scope                                           | Update window               | Buyer profile                                 |
+| ----- | -------------------------- | ------------------------------------------------------- | --------------------------- | --------------------------------------------- |
+| **A** | **wa'kijo Starter**        | 1 developer, 1 production project                       | 6 months                    | Solo founders, side projects                  |
+| **B** | **wa'kijo Pro**            | 1 developer, unlimited projects                         | 12 months                   | Indie devs, multiple SaaS attempts            |
+| **C** | **wa'kijo Team**           | Up to 5 developers, unlimited projects                  | 18 months                   | Small agencies, 2–5 dev teams                 |
+| **D** | **wa'kijo Enterprise**     | Unlimited developers in one organisation                | 24 months                   | Companies building internal multi-tenant apps |
+| **E** | **wa'kijo OEM / Reseller** | White-label rights, source modification, reseller terms | Lifetime + priority support | Agencies reselling SaaS-in-a-box to clients   |
 
 **Update model.** A buyer of Tier B in month 0 receives all wa'kijo releases up
 to month 12 for free. From month 12 onwards, they continue to own everything
-shipped up to that point, but new releases require a paid renewal (priced at
-~50% of original tier price for an additional 12 months).
+shipped up to that point, but new releases require a paid renewal for an
+additional 12 months.
 
 ### 8.3 Feature matrix
 
@@ -691,13 +692,12 @@ Full text in `LICENSE-COMMUNITY.md`, `LICENSE-COMMERCIAL.md`, and
 
 ### 8.6 Open SKU decisions
 
-- **Final pricing** — placeholders above. Need market research / pricing
-  experiment.
+- **Final pricing** — kept out of this OSS PRD. Calibrated against the
+  boilerplate market and published on the wa-kijo-pro repo at sale time.
 - **WorkOS dependency disclosure** — if SSO/SCIM in Tier D uses WorkOS, the
-  buyer pays WorkOS separately ($125/SSO connection/month). Must be disclosed
-  pre-purchase.
-- **Renewal pricing** — currently sketched at 50% of tier price for an
-  additional 12 months. Industry varies between 30%–60%.
+  buyer pays WorkOS separately. Must be disclosed pre-purchase.
+- **Renewal model** — paid renewal for an additional 12 months. Specific renewal
+  ratio is a pricing decision held with the rest of the price sheet.
 - **Stripe-only OSS billing edge case** — if a buyer ships an app on Community
   using Stripe, then needs Billplz for Malaysian customers, they must upgrade to
   A or higher. Confirm this is the intended fence (vs giving Billplz away to
