@@ -9,38 +9,50 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); version
 
 ---
 
-## 0.6.0 — 2026-05-17 — **OSS Community release** 🎉
+## 0.6.1 — 2026-05-17
 
-> **Major repositioning + first public release.** wa'kijo is now a two-tier product: a public Apache 2.0 Community edition and a private wa'kijo-pro repo with five paid tiers (A–E). The platform-pivot direction set in earlier ADRs is **reversed** per ADR-0011 — wa'kijo Community is the enterprise foundation under a single business module (wa'lawe ships as its own separate OSS repo), not a multi-module platform.
-
-### Added
-
-- **Apache 2.0 license** for the Community edition. The earlier commercial-license draft moves to the private `wa-kijo-pro` repository.
-- **ADR-0011** — formalises the platform-thesis reversal. Module Registry, Customization Layer, and kernel governance dropped from v1.0. Pragmatic DDD softened to recommended pattern. Booking Core moves from a separate workspace package to an in-API module. Engines-first build order across Phases 6/8/9 before wa'lawe in Phase 10. Partially supersedes ADR-0008, ADR-0009, ADR-0010.
-- **PRD §8 Commercial Tiers** — full feature matrix for Community + five tiers (Starter / Pro / Team / Enterprise / OEM) with one-time pricing and tier-dependent update windows. wa'lawe ships as a separate OSS repo (MIT) that requires Tier B+ to run.
-- **Five-epoch roadmap** — Phases 6–10 reorganised into Platform Hardening, Compliance & DX, Commerce & White-Label, Engines Build-out, and wa'lawe + v1.0 GA. v1.0 estimate updated to ~15–22 months.
-- **Stripe billing UI** — `/orgs/[orgId]/billing` upgraded from a stub to a fully working flow: plan list, monthly / yearly toggle, Stripe Checkout redirect, Customer Portal access, status-aware return-URL toasts, current-subscription view.
-- **Public-facing README** — rewritten for OSS positioning. New `NOTICE` file with the informal "please don't repackage" note.
+> **Single-tier positioning.** The Community-vs-Pro framing and five-tier (A–E) matrix introduced briefly in v0.6.0 are removed. wa'kijo is a single open-source product under Apache 2.0 going forward.
 
 ### Changed
 
-- **Phase 6 critical path** is now Audit engine hardening + Storage engine + enterprise identity (MFA / SSO / SCIM / sessions / impersonation / IP allowlist / org lifecycle / maintenance mode). Module Registry runtime work removed.
-- **`BillingService`** narrowed to Stripe-only in Community. The `BillingProvider` interface stays open so wa'kijo-pro can add Billplz / Curlec / others without diverging the contract.
-- Example seed plans (`Starter` / `Growth` / `Enterprise`) are now generic — buyers replace them with their own product's plans.
-- `.env.example` cleaned of paid-tier env vars; Stripe CLI setup hint added.
+- README, NOTICE, CONTRIBUTING, SUPPORT, issue templates, PRD §8, and the docs site all stripped of "Pro / Community" comparisons and `wa-kijo-pro` references.
+- Permission catalogue trimmed of orphan keys (`module:*`, `tournament:*`, `example:*`) left over from deleted modules. Added `admin:queues` to match the docs.
+- Code comments in the billing module no longer reference a paid tier as the destination for additional providers.
 
-### Removed (from Community — preserved in wa-kijo-pro)
+[Full engineering CHANGELOG entry](https://github.com/benharundev/wa-kijo/blob/main/CHANGELOG.md#061---2026-05-17--drop-commercial-tier-positioning)
+
+---
+
+## 0.6.0 — 2026-05-17 — **First public release** 🎉
+
+> **Major repositioning + first public release.** The platform-pivot direction set in earlier ADRs is **reversed** per ADR-0011 — wa'kijo is the enterprise foundation under a single business module (wa'lawe ships as its own separate OSS repo), not a multi-module platform.
+
+### Added
+
+- **Apache 2.0 license** ([`LICENSE`](https://github.com/benharundev/wa-kijo/blob/main/LICENSE)).
+- **ADR-0011** — formalises the platform-thesis reversal. Module Registry, Customization Layer, and kernel governance dropped from v1.0. Pragmatic DDD softened to recommended pattern. Booking Core moves from a separate workspace package to an in-API module. Engines-first build order across Phases 6/8/9 before wa'lawe in Phase 10.
+- **Five-epoch roadmap** — Phases 6–10 reorganised into Platform Hardening, Compliance & DX, Commerce & White-Label, Engines Build-out, and wa'lawe + v1.0 GA. v1.0 estimate ~15–22 months.
+- **Stripe billing UI** — `/orgs/[orgId]/billing` upgraded from a stub to a working flow: plan list, monthly / yearly toggle, Stripe Checkout redirect, Customer Portal access, status-aware return-URL toasts, current-subscription view.
+
+### Changed
+
+- **Phase 6 critical path** is now Audit engine hardening + Storage engine + enterprise identity (MFA / SSO / SCIM / sessions / impersonation / IP allowlist / org lifecycle / maintenance mode).
+- **`BillingService`** narrowed to Stripe-only. The `BillingProvider` interface stays open so additional providers can be added later.
+- Example seed plans are now generic — replace them with the plans your product needs.
+- `.env.example` cleaned of paid-provider env vars; Stripe CLI setup hint added.
+
+### Removed
 
 - `@wa-kijo/booking-core` workspace package
 - Module Registry runtime (`Module` + `TenantModule` Prisma models, manifest scanner, dependency resolver, `@RequireModule()` guard)
 - `walawe` (chess tournament) module — moves to its own OSS repo
 - `_template` module
-- Billplz + Curlec billing providers
-- Plan + Subscription columns for Billplz / Curlec — Pro repo adds them back via its own migration
+- Billplz + Curlec billing provider implementations
+- Plan + Subscription columns for Billplz / Curlec
 
 ### Migration notes
 
-For developers coming from the pre-OSS state: run `pnpm db:migrate --name drop_platform_thesis_models` to drop the orphaned `module`, `tenant_module`, and Billplz / Curlec columns. Pro-tier buyers continue using `wa-kijo-pro` — paid features are preserved on the `archive/platform-thesis` branch.
+For developers coming from the pre-OSS state: run `pnpm db:migrate --name drop_platform_thesis_models` to drop the orphaned `module`, `tenant_module`, and Billplz / Curlec columns.
 
 [Full engineering CHANGELOG entry](https://github.com/benharundev/wa-kijo/blob/main/CHANGELOG.md#060---2026-05-17--oss-community-release-)
 

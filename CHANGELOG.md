@@ -15,35 +15,74 @@ and this project adheres to
 
 ## [Unreleased]
 
-## [0.6.0] - 2026-05-17 — **OSS Community release** 🎉
+## [0.6.1] - 2026-05-17 — Drop commercial-tier positioning
 
-> **Major repositioning + first public release.** wa'kijo is now a two-tier
-> product: a public Apache 2.0 Community edition (this repo) and a private
-> wa'kijo-pro repo with five paid tiers (A–E). The 2026-05-10 platform-pivot
-> direction set by ADR-0008 is **reversed** per ADR-0011 — wa'kijo Community is
-> the enterprise foundation under a single business module (wa'lawe ships as its
+### Changed
+
+- **License + positioning simplified to single-tier Apache 2.0 OSS.** The
+  Community-vs-Pro framing, the five-tier (A–E) feature matrix, and the
+  `wa-kijo-pro` references introduced in v0.6.0 have been removed from all
+  public-facing files (`README.md`, `NOTICE`, `CONTRIBUTING.md`, `SUPPORT.md`,
+  the issue templates, `CLAUDE.md`, `docs/prd.md`, the docs site, and code
+  comments). wa'kijo is a single open-source product going forward; any future
+  commercial offering will be re-introduced through separate channels if and
+  when it makes sense.
+- **`docs/prd.md` §8** trimmed from a multi-page commercial-tier matrix to a
+  short licensing note pointing at `LICENSE` and `NOTICE`.
+- **`docs-site/roadmap.mdx`** rewritten to describe the technical roadmap only,
+  without per-tier feature scoping.
+- **Permission catalogue** trimmed (`module:*`, `tournament:*`, `example:*`
+  keys removed — the modules they belonged to are gone). Added `admin:queues`
+  to match the docs.
+- **Code comments** in `billing.module.ts`, `billing.service.ts`,
+  `billing.provider.interface.ts`, and `packages/db/prisma/schema.prisma` no
+  longer reference `wa-kijo-pro` as the destination for additional billing
+  providers. They now say "additional providers can be added later" without
+  naming a paid tier.
+
+### Removed
+
+- `wa'kijo Pro` and `wa-kijo-pro` URL references everywhere.
+- Tier A–E table from README + PRD.
+- "Need enterprise features?" callout from README.
+- `NOTICE` paragraph naming the paid tier.
+- "Pro / Community" comparison rows in `CONTRIBUTING.md`.
+- Per-tier SLA table in `SUPPORT.md`.
+- Pro feature callout in `.github/ISSUE_TEMPLATE/feature_request.md`.
+
+### Note
+
+This is a positioning change, not a code change in v0.6.0's behaviour. The
+v0.6.0 git commits and tag remain in history as-is — see them for the original
+SKU-tier intent that was reverted by this release.
+
+---
+
+## [0.6.0] - 2026-05-17 — **First public release** 🎉
+
+> **Major repositioning + first public release.** The 2026-05-10 platform-pivot
+> direction set by ADR-0008 is **reversed** per ADR-0011 — wa'kijo is the
+> enterprise foundation under a single business module (wa'lawe ships as its
 > own separate OSS repo), not a multi-module platform.
+>
+> Note: as originally tagged, v0.6.0 introduced a five-tier commercial SKU
+> framing. That positioning was removed in v0.6.1; the entry below describes
+> the simplified single-tier shape.
 
 ### Added
 
-- **License:** repository relicensed from the commercial draft to **Apache 2.0**
-  ([`LICENSE`](LICENSE)). [`NOTICE`](NOTICE) carries the informal "please don't
-  repackage as a competing boilerplate" note alongside the standard attribution.
+- **License:** repository relicensed from the earlier commercial draft to
+  **Apache 2.0** ([`LICENSE`](LICENSE), [`NOTICE`](NOTICE)).
 - **ADR-0011** — formalises the platform-thesis reversal: Module Registry,
   Customization Layer, and kernel governance dropped from v1.0. Pragmatic DDD
   softened to recommended pattern. Booking Core stays in-API rather than as a
   workspace package. Engines-first build order (Path 2) confirmed across Phases
   6/8/9 before wa'lawe in Phase 10. Partially supersedes ADR-0008, ADR-0009,
   ADR-0010.
-- **PRD §8 Commercial Tiers and Licensing** — full feature matrix for
-  Community + five tiers A–E (Starter / Pro / Team / Enterprise / OEM), one-time
-  pricing with tier-dependent update windows, wa'lawe positioning (separate OSS
-  repo, requires Tier B+ to run).
 - **PRD §4 re-sort** — Phases 6–10 reorganised into five epochs (Platform
   Hardening / Compliance & DX / Commerce & White-Label / Engines Build-out /
   wa'lawe + v1.0 GA). v1.0 GA estimate updated to ~15–22 months from 2026-05-17.
-- **Public-facing README** — rewritten for OSS positioning with Community
-  feature list, quickstart, pointers to wa'kijo Pro for paid features.
+- **Public-facing README** — rewritten for OSS positioning.
 - **Stripe billing UI** — `apps/web/src/app/(app)/orgs/[orgId]/billing` upgraded
   from a stub to a fully working flow: plan list, monthly / yearly toggle,
   Stripe Checkout redirect, Customer Portal access, status-aware return-URL
@@ -61,34 +100,33 @@ and this project adheres to
 - `CLAUDE.md` strategic pivot section updated to keep ADR-0008/0009/0010 as
   historical context with a clear "reversed by ADR-0011" callout.
 - Example plans in `packages/db/src/seed.ts` are now generic (Starter / Growth /
-  Enterprise) rather than WhatsApp-specific — buyers replace them with the plans
-  their actual product needs.
-- `BillingService` provider selection narrowed to Stripe-only in Community; the
-  `BillingProvider` interface and `provider` enum stay open so wa'kijo-pro can
-  add Billplz / Curlec / others without diverging the API contract.
-- `.env.example` cleaned of paid-tier env vars (Billplz, Curlec) and given
-  clearer Stripe CLI setup hints.
+  Enterprise) rather than WhatsApp-specific — replace them with the plans your
+  actual product needs.
+- `BillingService` provider selection narrowed to Stripe-only; the
+  `BillingProvider` interface and `provider` enum stay open so additional
+  providers can be added later without diverging the API contract.
+- `.env.example` cleaned of unused provider env vars (Billplz, Curlec) and
+  given clearer Stripe CLI setup hints.
 
-### Removed (from this repo — preserved in `wa-kijo-pro`)
+### Removed
 
-- **`@wa-kijo/booking-core` workspace package** — code preserved on the
-  `archive/platform-thesis` branch in `wa-kijo-pro`. Becomes
-  `apps/api/src/modules/booking/` inside the Pro repo at engine build-out time.
+- **`@wa-kijo/booking-core` workspace package** — source remains in git
+  history if it ever needs to be revived.
 - **Module Registry runtime** — `apps/api/src/platform/module-registry/`, the
   `Module` + `TenantModule` Prisma models, manifest scanner, dependency
   resolver, `@RequireModule()` guard, manifest files in `contacts` and
   `conversations` modules.
-- **`apps/api/src/modules/walawe/`** — moves to its own OSS repo (`wa-lawe`, MIT
-  licence) and requires wa'kijo Pro to run.
+- **`apps/api/src/modules/walawe/`** — moves to its own OSS repo (`wa-lawe`,
+  MIT licence).
 - **`apps/api/src/modules/_template/`** — was a Module-Registry consumer
-  template; no longer load-bearing under the (b) scope.
+  template; no longer load-bearing.
 - **`apps/api/src/modules/billing/providers/billplz.billing-provider.ts`** and
-  **`curlec.billing-provider.ts`** — multi-provider billing is a Tier A+ feature
-  in Pro.
+  **`curlec.billing-provider.ts`** — only Stripe is built-in. Additional
+  providers can be added later via the `BillingProvider` interface.
 - **Plan + Subscription Billplz/Curlec columns** — Prisma schema cleaned to
-  Stripe-only. Pro adds them back via its own migration.
+  Stripe-only.
 - **`packages/shared/src/platform/`** — Module manifest schemas / admin DTOs no
-  longer exported from `@wa-kijo/shared` in Community.
+  longer exported from `@wa-kijo/shared`.
 - **`razorpay` runtime dependency** — only needed by the removed Curlec
   provider.
 - **Mintlify `reference/module-registry.mdx`** — removed from the docs site nav
@@ -102,8 +140,8 @@ and this project adheres to
 
 ### Security
 
-- Cross-tenant fuzz tests continue to run in CI on the Community-scoped models —
-  verified after the schema cleanup that no test imports removed code.
+- Cross-tenant fuzz tests continue to run in CI — verified after the schema
+  cleanup that no test imports removed code.
 
 ### Migration notes
 
@@ -112,8 +150,6 @@ and this project adheres to
   migration that drops `module`, `tenant_module`, and the Billplz / Curlec
   columns on `plan` and `subscription`. Review the generated SQL before
   accepting.
-- **Pro tier buyers**: continue using `wa-kijo-pro` — all paid features remain
-  available on the `archive/platform-thesis` branch and will be integrated into
   the Pro mainline through the engines build-out plan (PRD §4).
 
 ---
@@ -297,7 +333,8 @@ and this project adheres to
 
 ---
 
-[Unreleased]: https://github.com/benharundev/wa-kijo/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/benharundev/wa-kijo/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/benharundev/wa-kijo/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/benharundev/wa-kijo/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/benharundev/wa-kijo/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/benharundev/wa-kijo/compare/v0.3.0...v0.4.0

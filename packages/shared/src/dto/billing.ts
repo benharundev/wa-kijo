@@ -3,9 +3,9 @@ import { z } from 'zod';
 // ── Checkout ──────────────────────────────────────────────────────────────────
 
 /**
- * The `provider` enum stays open to additional values so that wa'kijo-pro can
- * accept Billplz / Curlec / etc. without forking this DTO. Community only
- * accepts 'stripe' at runtime — see BillingService.createCheckout.
+ * The `provider` enum stays open to additional values so future providers
+ * (Billplz, Curlec, etc.) can be added without forking this DTO. Only
+ * 'stripe' is accepted at runtime by default — see BillingService.createCheckout.
  */
 export const CreateCheckoutSchema = z.object({
   planId: z.string().min(1),

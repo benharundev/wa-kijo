@@ -6,11 +6,11 @@ import { BillingService } from './billing.service';
 import { BillingController } from './billing.controller';
 
 /**
- * BillingModule — subscription management via Stripe (OSS Community).
+ * BillingModule — subscription management via Stripe.
  *
  * The BillingProvider interface is intentionally kept generic so that
- * additional providers (Billplz, Curlec, etc.) can be added in wa'kijo-pro
- * without changing the BillingService contract.
+ * additional providers (Billplz, Curlec, etc.) can be added later without
+ * changing the BillingService contract.
  *
  * Provider initialisation is lazy via useFactory: if the required env vars
  * are absent the factory returns null instead of throwing, so the app boots

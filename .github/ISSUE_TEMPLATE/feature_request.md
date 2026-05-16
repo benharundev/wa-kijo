@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea for wa'kijo Community
+about: Suggest an idea for wa'kijo
 title: '[FEATURE] '
 labels: ['enhancement', 'needs-triage']
 ---
@@ -9,12 +9,6 @@ labels: ['enhancement', 'needs-triage']
 > [the roadmap](https://github.com/benharundev/wa-kijo/blob/main/docs/prd.md#4-phases)
 > and existing [discussions](https://github.com/benharundev/wa-kijo/discussions)
 > — there may already be a thread.
->
-> **Note on Pro-tier features.** SSO, SCIM, the 11 shared engines, custom
-> domains, white-labeling, public API + keys, and the super-admin console are
-> part of [wa'kijo Pro](https://github.com/benharundev/wa-kijo-pro), not
-> Community. Feature requests for those land on the Pro roadmap — see the
-> [feature matrix](https://github.com/benharundev/wa-kijo/blob/main/docs/prd.md#83-feature-matrix).
 
 ## Problem
 
@@ -22,7 +16,7 @@ labels: ['enhancement', 'needs-triage']
 
 ## Proposed solution
 
-<!-- What you'd like wa'kijo Community to do. Be specific. -->
+<!-- What you'd like wa'kijo to do. Be specific. -->
 
 ## Alternatives considered
 

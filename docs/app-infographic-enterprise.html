@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>wa'kijo Enterprise App Infographic</title>
+    <style>
+      :root {
+        --bg: #f3f6fb;
+        --panel: #ffffff;
+        --ink: #101828;
+        --muted: #475467;
+        --line: #d0d5dd;
+        --brand: #0b5fff;
+        --brand-2: #1f7a8c;
+        --accent: #134e4a;
+        --shadow: 0 24px 60px rgba(16, 24, 40, 0.12);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: "IBM Plex Sans", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        background:
+          radial-gradient(circle at 8% 10%, rgba(11,95,255,0.10), transparent 36%),
+          radial-gradient(circle at 90% 15%, rgba(31,122,140,0.10), transparent 32%),
+          linear-gradient(180deg, #eef3fb 0%, #f8fafc 60%, #eef2f7 100%);
+      }
+      .page {
+        width: min(1500px, calc(100vw - 40px));
+        margin: 20px auto;
+        padding: 30px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+      }
+      .hero {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 20px;
+        border: 1px solid var(--line);
+        background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+        padding: 22px;
+      }
+      .badge { display:inline-block; font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:#fff; background:var(--brand); padding:6px 10px; font-weight:700; }
+      h1 { margin: 12px 0 10px; font-size: clamp(32px, 4.2vw, 58px); line-height: 1; font-weight: 800; }
+      .sub { color: var(--muted); font-size: 18px; line-height: 1.45; max-width: 920px; }
+      .meta { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+      .meta .box { border:1px solid var(--line); background:#fff; padding:10px 12px; }
+      .meta b { display:block; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:#344054; margin-bottom:4px; }
+      .meta span { font-size:14px; color:#475467; }
+
+      .grid { display:grid; grid-template-columns: 1.1fr 1fr 1fr; gap:14px; margin-top:14px; }
+      section { border:1px solid var(--line); background:#fff; }
+      .hd { padding:12px 14px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; }
+      h2 { margin:0; font-size:18px; }
+      .tag { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:#fff; background:#111827; padding:4px 8px; }
+      .body { padding:12px 14px; }
+      .item { border:1px solid #e4e7ec; background:#fafcff; padding:10px; margin-bottom:8px; }
+      .item:last-child{margin-bottom:0}
+      .item h3 { margin:0 0 6px; font-size:14px; }
+      .item p { margin:0; color:var(--muted); font-size:13px; line-height:1.35; }
+      .pill { display:inline-block; margin:4px 4px 0 0; padding:4px 7px; border:1px solid #cfd4dc; background:#f8fafc; font-size:11px; font-weight:600; }
+      .flow { margin-bottom:8px; padding:10px; border-left:4px solid var(--brand); background:#f8fbff; border:1px solid #dbe4ff; }
+      .flow b { display:block; font-size:13px; margin-bottom:4px; }
+      .flow span { color:var(--muted); font-size:12px; }
+
+      .wide { margin-top:14px; border:1px solid var(--line); background:#fff; }
+      .wide .row { display:grid; grid-template-columns: repeat(6, 1fr); gap:8px; padding:12px; }
+      .kpi { border:1px solid #dbe2ea; background:#f8fafc; padding:10px; }
+      .kpi b { display:block; font-size:12px; color:#344054; margin-bottom:4px; }
+      .kpi span { font-size:13px; color:#1d2939; }
+
+      @media (max-width: 1100px){
+        .hero { grid-template-columns:1fr; }
+        .grid { grid-template-columns:1fr; }
+        .wide .row { grid-template-columns: repeat(2, 1fr); }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div>
+          <span class="badge">Enterprise System Blueprint</span>
+          <h1>wa'kijo Full Application Infographic</h1>
+          <p class="sub">Production-ready, multi-tenant SaaS foundation with secure request handling, tenant-safe data access, and enterprise modules for B2B product delivery.</p>
+        </div>
+        <div class="meta">
+          <div class="box"><b>Stack</b><span>NestJS, Fastify, Next.js, Prisma, Postgres, Redis</span></div>
+          <div class="box"><b>Architecture</b><span>API/Web decoupled, shared DTO + RBAC package</span></div>
+          <div class="box"><b>Security</b><span>Better Auth, RBAC guard, tenant-scoped repository</span></div>
+          <div class="box"><b>Primary Outcome</b><span>Enterprise SaaS shipped faster with lower risk</span></div>
+        </div>
+      </header>
+
+      <section class="wide">
+        <div class="hd"><h2>Business Capability Coverage</h2><span class="tag">Core Value</span></div>
+        <div class="row">
+          <div class="kpi"><b>Authentication</b><span>Email/password, magic link, OAuth, sessions</span></div>
+          <div class="kpi"><b>Authorization</b><span>Permission map + guard-enforced RBAC</span></div>
+          <div class="kpi"><b>Multi-Tenancy</b><span>SYSTEM -> AGENCY -> WORKSPACE hierarchy</span></div>
+          <div class="kpi"><b>Billing</b><span>Stripe plans, subscriptions, webhook support</span></div>
+          <div class="kpi"><b>Messaging</b><span>Conversations + queue-driven dispatch</span></div>
+          <div class="kpi"><b>Observability</b><span>Structured logging, auditability, traceable requests</span></div>
+        </div>
+      </section>
+
+      <div class="grid">
+        <section>
+          <div class="hd"><h2>Platform Layers</h2><span class="tag">Structure</span></div>
+          <div class="body">
+            <div class="item"><h3>1. Experience Layer</h3><p>Next.js web app for auth, onboarding, dashboard, org settings, and billing UX.</p></div>
+            <div class="item"><h3>2. API Core Layer</h3><p>NestJS modules for contacts, conversations, billing, email, health, and auth orchestration.</p></div>
+            <div class="item"><h3>3. Data & Shared Layer</h3><p>Prisma models/migrations and shared Zod DTO + permission types across API and Web.</p></div>
+            <div class="item"><h3>4. Integration Layer</h3><p>Stripe, Resend, Redis/BullMQ, and observability pipeline connected to core services.</p></div>
+          </div>
+        </section>
+
+        <section>
+          <div class="hd"><h2>Secure Request Lifecycle</h2><span class="tag">Control Plane</span></div>
+          <div class="body">
+            <div class="flow"><b>Step 1: Context Initialization</b><span>Fastify hook creates request scope with requestId and context placeholders.</span></div>
+            <div class="flow"><b>Step 2: Auth Intercept</b><span>Better Auth handles `/api/auth/*` directly for raw cookie/session flows.</span></div>
+            <div class="flow"><b>Step 3: Guard Enforcement</b><span>AuthGuard resolves active org, PermissionGuard enforces role capabilities.</span></div>
+            <div class="flow"><b>Step 4: Tenant-Scoped Data Access</b><span>BaseRepository injects orgId filters and soft-delete defaults automatically.</span></div>
+            <div class="flow"><b>Step 5: Uniform API Contract</b><span>Consistent success/error response envelope for client reliability and monitoring.</span></div>
+          </div>
+        </section>
+
+        <section>
+          <div class="hd"><h2>Operational Flow</h2><span class="tag">Execution</span></div>
+          <div class="body">
+            <div class="item"><h3>Identity to Access</h3><p>User authenticates, enters tenant context, receives effective role permissions.</p></div>
+            <div class="item"><h3>Business Transactions</h3><p>User executes module workflows (contacts, conversations, billing) via API boundaries.</p></div>
+            <div class="item"><h3>Async Processing</h3><p>Background jobs process delayed/retied tasks through BullMQ and Redis queues.</p></div>
+            <div class="item"><h3>External Sync</h3><p>Payment and communications integrate through Stripe and Resend connectors.</p></div>
+            <div class="item"><h3>Audit and Monitoring</h3><p>Structured logs and request correlation support incident response and compliance.</p></div>
+            <div>
+              <span class="pill">Tenant Isolation</span>
+              <span class="pill">RBAC</span>
+              <span class="pill">Queue Reliability</span>
+              <span class="pill">Enterprise Readiness</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

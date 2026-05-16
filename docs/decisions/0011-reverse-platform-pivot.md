@@ -92,11 +92,10 @@ Concretely:
    Inventory Core / Invoice Core have no in-scope consumer in v1.0 (see
    "Negative consequences").
 
-6. **Commercial SKU model.** wa'kijo ships as one Apache-2.0 Community edition
-   plus five commercial tiers A–E (Starter / Pro / Team / Enterprise / OEM).
-   wa'lawe is open-sourced as a separate MIT repository; running it requires
-   wa'kijo Pro (Tier B) or higher because it depends on Booking Core. Full SKU
-   detail in `docs/prd.md` §8.
+6. **Single-tier licensing.** wa'kijo ships under Apache 2.0 as a single
+   open-source product. wa'lawe is open-sourced as a separate MIT repository.
+   (An earlier draft of this ADR introduced a five-tier commercial SKU model;
+   that was removed in v0.6.1 — see the CHANGELOG.)
 
 ---
 
@@ -134,10 +133,9 @@ Concretely:
   (wa-lawe, wa-bengkel, wa-kiro) is a hard fork of wa'kijo's current tag. No
   shared platform code beyond what's frozen at fork time.
 - **Why considered:** Simplest mental model. Zero platform plumbing.
-- **Why rejected:** Defeats the SKU commercial model. Buyers of Tier B+ expect
-  to receive 12–24 months of platform updates. Hard forks make upstream-merging
-  painful for buyers and for us. The SKU-tier update windows in §8 of the PRD
-  require a maintainable single mainline.
+- **Why rejected:** Hard forks make upstream-merging painful for downstream
+  consumers and for the maintainer. A single mainline is easier to support and
+  patch.
 
 ---
 
@@ -150,8 +148,6 @@ Concretely:
   code than the platform thesis required.
 - **Less abstraction debt.** No speculative pluggability surface to maintain.
   Wrong abstractions are the most expensive kind of code.
-- **Clearer SKU positioning.** Tiers A–E map to capabilities, not to
-  enable/disable module flags. Marketing is simpler.
 - **Enterprise-readiness is the differentiator.** Without the distraction of
   platform plumbing, Phase 6 (SSO / SCIM / audit hardening) gets the engineering
   bandwidth it needs to compete with HubSpot / Salesforce / ServiceNow on
@@ -205,8 +201,7 @@ Follow-up tasks unblocked by this ADR:
 4. **Decide WorkOS vs build for SSO/SCIM** — flagged as an open decision, not
    part of this ADR. Likely ADR-0012.
 5. **wa'lawe repo setup** — create `wa-lawe` as a public repository under MIT
-   licence with a README that explicitly states "requires wa'kijo Pro (Tier B)
-   or higher to run."
+   licence. It depends on the wa'kijo Booking Core module at runtime.
 
 ---
 
@@ -214,9 +209,8 @@ Follow-up tasks unblocked by this ADR:
 
 - **Supersedes / modifies:** ADR-0008 (partially), ADR-0009 (modifies), ADR-0010
   (modifies).
-- **Related:** `docs/prd.md` §4 (phase plan), §8 (commercial SKUs); the Modular
-  Enterprise SaaS Architecture diagrams shared on 2026-05-17 (now reversed for
-  v1.0 scope).
+- **Related:** `docs/prd.md` §4 (phase plan); the Modular Enterprise SaaS
+  Architecture diagrams shared on 2026-05-17 (now reversed for v1.0 scope).
 - **External:** n8n's Apache-2.0-with-commons-clause licence model (used as a
   reference for wa'kijo Community licensing); ShipFast, Boilerplate.dev, SaaS
   Pegasus, Bullet Train for tier pricing benchmarks.

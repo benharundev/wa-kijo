@@ -119,6 +119,6 @@ export class BillingController {
     return { received: true };
   }
 
-  // Additional provider routes (Billplz, Curlec, etc.) live in wa'kijo-pro
-  // behind the Tier A+ paywall. Stripe is the only provider in Community.
+  // Additional provider routes (Billplz, Curlec, etc.) can be added here when
+  // their concrete BillingProvider implementations are wired in.
 }

@@ -5,5 +5,5 @@ export * from './dto/conversation';
 export * from './dto/billing';
 export * from './auth';
 // platform/* exports (module manifest schema, module admin DTOs) removed
-// per ADR-0011 — Module Registry is deferred post-v1.0. They live in
-// wa'kijo-pro on the archive/platform-thesis branch.
+// per ADR-0011 — the Module Registry was reverted out of v1.0 scope. The
+// original source remains in git history if it ever needs to be revived.

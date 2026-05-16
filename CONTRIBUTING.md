@@ -1,12 +1,8 @@
 # Contributing to wa'kijo
 
-Thanks for your interest. wa'kijo Community is Apache 2.0 licensed and welcomes
+Thanks for your interest. wa'kijo is Apache 2.0 licensed and welcomes
 contributions from anyone. This document covers how the project is run, what
 gets merged, and what's expected of contributors.
-
-> Looking for paid support or commercial features? Those live in wa'kijo Pro —
-> see the [tier matrix](docs/prd.md#83-feature-matrix). This document is only
-> about contributing to the OSS Community edition.
 
 ---
 
@@ -46,13 +42,13 @@ gets merged, and what's expected of contributors.
 
 ## What kinds of contributions we want
 
-| Always welcome             | Discuss first                                 | Probably not a fit                                                                    |
-| -------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Bug fixes with a test      | New feature modules                           | Re-platforming (Express, Hono, Drizzle, MongoDB)                                      |
-| Doc clarifications + typos | Performance improvements that change behavior | Visual / drag-and-drop builders                                                       |
-| Test coverage improvements | New ADRs for architectural decisions          | CMS or marketing-site features                                                        |
-| Dependency security bumps  | New permissions                               | Anything that competes with the Pro feature list — open a discussion if you're unsure |
-| Translation / i18n strings | New CLI scripts                               |                                                                                       |
+| Always welcome             | Discuss first                                 | Probably not a fit                               |
+| -------------------------- | --------------------------------------------- | ------------------------------------------------ |
+| Bug fixes with a test      | New feature modules                           | Re-platforming (Express, Hono, Drizzle, MongoDB) |
+| Doc clarifications + typos | Performance improvements that change behavior | Visual / drag-and-drop builders                  |
+| Test coverage improvements | New ADRs for architectural decisions          | CMS or marketing-site features                   |
+| Dependency security bumps  | New permissions                               |                                                  |
+| Translation / i18n strings | New CLI scripts                               |                                                  |
 
 ---
 

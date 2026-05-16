@@ -12,11 +12,11 @@ import {
  * BillingService — business logic for subscription lifecycle management.
  *
  * Provider selection:
- *  Community ships with Stripe only. The provider is selected per-request
- *  via CreateCheckoutDto.provider, kept as a string so wa'kijo-pro can add
- *  more providers without changing this contract. If the requested provider
- *  is not configured, a BadRequestException is thrown before any external
- *  call is made.
+ *  Ships with Stripe only. The provider is selected per-request via
+ *  CreateCheckoutDto.provider, kept as a string so additional providers can
+ *  be plugged in later without changing this contract. If the requested
+ *  provider is not configured, a BadRequestException is thrown before any
+ *  external call is made.
  *
  * Subscription persistence:
  *  A single Subscription row per org tracks the current plan, status, and
@@ -78,11 +78,11 @@ export class BillingService {
     const provider = this.getProvider(dto.provider);
     const plan = await this.getPlan(dto.planId);
 
-    // Community ships Stripe only — additional provider price ID resolution
-    // lives in wa'kijo-pro. Reject non-Stripe providers explicitly.
+    // Stripe is the only built-in provider — additional providers can be
+    // wired in later without changing this contract.
     if (dto.provider !== 'stripe') {
       throw new BadRequestException(
-        `Billing provider '${dto.provider}' is not available in wa'kijo Community. Stripe is the only supported provider; additional providers (Billplz, Curlec) require wa'kijo Pro or higher.`,
+        `Billing provider '${dto.provider}' is not configured. Stripe is the only built-in provider; configure additional providers via the BillingProvider interface.`,
       );
     }
 
@@ -139,7 +139,7 @@ export class BillingService {
 
     if (!sub.stripeCustomerId) {
       throw new BadRequestException(
-        "No Stripe customer ID on this subscription. wa'kijo Community only supports the Stripe Customer Portal.",
+        'No Stripe customer ID on this subscription. Only the Stripe Customer Portal is supported.',
       );
     }
 
@@ -160,7 +160,7 @@ export class BillingService {
   private getProvider(name: string): BillingProvider {
     if (name !== 'stripe') {
       throw new BadRequestException(
-        `Billing provider '${name}' is not available in wa'kijo Community. Additional providers (Billplz, Curlec, etc.) require wa'kijo Pro or higher.`,
+        `Billing provider '${name}' is not configured. Stripe is the only built-in provider.`,
       );
     }
     if (!this.stripeProvider) {

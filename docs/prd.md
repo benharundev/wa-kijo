@@ -81,7 +81,7 @@ needs MongoDB / Drizzle / Auth.js out of the box.
 >
 > **(1) Enterprise day-one positioning.** SSO/SCIM/SAML, audit log streaming,
 > custom domains, white-labeling all move into P0 (not P1). Outbound webhooks +
-> public API + API keys are core, not paid add-ons.
+> public API + API keys are core.
 >
 > **(2) Reversal of the 2026-05-10 platform pivot.** wa'kijo is now the
 > **enterprise SaaS foundation under wa'lawe**, not a platform with pluggable
@@ -469,7 +469,7 @@ The full FR catalogue is grouped by domain. Each requirement has a stable
 
 | ID      | Requirement                                                                                                                                                                                                | Status      |
 | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
-| FR-1501 | wa'lawe ships in a **separate repository** (`wa-lawe`, MIT-licensed), depending on wa'kijo Pro (Tier B+) at runtime. Per ADR-0011, it consumes `apps/api/src/modules/booking/` not `@wa-kijo/booking-core` | 🚧 Phase 10 |
+| FR-1501 | wa'lawe ships in a **separate repository** (`wa-lawe`, MIT-licensed). Per ADR-0011, it consumes `apps/api/src/modules/booking/` not `@wa-kijo/booking-core` | 🚧 Phase 10 |
 | FR-1502 | Tournament + Round + Pairing + Player + Result aggregates                                                                                                                                                  | 🚧 Phase 10 |
 | FR-1503 | Swiss pairing algorithm (domain service, pure logic, exhaustive tests)                                                                                                                                     | 🚧 Phase 10 |
 | FR-1504 | Round-robin pairing algorithm                                                                                                                                                                              | 🚧 Phase 10 |
@@ -538,170 +538,12 @@ These come up in customer conversations. We've said no, on purpose.
 
 ---
 
-## 8. Commercial Tiers and Licensing
+## 8. Licensing
 
-> **Decided 2026-05-17.** wa'kijo ships as a free open-source Community edition
-> plus five commercial tiers (A–E). One-time license with a tier-dependent
-> update window. wa'lawe is open-sourced separately as a reference
-> implementation (its own repo, MIT-licensed) but requires a Pro tier or higher
-> to run.
-
-### 8.1 wa'kijo Community — Open Source
-
-**License:** Apache 2.0 with a no-resale-of-the-boilerplate-itself clause
-(typical pattern — see n8n, ToolJet). Buyers can build commercial apps freely on
-top; they cannot repackage and sell wa'kijo itself.
-
-**Goal:** developer mindshare and top-of-funnel for paid tiers. Lean enough to
-drive upgrades, useful enough that people actually adopt it.
-
-**Included:**
-
-- Phase 1–5 foundation: pnpm monorepo, NestJS+Fastify, Prisma, BaseRepository,
-  Next.js 15 shell, Pino logging, Docker Compose
-- Better Auth basics: email/password, magic links, Google OAuth only
-- Multi-tenant org hierarchy with 3-level RBAC and role inheritance
-- One billing provider: **Stripe only** (Billplz, Curlec are paid-tier)
-- Domain modules: contacts, conversations, messages, tags, basic audit log
-- BullMQ + Redis basic wiring
-- Email via Resend with basic transactional templates
-- Cursor pagination + soft delete patterns
-- Cross-tenant fuzz test (security credibility)
-- Docs: getting-started, architecture overview, public ADRs
-- Community patches for 90 days from each tagged release
-
-**Excluded (paywall fence):**
-
-- Multi-provider billing (Billplz, Curlec, Stripe Tax)
-- MFA / WebAuthn
-- The 11 shared engines beyond minimal stubs (Booking Core, Workflow, Audit Pro,
-  Storage, Notification, Communication, Document, Report, Inventory Core,
-  Invoice Core, Availability)
-- White-labeling, custom domains, full i18n wiring
-- Outbound webhooks, public API + keys, OpenAPI auto-gen
-- OpenTelemetry, metrics export, Sentry
-- SSO, SCIM, audit log hardening, field-level encryption, retention, GDPR
-  tooling, impersonation, IP allowlist, session management
-- Super-admin console, sandbox/test mode, TypeScript SDK
-- Updates beyond 90 days
-
-### 8.2 Commercial tiers (A–E)
-
-Pricing is intentionally omitted from this document — it is calibrated and
-published on the wa-kijo-pro repo at sale time, not committed to public OSS
-sources. The table below captures the **structural** shape of each tier (license
-scope, update window, buyer profile).
-
-| Tier  | Name                       | License scope                                           | Update window               | Buyer profile                                 |
-| ----- | -------------------------- | ------------------------------------------------------- | --------------------------- | --------------------------------------------- |
-| **A** | **wa'kijo Starter**        | 1 developer, 1 production project                       | 6 months                    | Solo founders, side projects                  |
-| **B** | **wa'kijo Pro**            | 1 developer, unlimited projects                         | 12 months                   | Indie devs, multiple SaaS attempts            |
-| **C** | **wa'kijo Team**           | Up to 5 developers, unlimited projects                  | 18 months                   | Small agencies, 2–5 dev teams                 |
-| **D** | **wa'kijo Enterprise**     | Unlimited developers in one organisation                | 24 months                   | Companies building internal multi-tenant apps |
-| **E** | **wa'kijo OEM / Reseller** | White-label rights, source modification, reseller terms | Lifetime + priority support | Agencies reselling SaaS-in-a-box to clients   |
-
-**Update model.** A buyer of Tier B in month 0 receives all wa'kijo releases up
-to month 12 for free. From month 12 onwards, they continue to own everything
-shipped up to that point, but new releases require a paid renewal for an
-additional 12 months.
-
-### 8.3 Feature matrix
-
-What each tier unlocks beyond Community. Every paid tier includes everything
-from the tier below it.
-
-| Capability                                                    | OSS |  A  |  B  |  C  |  D  |  E  |
-| ------------------------------------------------------------- | :-: | :-: | :-: | :-: | :-: | :-: |
-| **Foundation (Phases 1–5)**                                   | ✅  | ✅  | ✅  | ✅  | ✅  | ✅  |
-| Auth basic (email/pw, OAuth, magic link)                      | ✅  | ✅  | ✅  | ✅  | ✅  | ✅  |
-| Stripe billing                                                | ✅  | ✅  | ✅  | ✅  | ✅  | ✅  |
-| Multi-provider billing (Billplz, Curlec)                      |  —  | ✅  | ✅  | ✅  | ✅  | ✅  |
-| MFA (TOTP)                                                    |  —  | ✅  | ✅  | ✅  | ✅  | ✅  |
-| MFA (WebAuthn / Passkeys)                                     |  —  |  —  | ✅  | ✅  | ✅  | ✅  |
-| **Booking Core engine**                                       |  —  |  —  | ✅  | ✅  | ✅  | ✅  |
-| **Workflow engine**                                           |  —  |  —  | ✅  | ✅  | ✅  | ✅  |
-| **Document engine** (PDF generation)                          |  —  |  —  | ✅  | ✅  | ✅  | ✅  |
-| **Report engine**                                             |  —  |  —  | ✅  | ✅  | ✅  | ✅  |
-| **Notification engine** (in-app)                              |  —  |  —  | ✅  | ✅  | ✅  | ✅  |
-| **Communication engine** (outbound SMS/email/WhatsApp)        |  —  |  —  | ✅  | ✅  | ✅  | ✅  |
-| **Storage engine** (S3/R2, signed URLs)                       |  —  |  —  |  —  | ✅  | ✅  | ✅  |
-| **Inventory Core**                                            |  —  |  —  |  —  | ✅  | ✅  | ✅  |
-| **Invoice Core**                                              |  —  |  —  |  —  | ✅  | ✅  | ✅  |
-| Custom domains                                                |  —  |  —  |  —  | ✅  | ✅  | ✅  |
-| White-labeling (logo, colors, email-from)                     |  —  |  —  |  —  | ✅  | ✅  | ✅  |
-| Full i18n wiring (per-user locale)                            |  —  |  —  |  —  | ✅  | ✅  | ✅  |
-| OpenAPI auto-gen from Zod                                     |  —  |  —  |  —  | ✅  | ✅  | ✅  |
-| Public API + API keys with scopes                             |  —  |  —  |  —  | ✅  | ✅  | ✅  |
-| Outbound webhooks (HMAC, retried, DLQ)                        |  —  |  —  |  —  | ✅  | ✅  | ✅  |
-| Usage metering + quota enforcement                            |  —  |  —  |  —  | ✅  | ✅  | ✅  |
-| Manual invoicing (PO/NET-30)                                  |  —  |  —  |  —  |  —  | ✅  | ✅  |
-| Tax/VAT (Stripe Tax)                                          |  —  |  —  |  —  |  —  | ✅  | ✅  |
-| **SSO** (SAML 2.0 + OIDC)                                     |  —  |  —  |  —  |  —  | ✅  | ✅  |
-| **SCIM 2.0 provisioning**                                     |  —  |  —  |  —  |  —  | ✅  | ✅  |
-| Audit log hardening (immutability, SIEM streaming, retention) |  —  |  —  |  —  |  —  | ✅  | ✅  |
-| Field-level encryption                                        |  —  |  —  |  —  |  —  | ✅  | ✅  |
-| Retention policies per entity                                 |  —  |  —  |  —  |  —  | ✅  | ✅  |
-| GDPR/PDPA export + right-to-delete                            |  —  |  —  |  —  |  —  | ✅  | ✅  |
-| Impersonation + IP allowlist                                  |  —  |  —  |  —  |  —  | ✅  | ✅  |
-| Session management UI                                         |  —  |  —  |  —  |  —  | ✅  | ✅  |
-| Org lifecycle ops (suspend, transfer)                         |  —  |  —  |  —  |  —  | ✅  | ✅  |
-| OpenTelemetry + metrics + Sentry                              |  —  |  —  |  —  |  —  | ✅  | ✅  |
-| Super-admin console                                           |  —  |  —  |  —  |  —  | ✅  | ✅  |
-| Sandbox / test mode                                           |  —  |  —  |  —  |  —  | ✅  | ✅  |
-| TypeScript SDK from OpenAPI                                   |  —  |  —  |  —  |  —  | ✅  | ✅  |
-| Mintlify customer docs templates                              |  —  |  —  |  —  |  —  | ✅  | ✅  |
-| Priority email support                                        |  —  |  —  |  —  |  —  | ✅  | ✅  |
-| **White-label rights** (remove wa'kijo branding)              |  —  |  —  |  —  |  —  |  —  | ✅  |
-| **Reseller rights** (sell derivatives to clients)             |  —  |  —  |  —  |  —  |  —  | ✅  |
-| **Source modification license**                               |  —  |  —  |  —  |  —  |  —  | ✅  |
-| Quarterly office hours with core team                         |  —  |  —  |  —  |  —  |  —  | ✅  |
-
-### 8.4 wa'lawe positioning
-
-wa'lawe ships as a separate open-source repository (`wa-lawe`, MIT license) —
-not bundled into any wa'kijo tier. It is the reference implementation that
-proves wa'kijo can host a real production SaaS.
-
-**Source is public** — anyone can read it to learn how to build a wa'kijo
-module. This drives top-of-funnel mindshare for wa'kijo.
-
-**Running it requires wa'kijo Pro (Tier B) or higher** — wa'lawe depends on
-Booking Core, Workflow, Document, Notification, and Communication engines, all
-of which live behind the Pro paywall. The "Vercel templates" model: source is
-free, the platform underneath is paid.
-
-The wa'lawe SaaS (`lawe.wakijo.dev` or similar) is run by the wa'kijo team as a
-separate revenue line — chess federations and tournament organisers pay a SaaS
-subscription. wa'lawe SaaS revenue is independent of wa'kijo boilerplate licence
-sales.
-
-### 8.5 License terms (summary)
-
-Full text in `LICENSE-COMMUNITY.md`, `LICENSE-COMMERCIAL.md`, and
-`LICENSE-OEM.md` (to be drafted).
-
-| Term                                      | Community                 | A–D                        | E                             |
-| ----------------------------------------- | ------------------------- | -------------------------- | ----------------------------- |
-| Use in commercial products                | ✅                        | ✅                         | ✅                            |
-| Modify source                             | ✅                        | ✅                         | ✅                            |
-| Distribute modifications publicly         | ✅ (Apache 2.0)           | —                          | ✅ (reseller-licensed)        |
-| Resell wa'kijo itself                     | ❌                        | ❌                         | ✅                            |
-| Remove wa'kijo branding from buyer's apps | ✅ (apps you build)       | ✅ (apps you build)        | ✅ (apps + boilerplate)       |
-| Receive future updates                    | 90 days post-release      | Per tier window            | Lifetime                      |
-| Support channel                           | GitHub issues (community) | Email (tier-dependent SLA) | Priority email + office hours |
-
-### 8.6 Open SKU decisions
-
-- **Final pricing** — kept out of this OSS PRD. Calibrated against the
-  boilerplate market and published on the wa-kijo-pro repo at sale time.
-- **WorkOS dependency disclosure** — if SSO/SCIM in Tier D uses WorkOS, the
-  buyer pays WorkOS separately. Must be disclosed pre-purchase.
-- **Renewal model** — paid renewal for an additional 12 months. Specific renewal
-  ratio is a pricing decision held with the rest of the price sheet.
-- **Stripe-only OSS billing edge case** — if a buyer ships an app on Community
-  using Stripe, then needs Billplz for Malaysian customers, they must upgrade to
-  A or higher. Confirm this is the intended fence (vs giving Billplz away to
-  drive SEA adoption).
+wa'kijo is licensed under the **Apache License, Version 2.0**. Full text in
+[`LICENSE`](../LICENSE); attribution notes in [`NOTICE`](../NOTICE). Third-party
+dependencies retain their original licences (`pnpm licenses list` enumerates
+them).
 
 ---
 
@@ -724,8 +566,8 @@ decided.
   shell is stable? (Currently leaning: keep it as an app, document the
   customisation patterns.)
 - **SSO/SCIM build vs buy.** WorkOS ($125/connection/month) ships SSO + SCIM +
-  Directory Sync + Audit Logs and saves ~6–8 weeks. Pending ADR. If WorkOS, the
-  cost must be disclosed in Tier D marketing (buyer pays WorkOS separately).
+  Directory Sync + Audit Logs and saves ~6–8 weeks vs an in-house build.
+  Pending ADR.
 - **ADR-0011 follow-up.** Draft a new ADR that formalises the 2026-05-17
   reversal of the platform pivot — Module Registry dropped, Customization Layer
   dropped, Pragmatic DDD softened, Booking Core kept as an in-API module rather
@@ -736,10 +578,6 @@ decided.
   if/when Custom Fields are added post-v1.0.
 - **Module marketplace** (deferred). Requires a multi-module platform thesis.
   Re-evaluate post-v1.0.
-- **Final tier pricing** (§8.6). Placeholders need market calibration against
-  ShipFast / Boilerplate.dev / SaaS Pegasus / Bullet Train.
-- **Stripe-only OSS billing edge case** (§8.6). Confirm Billplz/Curlec stay
-  paywalled in OSS, or relax to drive SEA adoption.
 
 ---
 
@@ -755,4 +593,4 @@ decided.
 | 2026-05-10 | core   | **Platform pivot** — wa'kijo evolves from boilerplate-to-fork into platform-with-modules. New phases 6a–8 added; FR-1100/1200/1300/1400/1500/1600 series introduced. wa'lawe selected as the first business module. ADRs 0008–0010 ratified                                                                                                                                                                                                                                                                              |
 | 2026-05-17 | core   | **Enterprise day-one re-sort.** SSO/SCIM/SAML moved to P0. Outbound webhooks + public API + API keys declared core, not paid add-ons. Phases 6–10 re-sequenced into five epochs (A–E) targeting v1.0 Enterprise GA                                                                                                                                                                                                                                                                                                       |
 | 2026-05-17 | core   | **Platform-thesis reversal + Path 2 sequencing.** wa'kijo narrowed to wa'kijo + wa'lawe scope (option b). Module Registry, Customization Layer, kernel governance dropped. Pragmatic DDD softened to "recommended pattern". Booking Core kept as in-API module, not workspace package. All 11 shared engines build into wa'kijo across Phases 6/8/9 _before_ wa'lawe development starts in Phase 10. v1.0 estimate shifts to ~15–22 months. ADRs 0008/0009/0010 marked partially superseded — ADR-0011 follow-up pending |
-| 2026-05-17 | core   | **Commercial SKU model added (§8).** Open Source `wa'kijo Community` (Apache 2.0) + five commercial tiers A–E (Starter / Pro / Team / Enterprise / OEM) with feature matrix, one-time pricing, tier-dependent update windows. wa'lawe ships as separate OSS repo (MIT) — running it requires Tier B+. Pricing placeholders pending market calibration                                                                                                                                                                    |
+| 2026-05-17 | core   | Repository relicensed to **Apache 2.0** ([`LICENSE`](../LICENSE), [`NOTICE`](../NOTICE)). wa'lawe ships as a separate OSS repo (MIT)                                                                                                                                                                                                                                                                                                                                                                                     |

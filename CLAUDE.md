@@ -14,12 +14,8 @@ building multi-tenant B2B SaaS. **This is a sellable product**, not a private
 internal scaffold. Code quality, documentation, and consistency are P0 features,
 not nice-to-haves.
 
-Customers buy a private GitHub repo + Mintlify docs + 6–24 months of updates
-depending on tier. wa'kijo ships as an **Apache-2.0 Community edition** plus
-**five commercial tiers A–E** (Starter / Pro / Team / Enterprise / OEM). See
-`@docs/prd.md` §8 for the full feature matrix, license terms, and pricing.
-wa'lawe ships as a separate OSS reference repo (MIT) — running it requires
-wa'kijo Pro (Tier B) or higher.
+wa'kijo is licensed under **Apache 2.0**. See `@docs/prd.md` for the full
+product scope and roadmap.
 
 > **Strategic pivot (2026-05-10):** wa'kijo is evolving from a
 > boilerplate-to-fork into a **platform with pluggable business modules**.
@@ -127,8 +123,8 @@ needed.
 **Shared engines packaging (locked 2026-05-17):** none of the 11 engines ship as
 workspace packages in v1.0. All will land as in-API NestJS modules under
 `apps/api/src/modules/` when their phase arrives. The `@wa-kijo/booking-core`
-workspace package that existed pre-2026-05-17 was removed from Community in the
-v0.6.0 cleanup; its code is preserved on the `wa-kijo-pro` archive branch.
+workspace package that existed pre-2026-05-17 was removed in the v0.6.0
+cleanup; its source remains in git history if it ever needs to be revived.
 Workspace-package promotion is a post-v1.0 decision triggered by an actual
 second module needing independent SemVer.
 

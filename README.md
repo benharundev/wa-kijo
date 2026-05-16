@@ -14,22 +14,15 @@
   <img alt="CI" src="https://github.com/benharundev/wa-kijo/actions/workflows/ci.yml/badge.svg">
 </p>
 
-**wa'kijo Community** is the open-source foundation: multi-tenant auth, RBAC,
-billing, queues, audit log, and a Next.js shell — already production-tested in
-[`wa-kiro`](https://github.com/benharundev) (WhatsApp Business SaaS). Clone it,
-configure six env vars, and you have a working B2B SaaS scaffold at `localhost`
-— no four-week boilerplate slog before you can start on the features that
-actually differentiate your product.
-
-> 💰 **Need enterprise features?** wa'kijo Pro adds SSO, SCIM, the 11 shared
-> engines (booking, document, notification, communication, …), custom domains,
-> audit-log SIEM streaming, the super-admin console, and more. Five tiers from
-> Starter to OEM — see
-> [`docs/prd.md` §8](docs/prd.md#8-commercial-tiers-and-licensing).
+**wa'kijo** is an open-source foundation for multi-tenant B2B SaaS: auth, RBAC,
+billing, queues, audit log, and a Next.js shell — already production-tested.
+Clone it, configure six env vars, and you have a working SaaS scaffold at
+`localhost` — no four-week boilerplate slog before you can start on the features
+that actually differentiate your product.
 
 ---
 
-## What's included in Community
+## What's included
 
 | Layer         | Technology                                 | Notes                                                                                            |
 | ------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
@@ -45,15 +38,6 @@ actually differentiate your product.
 | Audit log     | Built-in                                   | Mutation tracking on flagged entities, append via Prisma middleware                              |
 | Observability | Pino structured logs                       | Request IDs, PII redaction, log levels                                                           |
 | Dev tooling   | pnpm 9, Vitest, Playwright, Docker Compose | Monorepo-ready, cross-tenant fuzz tests in CI                                                    |
-
-**Not in Community** (lives in wa'kijo Pro): SSO/SAML/OIDC, SCIM 2.0, MFA,
-multi-provider billing (Billplz, Curlec), the 11 shared engines (Booking Core,
-Workflow, Document, Report, Inventory, Invoice, Notification, Communication,
-etc.), white-labeling, custom domains, full i18n, OpenTelemetry/metrics/Sentry,
-public API + API keys, outbound webhooks, GDPR data export, field-level
-encryption, super-admin console, sandbox/test mode, TypeScript SDK, and the
-higher-tier roadmap items. See
-[`docs/prd.md` §8.3](docs/prd.md#83-feature-matrix) for the full feature matrix.
 
 ---
 
@@ -137,7 +121,7 @@ wa-kijo/
 ├── docs/
 │   ├── architecture.md       # System design, request lifecycle, tenant model
 │   ├── runbook.md            # Day-to-day local-development operations
-│   ├── prd.md                # Product requirements + tier feature matrix
+│   ├── prd.md                # Product requirements, phase plan
 │   └── decisions/            # Architecture Decision Records (ADRs)
 └── .claude/rules/            # Project-specific Claude Code context
 ```
@@ -257,7 +241,7 @@ See [`.env.example`](.env.example) for the full reference. **Minimum required:**
 | Path                                                 | Purpose                                                   |
 | ---------------------------------------------------- | --------------------------------------------------------- |
 | [`docs/architecture.md`](docs/architecture.md)       | System design, request lifecycle, tenant model            |
-| [`docs/prd.md`](docs/prd.md)                         | Product requirements, phase plan, tier feature matrix     |
+| [`docs/prd.md`](docs/prd.md)                         | Product requirements, phase plan                          |
 | [`docs/api-conventions.md`](docs/api-conventions.md) | REST conventions, response envelope, error shape          |
 | [`docs/deployment.md`](docs/deployment.md)           | Production deployment recipes (Railway, AWS, self-hosted) |
 | [`docs/observability.md`](docs/observability.md)     | Logging, tracing, metrics, alerting playbook              |
@@ -265,21 +249,12 @@ See [`.env.example`](.env.example) for the full reference. **Minimum required:**
 | [`docs/glossary.md`](docs/glossary.md)               | Plain-English definitions of every term used              |
 | [`docs/decisions/`](docs/decisions/)                 | Architecture Decision Records (ADRs)                      |
 
-ADR-0011 (the 2026-05-17 platform-thesis reversal) is the most important one for
-understanding why the repo is shaped the way it is.
-
 ---
 
 ## License
 
 [Apache 2.0](LICENSE). Build whatever you want with it — commercial products are
 explicitly fine.
-
-**One ask** (not legally binding, just community norm): please don't repackage
-wa'kijo itself as a competing boilerplate product. We make our living from
-wa'kijo Pro and the higher tiers — the Community edition exists because we
-believe a strong open foundation grows the whole ecosystem, not just to be
-repackaged. See [`NOTICE`](NOTICE) for the full informal note.
 
 ---
 
@@ -301,10 +276,9 @@ Be kind. Disagree with ideas, not people.
 
 ## Support
 
-| Where                                                                    | What                                          |
-| ------------------------------------------------------------------------ | --------------------------------------------- |
-| [GitHub Discussions](https://github.com/benharundev/wa-kijo/discussions) | Community Q&A — best-effort, no SLA           |
-| [GitHub Issues](https://github.com/benharundev/wa-kijo/issues)           | Reproducible bugs only                        |
-| [wa'kijo Pro+](https://github.com/benharundev/wa-kijo-pro)               | Email support with response-time SLAs by tier |
+| Where                                                                    | What                                |
+| ------------------------------------------------------------------------ | ----------------------------------- |
+| [GitHub Discussions](https://github.com/benharundev/wa-kijo/discussions) | Community Q&A — best-effort, no SLA |
+| [GitHub Issues](https://github.com/benharundev/wa-kijo/issues)           | Reproducible bugs only              |
 
 See [`SUPPORT.md`](SUPPORT.md) for details.

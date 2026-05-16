@@ -292,9 +292,9 @@ model Plan {
   features String? // JSON array of feature strings shown in pricing table
   limits   String? // JSON object: { contacts: 1000, messages: 10000, agents: 5 }
 
-  // Stripe (the only billing provider in wa'kijo Community).
-  // Additional provider price IDs (Billplz, Curlec, etc.) are added by
-  // wa'kijo-pro via its own migration.
+  // Stripe (the only built-in billing provider).
+  // Add columns for additional provider price IDs (Billplz, Curlec, etc.)
+  // here when wiring in more BillingProvider implementations.
   stripePriceMonthlyId String?
   stripePriceYearlyId  String?
   stripeProductId      String?
@@ -330,8 +330,9 @@ model Subscription {
   cancelAt           DateTime?
   canceledAt         DateTime?
 
-  // Stripe (the only billing provider in wa'kijo Community).
-  // Additional provider IDs are added by wa'kijo-pro via its own migration.
+  // Stripe (the only built-in billing provider).
+  // Add columns for additional provider subscription/customer IDs here when
+  // wiring in more BillingProvider implementations.
   stripeCustomerId     String? @unique
   stripeSubscriptionId String? @unique
 
@@ -388,7 +389,7 @@ model Invitation {
 // ---------------------------------------------------------------------------
 // Module Registry models removed per ADR-0011 (2026-05-17).
 // The platform-pivot direction set by ADR-0008 was reversed when v1.0 scope
-// narrowed to wa'kijo + wa'lawe only. Module + TenantModule lived here previously.
-// To restore for a future paid-tier release: see the wa-kijo-pro repo's
-// archive/platform-thesis branch.
+// narrowed to wa'kijo + wa'lawe only. `Module` + `TenantModule` models lived
+// here previously and can be re-introduced from the git history if a future
+// release ever reintroduces the platform thesis.
 // ---------------------------------------------------------------------------

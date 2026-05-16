@@ -5,20 +5,15 @@ description: "What's next for wa'kijo, in dependency order."
 
 This is the public roadmap. **Order is by dependency**, not by calendar date — the wider the range on the v1.0 estimate (15–22 months), the more uncertainty we're being honest about.
 
-Shipped work is in the [Changelog](/changelog). The current foundation tag is **v0.6.0 — OSS Community release** (2026-05-17).
+Shipped work is in the [Changelog](/changelog). Current tag: **v0.6.1** (2026-05-17).
 
 ---
 
-## Scope and positioning
+## Scope
 
-wa'kijo ships in two distributions:
+wa'kijo is the enterprise foundation under a single business module (wa'lawe, shipped as its own OSS repo). Apache 2.0. Multi-tenant auth, RBAC, billing (Stripe), domain modules, audit log, frontend shell — plus the enterprise hardening, compliance, commerce, and engine layers being built over the next ~15–22 months.
 
-- **wa'kijo Community** — this OSS edition. Apache 2.0. Multi-tenant auth, RBAC, billing (Stripe), domain modules, audit log, frontend shell.
-- **wa'kijo Pro and higher tiers (A–E)** — the private commercial edition. Adds SSO, SCIM, the 11 shared engines, custom domains, white-labeling, public API, SDKs, and the super-admin console. See the [PRD §8](https://github.com/benharundev/wa-kijo/blob/main/docs/prd.md#8-commercial-tiers-and-licensing) for the full feature matrix.
-
-The roadmap below is the **Pro** roadmap leading to v1.0 Enterprise GA. Community gets every Pro improvement that fits the open-foundation scope (bug fixes, security patches, dev-experience polish, public-API additions) — it does **not** get the Pro-tier engines or SSO/SCIM/audit-streaming features.
-
-> ⚠ **Reversal note.** Before 2026-05-17, the roadmap described a "platform with pluggable modules" direction (Module Registry, Customization Layer, kernel governance). That direction is **reversed** for v1.0 — wa'kijo is now the enterprise foundation under a single business module (wa'lawe, shipped as its own OSS repo). See [ADR-0011](https://github.com/benharundev/wa-kijo/blob/main/docs/decisions/0011-reverse-platform-pivot.md) for the rationale.
+> ⚠ **Reversal note.** Before 2026-05-17, the roadmap described a "platform with pluggable modules" direction (Module Registry, Customization Layer, kernel governance). That direction is **reversed** for v1.0. See [ADR-0011](https://github.com/benharundev/wa-kijo/blob/main/docs/decisions/0011-reverse-platform-pivot.md) for the rationale.
 
 ---
 
@@ -108,7 +103,7 @@ Invoice an enterprise customer correctly; look like their product.
 
 ## Phase 9 — Engines Build-out
 
-Shared engines all in place before any business module starts. Build engines into wa'kijo Pro as `apps/api/src/modules/*` — not separate workspace packages.
+Shared engines all in place before any business module starts. Built as `apps/api/src/modules/*` — not separate workspace packages.
 
 <CardGroup cols={2}>
   <Card title="Booking Core" icon="calendar-check">
@@ -139,7 +134,7 @@ First business module ships on the completed engine foundation. v1.0 Enterprise 
 
 <CardGroup cols={2}>
   <Card title="wa'lawe — chess tournaments" icon="chess-knight">
-    Separate OSS repo, MIT licensed. Runs on wa'kijo Pro (Tier B+). Tournament + Round + Pairing aggregates; Swiss / round-robin / KO pairing algorithms; tie-breaks; standings.
+    Separate OSS repo, MIT licensed. Tournament + Round + Pairing aggregates; Swiss / round-robin / KO pairing algorithms; tie-breaks; standings.
   </Card>
   <Card title="Super-admin console" icon="user-shield">
     Read tenant data with audit, suspend, restore, transfer, force-resync billing, view feature flag state.
@@ -215,7 +210,6 @@ Full rationale in [PRD § 7 — Out of scope](https://github.com/benharundev/wa-
 
 ## Influencing the roadmap
 
-- **Community** — open a [Discussion](https://github.com/benharundev/wa-kijo/discussions). Many users asking for the same thing moves it up.
-- **Pro and higher tiers** — bring it to office hours, email `support@wakijo.dev`, or your CSM. Enterprise tier explicitly includes roadmap influence.
+Open a [Discussion](https://github.com/benharundev/wa-kijo/discussions). Many users asking for the same thing moves it up.
 
-We publish quarterly retrospectives on [GitHub Discussions](https://github.com/benharundev/wa-kijo/discussions) — what we shipped, what we deferred, what we learned.
+We publish retrospectives on [GitHub Discussions](https://github.com/benharundev/wa-kijo/discussions) — what we shipped, what we deferred, what we learned.
