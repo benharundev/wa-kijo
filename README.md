@@ -11,7 +11,7 @@
   <img alt="Prisma" src="https://img.shields.io/badge/Prisma-5-2D3748?logo=prisma&logoColor=white">
   <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white">
   <img alt="License" src="https://img.shields.io/badge/license-Apache%202.0-blue">
-  <img alt="Status" src="https://img.shields.io/badge/status-Community%20v0.1-green">
+  <img alt="CI" src="https://github.com/benharundev/wa-kijo/actions/workflows/ci.yml/badge.svg">
 </p>
 
 **wa'kijo Community** is the open-source foundation: multi-tenant auth, RBAC,
