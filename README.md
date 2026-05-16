@@ -283,25 +283,6 @@ repackaged. See [`NOTICE`](NOTICE) for the full informal note.
 
 ---
 
-## wa'kijo Pro and higher tiers
-
-The Pro repo lives at
-[`github.com/benharundev/wa-kijo-pro`](https://github.com/benharundev/wa-kijo-pro).
-Access is granted on purchase.
-
-| Tier               | Headline capability                                                                                                 | Indicative price |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| **A · Starter**    | + Multi-provider billing (Billplz, Curlec), MFA TOTP                                                                | $199 one-time    |
-| **B · Pro**        | + Booking Core, Workflow, Document, Report, Notification, Communication engines, WebAuthn                           | $499 one-time    |
-| **C · Team**       | + Storage, Inventory Core, Invoice Core, custom domains, white-labeling, public API + keys, outbound webhooks       | $999 one-time    |
-| **D · Enterprise** | + SSO (SAML+OIDC), SCIM 2.0, audit log hardening, encryption, GDPR tools, impersonation, OpenTelemetry, super-admin | $2,499 one-time  |
-| **E · OEM**        | + White-label rights, source modification, reseller terms, lifetime updates                                         | $9,999+ custom   |
-
-Prices are placeholders pending market calibration. Full feature matrix in
-[`docs/prd.md` §8.3](docs/prd.md#83-feature-matrix).
-
----
-
 ## Contributing
 
 Issues and pull requests welcome. Read [`CONTRIBUTING.md`](CONTRIBUTING.md) for
