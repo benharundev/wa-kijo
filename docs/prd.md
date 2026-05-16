@@ -328,80 +328,88 @@ The full FR catalogue is grouped by domain. Each requirement has a stable
 | FR-1008 | Static OpenAPI snapshot generated on release | ✅ |
 | FR-1009 | CI pipeline: typecheck, lint, unit, integration, e2e | ✅ |
 
-### 5.11 Platform — Module Registry (FR-1100 series)
+### 5.11 Platform — Module Registry (FR-1100 series) — **Deferred post-v1.0**
+
+> **Rescoped 2026-05-17 (ADR-0011):** wa'kijo no longer ships as a multi-module platform in v1.0. wa'lawe wires into wa'kijo via standard NestJS module imports. The Module Registry runtime is preserved here as design reference for the post-v1.0 case where a second business module is committed and pluggability becomes worth its overhead.
 
 | ID | Requirement | Status |
 |---|---|---|
-| FR-1101 | `Module` Prisma model registering each installed module | 🚧 6a |
-| FR-1102 | `TenantModule` join table with per-tenant enable/disable + per-tenant config JSON | 🚧 6a |
-| FR-1103 | Boot-time manifest scanner reads `apps/api/src/modules/*/module.manifest.ts` | 🚧 6a |
-| FR-1104 | Manifest schema validation via Zod; malformed manifest is a non-recoverable startup error | 🚧 6a |
-| FR-1105 | Dependency resolver — semver-aware; refuses to start on incompatible pairs or cycles | 🚧 6a |
-| FR-1106 | `@RequireModule('slug')` guard returns **404** (not 403) for non-enabled modules | 🚧 6a |
-| FR-1107 | `module.enabled` / `module.disabled` audit log entries on every TenantModule mutation | 🚧 6a |
-| FR-1108 | Module retirement preserves historical references (no FK breaks in AuditLog) | 🚧 6a |
-| FR-1109 | Module manifests can declare new permissions; registry merges them into the runtime catalogue | 🚧 6a |
-| FR-1110 | Existing `contacts` and `conversations` register via manifest before tag | 🚧 6a |
-| FR-1111 | `pnpm module:create <slug>` CLI scaffolds from `_template/` | 🚧 8 |
-| FR-1112 | `pnpm module:upgrade <slug>` runs declared upgrade scripts | 🚧 8 |
+| FR-1101 | `Module` Prisma model registering each installed module | Deferred post-v1.0 |
+| FR-1102 | `TenantModule` join table with per-tenant enable/disable + per-tenant config JSON | Deferred post-v1.0 |
+| FR-1103 | Boot-time manifest scanner reads `apps/api/src/modules/*/module.manifest.ts` | Deferred post-v1.0 |
+| FR-1104 | Manifest schema validation via Zod; malformed manifest is a non-recoverable startup error | Deferred post-v1.0 |
+| FR-1105 | Dependency resolver — semver-aware; refuses to start on incompatible pairs or cycles | Deferred post-v1.0 |
+| FR-1106 | `@RequireModule('slug')` guard returns **404** (not 403) for non-enabled modules | Deferred post-v1.0 |
+| FR-1107 | `module.enabled` / `module.disabled` audit log entries on every TenantModule mutation | Deferred post-v1.0 |
+| FR-1108 | Module retirement preserves historical references (no FK breaks in AuditLog) | Deferred post-v1.0 |
+| FR-1109 | Module manifests can declare new permissions; registry merges them into the runtime catalogue | Deferred post-v1.0 |
+| FR-1110 | Existing `contacts` and `conversations` register via manifest before tag | Deferred post-v1.0 |
+| FR-1111 | `pnpm module:create <slug>` CLI scaffolds from `_template/` | Deferred post-v1.0 |
+| FR-1112 | `pnpm module:upgrade <slug>` runs declared upgrade scripts | Deferred post-v1.0 |
 
-### 5.12 Platform — Booking Core kernel (FR-1200 series)
+### 5.12 Platform — Booking Core (FR-1200 series)
 
-| ID | Requirement | Status |
-|---|---|---|
-| FR-1201 | `@wa-kijo/booking-core` workspace package with conditional exports | 🚧 6b |
-| FR-1202 | `TimeRange` value object with closed-open semantics | 🚧 6b |
-| FR-1203 | `BookingState` enum + `canTransition()` table | 🚧 6b |
-| FR-1204 | `Resource` and `Schedulable` interfaces | 🚧 6b |
-| FR-1205 | `AvailabilityRule` types: `WorkingHoursRule`, `BlackoutRule` | 🚧 6b |
-| FR-1206 | `ConflictDetectionService.assertNoOverlap()` | 🚧 6b |
-| FR-1207 | `AvailabilityCheckService.assertAvailable()` | 🚧 6b |
-| FR-1208 | 5 universal lifecycle events: Scheduled / Confirmed / Cancelled / Rescheduled / Completed | 🚧 6b |
-| FR-1209 | `SchedulableRepositoryPort` + `DomainEventPublisherPort` interfaces | 🚧 6b |
-| FR-1210 | Kernel zero infrastructure imports (NestJS, Prisma, BullMQ forbidden) | 🚧 6b |
-| FR-1211 | 90% line / 85% branch coverage enforced on `domain/` | 🚧 6b |
-| FR-1212 | Independent SemVer; module manifests declare kernel range in `dependencies` | 🚧 6b |
-
-### 5.13 Platform — Pragmatic DDD layout (FR-1300 series)
+> **Rescoped 2026-05-17 (ADR-0011):** Booking Core is no longer a versioned workspace package. It lives at `apps/api/src/modules/booking/` as a normal NestJS module that wa'lawe imports directly. FR-1201 and FR-1212 (workspace-package + independent SemVer) are dropped. The remaining FRs are the kernel content — they ship in Phase 9 as part of the engines build-out before wa'lawe starts in Phase 10.
 
 | ID | Requirement | Status |
 |---|---|---|
-| FR-1301 | Per-module `domain / application / infrastructure / presentation` folders | 🚧 6c |
-| FR-1302 | `_template/` module scaffold demonstrates the layout, including failing test stubs | 🚧 6c |
-| FR-1303 | ESLint `no-restricted-paths` enforces inward-only dependency rule | 🚧 6c |
-| FR-1304 | Domain-events-as-objects-with-Zod-schemas pattern | 🚧 6c |
-| FR-1305 | Existing `contacts` and `conversations` modules refactored to the layout before tag | 🚧 6c |
+| FR-1201 | ~~`@wa-kijo/booking-core` workspace package with conditional exports~~ — **Dropped per ADR-0011.** Booking Core lives at `apps/api/src/modules/booking/` | Dropped |
+| FR-1202 | `TimeRange` value object with closed-open semantics | 🚧 Phase 9 |
+| FR-1203 | `BookingState` enum + `canTransition()` table | 🚧 Phase 9 |
+| FR-1204 | `Resource` and `Schedulable` interfaces | 🚧 Phase 9 |
+| FR-1205 | `AvailabilityRule` types: `WorkingHoursRule`, `BlackoutRule` | 🚧 Phase 9 |
+| FR-1206 | `ConflictDetectionService.assertNoOverlap()` | 🚧 Phase 9 |
+| FR-1207 | `AvailabilityCheckService.assertAvailable()` | 🚧 Phase 9 |
+| FR-1208 | 5 universal lifecycle events: Scheduled / Confirmed / Cancelled / Rescheduled / Completed | 🚧 Phase 9 |
+| FR-1209 | `SchedulableRepositoryPort` + `DomainEventPublisherPort` interfaces | 🚧 Phase 9 |
+| FR-1210 | Kernel layer keeps infrastructure imports out of `domain/` (NestJS, Prisma, BullMQ) — recommended pattern, not enforced | 🚧 Phase 9 |
+| FR-1211 | 90% line / 85% branch coverage enforced on `domain/` | 🚧 Phase 9 |
+| FR-1212 | ~~Independent SemVer; module manifests declare kernel range in `dependencies`~~ — **Dropped per ADR-0011** | Dropped |
+
+### 5.13 Platform — Pragmatic DDD layout (FR-1300 series) — **Softened to recommended pattern**
+
+> **Rescoped 2026-05-17 (ADR-0011):** The per-module DDD folder layout remains a recommended pattern for clarity inside complex modules. The ESLint enforcement (FR-1303) is removed. `_template/` stays in the repo as a reference but is no longer load-bearing kernel governance.
+
+| ID | Requirement | Status |
+|---|---|---|
+| FR-1301 | Per-module `domain / application / infrastructure / presentation` folders | Recommended pattern (not enforced) |
+| FR-1302 | `_template/` module scaffold demonstrates the layout, including failing test stubs | Optional reference |
+| FR-1303 | ESLint `no-restricted-paths` enforces inward-only dependency rule | **Dropped per ADR-0011** |
+| FR-1304 | Domain-events-as-objects-with-Zod-schemas pattern | Recommended pattern |
+| FR-1305 | Existing `contacts` and `conversations` modules refactored to the layout before tag | Deferred — refactor only if value emerges |
 | FR-1306 | CQRS-with-separate-databases explicitly NOT adopted | n/a (decision) |
 | FR-1307 | Event sourcing explicitly NOT adopted | n/a (decision) |
 
-### 5.14 Platform — Customization Layer (FR-1400 series)
+### 5.14 Platform — Customization Layer (FR-1400 series) — **Deferred post-v1.0**
+
+> **Rescoped 2026-05-17 (ADR-0011):** With wa'lawe as the only business module in v1.0, the Customization Layer has no consumer — wa'lawe ships with a fixed feature set per tenant. Reintroduce post-v1.0 only if/when a second business module emerges or a tenant needs schema/UI extensibility.
 
 | ID | Requirement | Status |
 |---|---|---|
-| FR-1401 | Per-tenant config overrides validated against module's declared Zod schema | 🚧 6d |
-| FR-1402 | `CustomFieldDefinition` table + JSONB storage on extending entities | 🚧 6d |
-| FR-1403 | Custom field UI auto-rendered from definitions | 🚧 6d |
-| FR-1404 | `@Hook('hook.point')` decorator + typed payload contract | 🚧 6e |
-| FR-1405 | Hook signatures versioned via SemVer; major bumps document migration path | 🚧 6e |
-| FR-1406 | Hook contract test harness (assert payload Zod parse on every hook point) | 🚧 6e |
-| FR-1407 | Policy classes for resource-level authorization (`canEdit(ctx, resource)`) | 🚧 6f |
-| FR-1408 | UI Slots system in Next.js — declared via manifest, filled by other modules | 🚧 6f |
-| FR-1409 | Customisation hierarchy enforced in docs: config → custom fields → hooks → policies → UI slots → custom module → fork | 🚧 6d |
+| FR-1401 | Per-tenant config overrides validated against module's declared Zod schema | Deferred post-v1.0 |
+| FR-1402 | `CustomFieldDefinition` table + JSONB storage on extending entities | Deferred post-v1.0 |
+| FR-1403 | Custom field UI auto-rendered from definitions | Deferred post-v1.0 |
+| FR-1404 | `@Hook('hook.point')` decorator + typed payload contract | Deferred post-v1.0 |
+| FR-1405 | Hook signatures versioned via SemVer; major bumps document migration path | Deferred post-v1.0 |
+| FR-1406 | Hook contract test harness (assert payload Zod parse on every hook point) | Deferred post-v1.0 |
+| FR-1407 | Policy classes for resource-level authorization (`canEdit(ctx, resource)`) | Deferred post-v1.0 |
+| FR-1408 | UI Slots system in Next.js — declared via manifest, filled by other modules | Deferred post-v1.0 |
+| FR-1409 | Customisation hierarchy enforced in docs: config → custom fields → hooks → policies → UI slots → custom module → fork | Deferred post-v1.0 |
 
 ### 5.15 Platform — wa'lawe as the first module (FR-1500 series)
 
 | ID | Requirement | Status |
 |---|---|---|
-| FR-1501 | `apps/api/src/modules/tournament/` consuming `@wa-kijo/booking-core` | 🚧 7 |
-| FR-1502 | Tournament + Round + Pairing + Player + Result aggregates | 🚧 7 |
-| FR-1503 | Swiss pairing algorithm (domain service, pure logic, exhaustive tests) | 🚧 7 |
-| FR-1504 | Round-robin pairing algorithm | 🚧 7 |
-| FR-1505 | Knockout pairing algorithm with bracket seeding | 🚧 7 |
-| FR-1506 | Tie-break methods (Buchholz, Sonneborn-Berger, direct encounter) | 🚧 7 |
-| FR-1507 | Standings calculation with multi-criteria sort | 🚧 7 |
-| FR-1508 | Player registration & withdrawal (player as Resource) | 🚧 7 |
-| FR-1509 | Tournament lifecycle: draft → registration → in-progress → completed → archived | 🚧 7 |
-| FR-1510 | wa'lawe Next.js pages: tournament dashboard, round view, standings, brackets | 🚧 7 |
+| FR-1501 | wa'lawe ships in a **separate repository** (`wa-lawe`, MIT-licensed), depending on wa'kijo Pro (Tier B+) at runtime. Per ADR-0011, it consumes `apps/api/src/modules/booking/` not `@wa-kijo/booking-core` | 🚧 Phase 10 |
+| FR-1502 | Tournament + Round + Pairing + Player + Result aggregates | 🚧 Phase 10 |
+| FR-1503 | Swiss pairing algorithm (domain service, pure logic, exhaustive tests) | 🚧 Phase 10 |
+| FR-1504 | Round-robin pairing algorithm | 🚧 Phase 10 |
+| FR-1505 | Knockout pairing algorithm with bracket seeding | 🚧 Phase 10 |
+| FR-1506 | Tie-break methods (Buchholz, Sonneborn-Berger, direct encounter) | 🚧 Phase 10 |
+| FR-1507 | Standings calculation with multi-criteria sort | 🚧 Phase 10 |
+| FR-1508 | Player registration & withdrawal (player as Resource) | 🚧 Phase 10 |
+| FR-1509 | Tournament lifecycle: draft → registration → in-progress → completed → archived (5-state inline machine — Workflow engine NOT required for v1.0) | 🚧 Phase 10 |
+| FR-1510 | wa'lawe Next.js pages: tournament dashboard, round view, standings, brackets | 🚧 Phase 10 |
 
 ### 5.16 Platform — Second business module (FR-1600 series) — **Deferred post-v1.0**
 
