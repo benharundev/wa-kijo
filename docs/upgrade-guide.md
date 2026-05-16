@@ -3,9 +3,9 @@
 > **Audience:** customers upgrading from one wa'kijo release to the next.
 >
 > Each section covers a single major or minor release. Read every section
-> between your current version and the target version, in order. Patch
-> releases are listed in [`CHANGELOG.md`](../CHANGELOG.md) but rarely need
-> upgrade steps beyond `git pull && pnpm install`.
+> between your current version and the target version, in order. Patch releases
+> are listed in [`CHANGELOG.md`](../CHANGELOG.md) but rarely need upgrade steps
+> beyond `git pull && pnpm install`.
 
 ---
 
@@ -53,16 +53,15 @@ pnpm install && pnpm <restart>
 
 ## Versioning policy
 
-- **Major (`X.0.0`)** — breaking changes to public API, environment
-  variables, or DB schema in a way that requires customer action. Released
-  rarely.
-- **Minor (`X.Y.0`)** — new functionality, additive schema changes, new
-  optional env vars. Backwards-compatible.
+- **Major (`X.0.0`)** — breaking changes to public API, environment variables,
+  or DB schema in a way that requires customer action. Released rarely.
+- **Minor (`X.Y.0`)** — new functionality, additive schema changes, new optional
+  env vars. Backwards-compatible.
 - **Patch (`X.Y.Z`)** — bug fixes only. Always safe to upgrade.
 
-Customers on Solo and Team tiers receive minor and patch releases for
-6 / 12 months respectively. Agency and Enterprise customers receive at
-least one major upgrade within their support window.
+Customers on Solo and Team tiers receive minor and patch releases for 6 / 12
+months respectively. Agency and Enterprise customers receive at least one major
+upgrade within their support window.
 
 ---
 
@@ -72,11 +71,10 @@ least one major upgrade within their support window.
 
 ### What changed
 
-- New modules: `contacts`, `tags`, `conversations`, `messages` mounted
-  under `/api/v1/`.
-- New `AuditLog` model and `AuditService`. Sensitive mutations (member
-  role changes, org config updates, bulk operations) are recorded
-  automatically.
+- New modules: `contacts`, `tags`, `conversations`, `messages` mounted under
+  `/api/v1/`.
+- New `AuditLog` model and `AuditService`. Sensitive mutations (member role
+  changes, org config updates, bulk operations) are recorded automatically.
 - Cross-tenant access fuzz tests in CI.
 - Bull-Board admin UI at `/admin/queues`, RBAC-gated.
 - Scheduled jobs for soft-delete cleanup and audit log partitioning.
@@ -95,8 +93,8 @@ least one major upgrade within their support window.
    ```
 2. **Add the new permissions** if you've customised
    `packages/shared/src/auth/permissions.ts`:
-   - `contact:create`, `contact:read`, `contact:update`,
-     `contact:delete`, `contact:import`, `contact:block`
+   - `contact:create`, `contact:read`, `contact:update`, `contact:delete`,
+     `contact:import`, `contact:block`
    - `tag:create`, `tag:update`, `tag:delete`
    - `conversation:create`, `conversation:read`, `conversation:assign`,
      `conversation:close`, `conversation:delete`
@@ -106,8 +104,8 @@ least one major upgrade within their support window.
    ```bash
    pnpm db:seed
    ```
-4. **Rebuild shared packages** after pulling — schema changes mean the
-   Prisma client and shared DTOs both regenerate:
+4. **Rebuild shared packages** after pulling — schema changes mean the Prisma
+   client and shared DTOs both regenerate:
    ```bash
    pnpm --filter @wa-kijo/db build
    pnpm --filter @wa-kijo/shared build
@@ -116,39 +114,37 @@ least one major upgrade within their support window.
 ### Optional
 
 - Wire the new CI workflow into your fork's branch protection rules.
-- Replace any wa'kijo placeholder copy under
-  `apps/api/src/modules/contacts/` with your own product terminology
-  before showing it to a customer.
-- If you operate Bull-Board behind a reverse proxy, configure it to
-  forward the session cookie — the admin UI requires a wa'kijo session
-  to load.
+- Replace any wa'kijo placeholder copy under `apps/api/src/modules/contacts/`
+  with your own product terminology before showing it to a customer.
+- If you operate Bull-Board behind a reverse proxy, configure it to forward the
+  session cookie — the admin UI requires a wa'kijo session to load.
 
 ### No breaking changes
 
-This release is purely additive. v0.4.0 customers can pull and migrate
-without touching application code.
+This release is purely additive. v0.4.0 customers can pull and migrate without
+touching application code.
 
 ---
 
 ## v0.5.0 → 1.0.0 (planned, not yet released)
 
-Tentative release notes for the first stable release. Will be finalised
-when 1.0 ships.
+Tentative release notes for the first stable release. Will be finalised when 1.0
+ships.
 
 ### Breaking changes (planned)
 
 - **Permission catalogue moved** from `packages/shared/src/auth/permissions.ts`
   into a database-backed table for tenant-defined custom roles.
-  - Migration tool: `pnpm db:migrate:permissions` will seed the new table
-    with the existing static catalogue. No customer action needed if you
-    haven't customised the catalogue.
-- **`@RequirePermission()` decorator** now accepts a string union derived
-  from the seeded permissions; arbitrary strings will fail at typecheck
-  time. Update any custom permissions to be added via the new admin API
-  rather than hand-edited in source.
-- **`/api/auth/sign-in/email` response shape**: error responses now follow
-  the wa'kijo error envelope (`{ success: false, ... }`) instead of Better
-  Auth's native shape. SDK consumers must update their error handling.
+  - Migration tool: `pnpm db:migrate:permissions` will seed the new table with
+    the existing static catalogue. No customer action needed if you haven't
+    customised the catalogue.
+- **`@RequirePermission()` decorator** now accepts a string union derived from
+  the seeded permissions; arbitrary strings will fail at typecheck time. Update
+  any custom permissions to be added via the new admin API rather than
+  hand-edited in source.
+- **`/api/auth/sign-in/email` response shape**: error responses now follow the
+  wa'kijo error envelope (`{ success: false, ... }`) instead of Better Auth's
+  native shape. SDK consumers must update their error handling.
 
 ### New features (planned)
 
@@ -176,8 +172,8 @@ pnpm --filter @wa-kijo/shared build
 pnpm --filter @wa-kijo/db build
 ```
 
-> **Estimated downtime for production deploy:** 2–5 minutes (one-time
-> permission catalogue backfill). Schedule a maintenance window.
+> **Estimated downtime for production deploy:** 2–5 minutes (one-time permission
+> catalogue backfill). Schedule a maintenance window.
 
 ---
 
@@ -189,22 +185,21 @@ pnpm --filter @wa-kijo/db build
 
 - Full Next.js 15 frontend scaffold added under `apps/web/`.
 - shadcn/ui primitives, TanStack Query provider, Better Auth client,
-  authenticated app shell, all auth pages, organisation and user settings
-  pages.
-- `useCan()` hook and `<Can />` component for client-side permission UX
-  (server enforcement unchanged).
+  authenticated app shell, all auth pages, organisation and user settings pages.
+- `useCan()` hook and `<Can />` component for client-side permission UX (server
+  enforcement unchanged).
 - Playwright E2E config that auto-starts the API and web.
 
 ### Required action
 
 - Run `pnpm install` to pull in the new `apps/web` dependencies.
-- If you ran `pnpm dev` previously and only had the API service running,
-  you can keep doing so by filtering: `pnpm --filter @wa-kijo/api dev`.
+- If you ran `pnpm dev` previously and only had the API service running, you can
+  keep doing so by filtering: `pnpm --filter @wa-kijo/api dev`.
 
 ### Optional
 
-- Replace `--color-primary` and the logo for your brand before showing the
-  web app to a customer (see [`customization.md`](customization.md) § 2).
+- Replace `--color-primary` and the logo for your brand before showing the web
+  app to a customer (see [`customization.md`](customization.md) § 2).
 
 ### No schema changes
 
@@ -236,17 +231,15 @@ This release is frontend-only. No database migrations needed.
    - `BETTER_AUTH_URL` — public API URL, no trailing slash.
    - `RESEND_API_KEY`, `EMAIL_FROM`.
    - Optional: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
-2. **Run migrations:** `pnpm db:migrate:deploy`. The migration adds the
-   Better Auth and organisation tables. **No data loss** — these are new
-   tables.
+2. **Run migrations:** `pnpm db:migrate:deploy`. The migration adds the Better
+   Auth and organisation tables. **No data loss** — these are new tables.
 3. **Seed dev:** locally, `pnpm db:seed` to create test users.
-4. **Update any controllers** you wrote to add `@RequirePermission(...)`
-   on each endpoint. Without it, every authenticated user can access the
-   route. (This is a deliberate behaviour change — you should make every
-   permission decision explicit.)
-5. **Replace any direct Prisma calls** with calls through your repository
-   class extending `BaseRepository<T>`. Direct calls bypass tenant
-   scoping.
+4. **Update any controllers** you wrote to add `@RequirePermission(...)` on each
+   endpoint. Without it, every authenticated user can access the route. (This is
+   a deliberate behaviour change — you should make every permission decision
+   explicit.)
+5. **Replace any direct Prisma calls** with calls through your repository class
+   extending `BaseRepository<T>`. Direct calls bypass tenant scoping.
 
 ### Breaking change
 
@@ -296,8 +289,8 @@ Initial private release. No upgrade path; this is the starting point.
 
 ## Per-release upgrade notes — template
 
-When releasing a new version, copy this template into a new section at the
-top of this file:
+When releasing a new version, copy this template into a new section at the top
+of this file:
 
 ```markdown
 ## v<X.Y.Z> (released YYYY-MM-DD)
@@ -327,8 +320,8 @@ top of this file:
 
 ## Reading old upgrade notes
 
-If you're skipping multiple versions (e.g. upgrading from v0.2.0 directly
-to v1.0.0), apply each section's required actions in order. The
-`pnpm db:migrate:deploy` step rolls every pending migration forward in
-sequence — you don't need to run it once per version, just once at the
-end. Apply manual code/env changes in version order regardless.
+If you're skipping multiple versions (e.g. upgrading from v0.2.0 directly to
+v1.0.0), apply each section's required actions in order. The
+`pnpm db:migrate:deploy` step rolls every pending migration forward in sequence
+— you don't need to run it once per version, just once at the end. Apply manual
+code/env changes in version order regardless.

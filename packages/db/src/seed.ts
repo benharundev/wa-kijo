@@ -33,8 +33,8 @@ const PLANS = [
     name: 'Starter',
     slug: 'starter',
     description: 'For small teams getting started.',
-    priceMonthly: 4900,    // MYR 49.00 — replace with your currency/amount
-    priceYearly: 47040,    // MYR 470.40 (~2 months free)
+    priceMonthly: 4900, // MYR 49.00 — replace with your currency/amount
+    priceYearly: 47040, // MYR 470.40 (~2 months free)
     currency: 'MYR',
     features: JSON.stringify([
       'Up to 1,000 contacts',
@@ -50,8 +50,8 @@ const PLANS = [
     name: 'Growth',
     slug: 'growth',
     description: 'For growing teams that need more scale.',
-    priceMonthly: 14900,   // MYR 149.00
-    priceYearly: 143040,   // MYR 1,430.40
+    priceMonthly: 14900, // MYR 149.00
+    priceYearly: 143040, // MYR 1,430.40
     currency: 'MYR',
     features: JSON.stringify([
       'Up to 10,000 contacts',
@@ -68,8 +68,8 @@ const PLANS = [
     name: 'Enterprise',
     slug: 'enterprise',
     description: 'For larger organisations needing unlimited scale.',
-    priceMonthly: 49900,   // MYR 499.00
-    priceYearly: 479040,   // MYR 4,790.40
+    priceMonthly: 49900, // MYR 499.00
+    priceYearly: 479040, // MYR 4,790.40
     currency: 'MYR',
     features: JSON.stringify([
       'Unlimited contacts',
@@ -90,27 +90,27 @@ const prisma = new PrismaClient();
 // ── Seed data ────────────────────────────────────────────────────────────────
 
 const USERS = [
-  { email: 'admin@example.com',  name: 'Admin',          password: 'password123' },
-  { email: 'agency@example.com', name: 'Agency Owner',   password: 'password123' },
+  { email: 'admin@example.com', name: 'Admin', password: 'password123' },
+  { email: 'agency@example.com', name: 'Agency Owner', password: 'password123' },
   { email: 'member@example.com', name: 'Workspace User', password: 'password123' },
 ] as const;
 
 const ORGS = [
   {
-    name:    "wa'kijo HQ",
-    slug:    'wakijo-hq',
+    name: "wa'kijo HQ",
+    slug: 'wakijo-hq',
     orgType: 'SYSTEM',
     // SaaS platform itself — no parent
   },
   {
-    name:    'Acme Agency',
-    slug:    'acme-agency',
+    name: 'Acme Agency',
+    slug: 'acme-agency',
     orgType: 'AGENCY',
     // Parent set dynamically after wa'kijo HQ is created
   },
   {
-    name:    'Acme Workspace',
-    slug:    'acme-workspace',
+    name: 'Acme Workspace',
+    slug: 'acme-workspace',
     orgType: 'WORKSPACE',
     // Parent set dynamically after Acme Agency is created
   },
@@ -120,7 +120,7 @@ const ORGS = [
 
 async function upsertUser(data: { email: string; name: string; password: string }) {
   const user = await prisma.user.upsert({
-    where:  { email: data.email },
+    where: { email: data.email },
     update: { emailVerified: true },
     create: { email: data.email, name: data.name, emailVerified: true },
   });
@@ -128,7 +128,7 @@ async function upsertUser(data: { email: string; name: string; password: string 
   // Better Auth stores credentials in Account: providerId='credential', accountId=<email>
   const hashed = await hashPassword(data.password);
   await prisma.account.upsert({
-    where:  { providerId_accountId: { providerId: 'credential', accountId: data.email } },
+    where: { providerId_accountId: { providerId: 'credential', accountId: data.email } },
     update: { password: hashed },
     create: { userId: user.id, providerId: 'credential', accountId: data.email, password: hashed },
   });
@@ -143,12 +143,12 @@ async function upsertOrg(data: {
   parentOrgId?: string;
 }) {
   return prisma.organization.upsert({
-    where:  { slug: data.slug },
+    where: { slug: data.slug },
     update: {},
     create: {
-      name:        data.name,
-      slug:        data.slug,
-      orgType:     data.orgType,
+      name: data.name,
+      slug: data.slug,
+      orgType: data.orgType,
       parentOrgId: data.parentOrgId ?? null,
     },
   });
@@ -156,7 +156,7 @@ async function upsertOrg(data: {
 
 async function upsertMember(userId: string, orgId: string, role: string) {
   return prisma.member.upsert({
-    where:  { organizationId_userId: { organizationId: orgId, userId } },
+    where: { organizationId_userId: { organizationId: orgId, userId } },
     update: { role },
     create: { userId, organizationId: orgId, role },
   });
@@ -165,12 +165,14 @@ async function upsertMember(userId: string, orgId: string, role: string) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
-  console.log("🌱 Seeding dev database...\n");
+  console.log('🌱 Seeding dev database...\n');
 
   // Users
-  const [adminUser, agencyUser, memberUser] = await Promise.all(
-    USERS.map(upsertUser),
-  ) as [Awaited<ReturnType<typeof upsertUser>>, Awaited<ReturnType<typeof upsertUser>>, Awaited<ReturnType<typeof upsertUser>>];
+  const [adminUser, agencyUser, memberUser] = (await Promise.all(USERS.map(upsertUser))) as [
+    Awaited<ReturnType<typeof upsertUser>>,
+    Awaited<ReturnType<typeof upsertUser>>,
+    Awaited<ReturnType<typeof upsertUser>>,
+  ];
   console.log('  ✓ Users');
   USERS.forEach((u) => console.log(`      ${u.email}  /  ${u.password}`));
 
@@ -180,15 +182,19 @@ async function main(): Promise<void> {
   console.log(`  ✓ Org [SYSTEM]    "${hqOrg.name}"  (id: ${hqOrg.id})`);
 
   const agencyOrg = await upsertOrg({ ...ORGS[1], parentOrgId: hqOrg.id });
-  console.log(`  ✓ Org [AGENCY]    "${agencyOrg.name}"  (id: ${agencyOrg.id})  parent → ${hqOrg.name}`);
+  console.log(
+    `  ✓ Org [AGENCY]    "${agencyOrg.name}"  (id: ${agencyOrg.id})  parent → ${hqOrg.name}`,
+  );
 
   const workspaceOrg = await upsertOrg({ ...ORGS[2], parentOrgId: agencyOrg.id });
-  console.log(`  ✓ Org [WORKSPACE] "${workspaceOrg.name}"  (id: ${workspaceOrg.id})  parent → ${agencyOrg.name}`);
+  console.log(
+    `  ✓ Org [WORKSPACE] "${workspaceOrg.name}"  (id: ${workspaceOrg.id})  parent → ${agencyOrg.name}`,
+  );
 
   // Memberships
   console.log('');
-  await upsertMember(adminUser.id,  hqOrg.id,        'owner');
-  await upsertMember(agencyUser.id, agencyOrg.id,    'owner');
+  await upsertMember(adminUser.id, hqOrg.id, 'owner');
+  await upsertMember(agencyUser.id, agencyOrg.id, 'owner');
   await upsertMember(memberUser.id, workspaceOrg.id, 'member');
 
   // Platform admin also has owner-level access to the agency (demonstrates hierarchy)
@@ -217,7 +223,9 @@ async function main(): Promise<void> {
     });
     const monthly = (plan.priceMonthly / 100).toFixed(2);
     const yearly = (plan.priceYearly / 100).toFixed(2);
-    console.log(`  ✓ Plan [${plan.slug.toUpperCase().padEnd(10)}]  MYR ${monthly}/mo  MYR ${yearly}/yr`);
+    console.log(
+      `  ✓ Plan [${plan.slug.toUpperCase().padEnd(10)}]  MYR ${monthly}/mo  MYR ${yearly}/yr`,
+    );
   }
 
   console.log('\n✅ Seed complete.\n');

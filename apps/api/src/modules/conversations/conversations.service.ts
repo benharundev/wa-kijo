@@ -95,10 +95,7 @@ export class ConversationsService {
   async update(ctx: RequestContext, id: string, dto: UpdateConversationDto) {
     await this.findOne(ctx, id);
 
-    if (
-      dto.assignedToUserId !== undefined &&
-      !hasPermission(ctx.userRole, 'conversation:assign')
-    ) {
+    if (dto.assignedToUserId !== undefined && !hasPermission(ctx.userRole, 'conversation:assign')) {
       throw new ForbiddenException(
         `Role '${ctx.userRole}' does not have permission 'conversation:assign'`,
       );
@@ -152,7 +149,9 @@ export class ConversationsService {
   async sendMessage(ctx: RequestContext, conversationId: string, dto: SendMessageDto) {
     const conv = await this.findOne(ctx, conversationId);
     if (conv.status === 'closed') {
-      throw new ConflictException('Cannot send a message to a closed conversation. Reopen it first.');
+      throw new ConflictException(
+        'Cannot send a message to a closed conversation. Reopen it first.',
+      );
     }
 
     const message = await this.prisma.$transaction(async (tx) => {

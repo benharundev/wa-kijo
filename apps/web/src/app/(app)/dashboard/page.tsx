@@ -11,7 +11,7 @@ const DashboardClient = dynamic(
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/50" />
       </div>
     ),
-  }
+  },
 );
 
 export const metadata = {

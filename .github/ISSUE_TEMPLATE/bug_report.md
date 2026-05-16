@@ -1,8 +1,8 @@
 ---
 name: Bug report
 about: Report a reproducible bug in wa'kijo Community
-title: "[BUG] "
-labels: ["bug", "needs-triage"]
+title: '[BUG] '
+labels: ['bug', 'needs-triage']
 ---
 
 <!-- Thanks for helping. Please fill in as much as you can. -->

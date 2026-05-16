@@ -272,9 +272,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
                   <span
                     className={cn(
                       'text-sm',
-                      step.done
-                        ? 'text-muted-foreground line-through'
-                        : 'text-foreground',
+                      step.done ? 'text-muted-foreground line-through' : 'text-foreground',
                     )}
                   >
                     {step.label}

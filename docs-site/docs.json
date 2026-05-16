@@ -52,7 +52,10 @@
         "header": "Legal",
         "items": [
           { "label": "License", "href": "https://github.com/wakijo/wa-kijo/blob/main/LICENSE" },
-          { "label": "Security", "href": "https://github.com/wakijo/wa-kijo/blob/main/SECURITY.md" },
+          {
+            "label": "Security",
+            "href": "https://github.com/wakijo/wa-kijo/blob/main/SECURITY.md"
+          },
           { "label": "Privacy", "href": "https://wakijo.dev/privacy" }
         ]
       }
@@ -65,12 +68,7 @@
         "groups": [
           {
             "group": "Get started",
-            "pages": [
-              "introduction",
-              "quickstart",
-              "what-you-get",
-              "support"
-            ]
+            "pages": ["introduction", "quickstart", "what-you-get", "support"]
           },
           {
             "group": "Concepts",
@@ -106,17 +104,11 @@
           },
           {
             "group": "Release",
-            "pages": [
-              "changelog",
-              "upgrade-guide",
-              "roadmap"
-            ]
+            "pages": ["changelog", "upgrade-guide", "roadmap"]
           },
           {
             "group": "Troubleshooting",
-            "pages": [
-              "troubleshooting"
-            ]
+            "pages": ["troubleshooting"]
           }
         ]
       },

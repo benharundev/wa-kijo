@@ -105,9 +105,7 @@ export default function SignInPage() {
                 transition={spring}
               />
             )}
-            <span className="relative z-10">
-              {t === 'password' ? 'Password' : 'Magic link'}
-            </span>
+            <span className="relative z-10">{t === 'password' ? 'Password' : 'Magic link'}</span>
           </button>
         ))}
       </motion.div>
@@ -141,7 +139,9 @@ export default function SignInPage() {
             className="space-y-4"
           >
             <motion.div variants={staggerItem} className="space-y-1.5">
-              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium">
+                Email
+              </Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
                 <Input
@@ -154,13 +154,17 @@ export default function SignInPage() {
                 />
               </div>
               {passwordForm.formState.errors.email && (
-                <p className="text-xs text-destructive">{passwordForm.formState.errors.email.message}</p>
+                <p className="text-xs text-destructive">
+                  {passwordForm.formState.errors.email.message}
+                </p>
               )}
             </motion.div>
 
             <motion.div variants={staggerItem} className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                <Label htmlFor="password" className="text-sm font-medium">
+                  Password
+                </Label>
                 <Link
                   href="/reset-password"
                   className="text-xs text-muted-foreground transition-colors hover:text-brand-600 dark:hover:text-brand-400"
@@ -179,7 +183,9 @@ export default function SignInPage() {
                 />
               </div>
               {passwordForm.formState.errors.password && (
-                <p className="text-xs text-destructive">{passwordForm.formState.errors.password.message}</p>
+                <p className="text-xs text-destructive">
+                  {passwordForm.formState.errors.password.message}
+                </p>
               )}
             </motion.div>
 
@@ -225,7 +231,9 @@ export default function SignInPage() {
             className="space-y-4"
           >
             <motion.div variants={staggerItem} className="space-y-1.5">
-              <Label htmlFor="magic-email" className="text-sm font-medium">Email</Label>
+              <Label htmlFor="magic-email" className="text-sm font-medium">
+                Email
+              </Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
                 <Input
@@ -238,7 +246,9 @@ export default function SignInPage() {
                 />
               </div>
               {magicForm.formState.errors.email && (
-                <p className="text-xs text-destructive">{magicForm.formState.errors.email.message}</p>
+                <p className="text-xs text-destructive">
+                  {magicForm.formState.errors.email.message}
+                </p>
               )}
             </motion.div>
 

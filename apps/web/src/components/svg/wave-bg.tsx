@@ -92,7 +92,9 @@ interface EmptyStateProps {
  */
 export function EmptyState({ icon, title, description, action, className }: EmptyStateProps) {
   return (
-    <div className={cn('flex flex-col items-center justify-center gap-4 py-16 text-center', className)}>
+    <div
+      className={cn('flex flex-col items-center justify-center gap-4 py-16 text-center', className)}
+    >
       {/* Floating illustration container */}
       <div className="relative animate-float">
         <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-brand-soft shadow-soft">
@@ -120,9 +122,7 @@ export function EmptyState({ icon, title, description, action, className }: Empt
 
       <div className="space-y-1.5">
         <h3 className="text-base font-semibold text-foreground">{title}</h3>
-        {description && (
-          <p className="max-w-xs text-sm text-muted-foreground">{description}</p>
-        )}
+        {description && <p className="max-w-xs text-sm text-muted-foreground">{description}</p>}
       </div>
 
       {action && <div className="mt-2">{action}</div>}

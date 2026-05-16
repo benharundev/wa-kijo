@@ -45,9 +45,7 @@ export default function DangerZonePage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Danger zone</h1>
-        <p className="text-sm text-muted-foreground">
-          Irreversible and destructive actions.
-        </p>
+        <p className="text-sm text-muted-foreground">Irreversible and destructive actions.</p>
       </div>
 
       <Card className="border-destructive">

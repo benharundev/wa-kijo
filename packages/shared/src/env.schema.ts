@@ -18,9 +18,7 @@ export const EnvSchema = z.object({
   CORS_ORIGIN: z.string().default('http://localhost:3001'),
 
   // Observability
-  LOG_LEVEL: z
-    .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace'])
-    .default('debug'),
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('debug'),
   SENTRY_DSN: z.string().optional(),
 
   // Phase 3 — Better Auth (required)

@@ -147,7 +147,9 @@ export class AuthService implements OnModuleInit {
    * Used for breadcrumb rendering and hierarchical permission checks.
    * Max depth 3 — throws if exceeded (data integrity violation).
    */
-  async getOrgAncestors(orgId: string): Promise<Array<{ id: string; name: string; orgType: string }>> {
+  async getOrgAncestors(
+    orgId: string,
+  ): Promise<Array<{ id: string; name: string; orgType: string }>> {
     const ancestors: Array<{ id: string; name: string; orgType: string }> = [];
     let currentId: string | null = orgId;
 

@@ -1,1 +1,403 @@
-{"openapi":"3.0.0","paths":{"/api/v1/health":{"get":{"operationId":"HealthController_check","parameters":[],"responses":{"200":{"description":""}},"tags":["Health"]}},"/api/v1/contacts":{"get":{"description":"Returns a cursor-paginated list of contacts for the active organisation. Supports full-text search and filtering by tag or blocked status.","operationId":"ContactsController_list","parameters":[],"responses":{"200":{"description":"Paginated contact list"}},"security":[{"cookie":[]}],"summary":"List contacts","tags":["Contacts"]},"post":{"description":"Creates a new contact in the active organisation. Phone must be in E.164 format and unique within the org.","operationId":"ContactsController_create","parameters":[],"responses":{"201":{"description":"Contact created"}},"security":[{"cookie":[]}],"summary":"Create contact","tags":["Contacts"]}},"/api/v1/contacts/{id}":{"get":{"description":"Returns a single contact with its tags. Returns 404 if the contact does not exist within the active organisation.","operationId":"ContactsController_findOne","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Contact with tags"},"404":{"description":"Contact not found"}},"security":[{"cookie":[]}],"summary":"Get contact by ID","tags":["Contacts"]},"patch":{"description":"Partially updates a contact. Supplying tagIds replaces the full tag set.","operationId":"ContactsController_update","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Updated contact"},"404":{"description":"Contact not found"}},"security":[{"cookie":[]}],"summary":"Update contact","tags":["Contacts"]},"delete":{"description":"Soft-deletes a contact. The record is retained and can be restored via Prisma Studio or a future admin endpoint.","operationId":"ContactsController_remove","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"204":{"description":"Contact deleted"},"404":{"description":"Contact not found"}},"security":[{"cookie":[]}],"summary":"Delete contact","tags":["Contacts"]}},"/api/v1/tags":{"get":{"description":"Returns all tags defined in the active organisation, ordered by name.","operationId":"TagsController_list","parameters":[],"responses":{"200":{"description":"Tag list"}},"security":[{"cookie":[]}],"summary":"List tags","tags":["Tags"]},"post":{"description":"Creates a new label for categorising contacts. Name must be unique within the org.","operationId":"TagsController_create","parameters":[],"responses":{"201":{"description":"Tag created"}},"security":[{"cookie":[]}],"summary":"Create tag","tags":["Tags"]}},"/api/v1/tags/{id}":{"patch":{"operationId":"TagsController_update","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Updated tag"},"404":{"description":"Tag not found"}},"security":[{"cookie":[]}],"summary":"Update tag","tags":["Tags"]},"delete":{"description":"Permanently deletes a tag and removes it from all contacts in the organisation.","operationId":"TagsController_remove","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"204":{"description":"Tag deleted"},"404":{"description":"Tag not found"}},"security":[{"cookie":[]}],"summary":"Delete tag","tags":["Tags"]}},"/api/v1/conversations":{"get":{"description":"Returns a cursor-paginated inbox, ordered by most recent message. Supports filtering by status, contact, assigned agent, and channel.","operationId":"ConversationsController_list","parameters":[],"responses":{"200":{"description":"Paginated conversation list"}},"security":[{"cookie":[]}],"summary":"List conversations","tags":["Conversations"]},"post":{"description":"Opens a new conversation with a contact on the specified channel. Returns 409 if an open conversation already exists for that contact + channel combination.","operationId":"ConversationsController_create","parameters":[],"responses":{"201":{"description":"Conversation opened"}},"security":[{"cookie":[]}],"summary":"Open conversation","tags":["Conversations"]}},"/api/v1/conversations/{id}":{"get":{"description":"Returns a single conversation with its contact summary.","operationId":"ConversationsController_findOne","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Conversation with contact"},"404":{"description":"Conversation not found"}},"security":[{"cookie":[]}],"summary":"Get conversation by ID","tags":["Conversations"]},"patch":{"description":"Update status (open | closed | snoozed) or assigned agent. Requires conversation:assign permission to change assignedToUserId.","operationId":"ConversationsController_update","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Updated conversation"},"404":{"description":"Conversation not found"}},"security":[{"cookie":[]}],"summary":"Update conversation","tags":["Conversations"]},"delete":{"description":"Soft-deletes a conversation and all its messages.","operationId":"ConversationsController_remove","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"204":{"description":"Conversation deleted"},"404":{"description":"Conversation not found"}},"security":[{"cookie":[]}],"summary":"Delete conversation","tags":["Conversations"]}},"/api/v1/conversations/{id}/messages":{"get":{"description":"Returns cursor-paginated messages within a conversation, newest first. Filter by direction (inbound | outbound).","operationId":"ConversationsController_listMessages","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"200":{"description":"Paginated message list"},"404":{"description":"Conversation not found"}},"security":[{"cookie":[]}],"summary":"List messages","tags":["Conversations"]},"post":{"description":"Queues an outbound message for delivery. The message is persisted with status=queued; a background job dispatches it to the provider and updates the status via webhook.","operationId":"ConversationsController_sendMessage","parameters":[{"name":"id","required":true,"in":"path","schema":{"type":"string"}}],"responses":{"201":{"description":"Message queued for delivery"},"404":{"description":"Conversation not found"}},"security":[{"cookie":[]}],"summary":"Send message","tags":["Conversations"]}},"/api/v1/billing/plans":{"get":{"description":"Returns all active subscription plans. Public — no auth required.","operationId":"BillingController_listPlans","parameters":[],"responses":{"200":{"description":"List of plans"}},"security":[{"cookie":[]}],"summary":"List active plans","tags":["Billing"]}},"/api/v1/billing/subscription":{"get":{"description":"Returns the active subscription for the caller's organisation.","operationId":"BillingController_getSubscription","parameters":[],"responses":{"200":{"description":"Current subscription or null if not subscribed"}},"security":[{"cookie":[]}],"summary":"Get current subscription","tags":["Billing"]}},"/api/v1/billing/stripe/checkout":{"post":{"description":"Creates a hosted Stripe Checkout session. Redirect the user to the returned `url` to complete payment.","operationId":"BillingController_createStripeCheckout","parameters":[],"responses":{"201":{"description":"Checkout session URL"}},"security":[{"cookie":[]}],"summary":"Create Stripe checkout session","tags":["Billing"]}},"/api/v1/billing/stripe/portal":{"post":{"description":"Creates a Stripe Customer Portal session for managing the subscription, payment method, and invoices.","operationId":"BillingController_createStripePortal","parameters":[],"responses":{"201":{"description":"Portal session URL"}},"security":[{"cookie":[]}],"summary":"Create Stripe billing portal session","tags":["Billing"]}},"/api/v1/billing/stripe/webhook":{"post":{"description":"Internal — do not call.","operationId":"BillingController_stripeWebhook","parameters":[{"name":"stripe-signature","required":true,"in":"header","schema":{"type":"string"}}],"responses":{"200":{"description":""}},"security":[{"cookie":[]}],"summary":"Stripe webhook receiver","tags":["Billing"]}},"/api/v1/billing/billplz/checkout":{"post":{"description":"Creates a Billplz bill for Malaysian FPX/online banking payment. Redirect the user to the returned `url`.","operationId":"BillingController_createBillplzCheckout","parameters":[],"responses":{"201":{"description":"Bill URL and ID"}},"security":[{"cookie":[]}],"summary":"Create Billplz bill","tags":["Billing"]}},"/api/v1/billing/billplz/webhook":{"post":{"description":"Internal — do not call.","operationId":"BillingController_billplzWebhook","parameters":[{"name":"x-billplz-signature","required":true,"in":"header","schema":{"type":"string"}}],"responses":{"200":{"description":""}},"security":[{"cookie":[]}],"summary":"Billplz webhook receiver","tags":["Billing"]}},"/api/v1/billing/curlec/checkout":{"post":{"description":"Creates a Curlec (Razorpay Malaysia) subscription. Redirect the user to the returned `url` to authorise the direct debit mandate.","operationId":"BillingController_createCurlecCheckout","parameters":[],"responses":{"201":{"description":"Subscription hosted URL"}},"security":[{"cookie":[]}],"summary":"Create Curlec subscription","tags":["Billing"]}},"/api/v1/billing/curlec/webhook":{"post":{"description":"Internal — do not call.","operationId":"BillingController_curlecWebhook","parameters":[{"name":"x-razorpay-signature","required":true,"in":"header","schema":{"type":"string"}}],"responses":{"200":{"description":""}},"security":[{"cookie":[]}],"summary":"Curlec webhook receiver","tags":["Billing"]}}},"info":{"title":"wa'kijo API","description":"Multi-tenant B2B SaaS boilerplate — API reference","version":"1.0","contact":{}},"tags":[],"servers":[],"components":{"securitySchemes":{"cookie":{"type":"apiKey","in":"cookie","name":"better-auth.session_token"}},"schemas":{}}}
+{
+  'openapi': '3.0.0',
+  'paths':
+    {
+      '/api/v1/health':
+        {
+          'get':
+            {
+              'operationId': 'HealthController_check',
+              'parameters': [],
+              'responses': { '200': { 'description': '' } },
+              'tags': ['Health'],
+            },
+        },
+      '/api/v1/contacts':
+        {
+          'get':
+            {
+              'description': 'Returns a cursor-paginated list of contacts for the active organisation. Supports full-text search and filtering by tag or blocked status.',
+              'operationId': 'ContactsController_list',
+              'parameters': [],
+              'responses': { '200': { 'description': 'Paginated contact list' } },
+              'security': [{ 'cookie': [] }],
+              'summary': 'List contacts',
+              'tags': ['Contacts'],
+            },
+          'post':
+            {
+              'description': 'Creates a new contact in the active organisation. Phone must be in E.164 format and unique within the org.',
+              'operationId': 'ContactsController_create',
+              'parameters': [],
+              'responses': { '201': { 'description': 'Contact created' } },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Create contact',
+              'tags': ['Contacts'],
+            },
+        },
+      '/api/v1/contacts/{id}':
+        {
+          'get':
+            {
+              'description': 'Returns a single contact with its tags. Returns 404 if the contact does not exist within the active organisation.',
+              'operationId': 'ContactsController_findOne',
+              'parameters':
+                [{ 'name': 'id', 'required': true, 'in': 'path', 'schema': { 'type': 'string' } }],
+              'responses':
+                {
+                  '200': { 'description': 'Contact with tags' },
+                  '404': { 'description': 'Contact not found' },
+                },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Get contact by ID',
+              'tags': ['Contacts'],
+            },
+          'patch':
+            {
+              'description': 'Partially updates a contact. Supplying tagIds replaces the full tag set.',
+              'operationId': 'ContactsController_update',
+              'parameters':
+                [{ 'name': 'id', 'required': true, 'in': 'path', 'schema': { 'type': 'string' } }],
+              'responses':
+                {
+                  '200': { 'description': 'Updated contact' },
+                  '404': { 'description': 'Contact not found' },
+                },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Update contact',
+              'tags': ['Contacts'],
+            },
+          'delete':
+            {
+              'description': 'Soft-deletes a contact. The record is retained and can be restored via Prisma Studio or a future admin endpoint.',
+              'operationId': 'ContactsController_remove',
+              'parameters':
+                [{ 'name': 'id', 'required': true, 'in': 'path', 'schema': { 'type': 'string' } }],
+              'responses':
+                {
+                  '204': { 'description': 'Contact deleted' },
+                  '404': { 'description': 'Contact not found' },
+                },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Delete contact',
+              'tags': ['Contacts'],
+            },
+        },
+      '/api/v1/tags':
+        {
+          'get':
+            {
+              'description': 'Returns all tags defined in the active organisation, ordered by name.',
+              'operationId': 'TagsController_list',
+              'parameters': [],
+              'responses': { '200': { 'description': 'Tag list' } },
+              'security': [{ 'cookie': [] }],
+              'summary': 'List tags',
+              'tags': ['Tags'],
+            },
+          'post':
+            {
+              'description': 'Creates a new label for categorising contacts. Name must be unique within the org.',
+              'operationId': 'TagsController_create',
+              'parameters': [],
+              'responses': { '201': { 'description': 'Tag created' } },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Create tag',
+              'tags': ['Tags'],
+            },
+        },
+      '/api/v1/tags/{id}':
+        {
+          'patch':
+            {
+              'operationId': 'TagsController_update',
+              'parameters':
+                [{ 'name': 'id', 'required': true, 'in': 'path', 'schema': { 'type': 'string' } }],
+              'responses':
+                {
+                  '200': { 'description': 'Updated tag' },
+                  '404': { 'description': 'Tag not found' },
+                },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Update tag',
+              'tags': ['Tags'],
+            },
+          'delete':
+            {
+              'description': 'Permanently deletes a tag and removes it from all contacts in the organisation.',
+              'operationId': 'TagsController_remove',
+              'parameters':
+                [{ 'name': 'id', 'required': true, 'in': 'path', 'schema': { 'type': 'string' } }],
+              'responses':
+                {
+                  '204': { 'description': 'Tag deleted' },
+                  '404': { 'description': 'Tag not found' },
+                },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Delete tag',
+              'tags': ['Tags'],
+            },
+        },
+      '/api/v1/conversations':
+        {
+          'get':
+            {
+              'description': 'Returns a cursor-paginated inbox, ordered by most recent message. Supports filtering by status, contact, assigned agent, and channel.',
+              'operationId': 'ConversationsController_list',
+              'parameters': [],
+              'responses': { '200': { 'description': 'Paginated conversation list' } },
+              'security': [{ 'cookie': [] }],
+              'summary': 'List conversations',
+              'tags': ['Conversations'],
+            },
+          'post':
+            {
+              'description': 'Opens a new conversation with a contact on the specified channel. Returns 409 if an open conversation already exists for that contact + channel combination.',
+              'operationId': 'ConversationsController_create',
+              'parameters': [],
+              'responses': { '201': { 'description': 'Conversation opened' } },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Open conversation',
+              'tags': ['Conversations'],
+            },
+        },
+      '/api/v1/conversations/{id}':
+        {
+          'get':
+            {
+              'description': 'Returns a single conversation with its contact summary.',
+              'operationId': 'ConversationsController_findOne',
+              'parameters':
+                [{ 'name': 'id', 'required': true, 'in': 'path', 'schema': { 'type': 'string' } }],
+              'responses':
+                {
+                  '200': { 'description': 'Conversation with contact' },
+                  '404': { 'description': 'Conversation not found' },
+                },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Get conversation by ID',
+              'tags': ['Conversations'],
+            },
+          'patch':
+            {
+              'description': 'Update status (open | closed | snoozed) or assigned agent. Requires conversation:assign permission to change assignedToUserId.',
+              'operationId': 'ConversationsController_update',
+              'parameters':
+                [{ 'name': 'id', 'required': true, 'in': 'path', 'schema': { 'type': 'string' } }],
+              'responses':
+                {
+                  '200': { 'description': 'Updated conversation' },
+                  '404': { 'description': 'Conversation not found' },
+                },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Update conversation',
+              'tags': ['Conversations'],
+            },
+          'delete':
+            {
+              'description': 'Soft-deletes a conversation and all its messages.',
+              'operationId': 'ConversationsController_remove',
+              'parameters':
+                [{ 'name': 'id', 'required': true, 'in': 'path', 'schema': { 'type': 'string' } }],
+              'responses':
+                {
+                  '204': { 'description': 'Conversation deleted' },
+                  '404': { 'description': 'Conversation not found' },
+                },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Delete conversation',
+              'tags': ['Conversations'],
+            },
+        },
+      '/api/v1/conversations/{id}/messages':
+        {
+          'get':
+            {
+              'description': 'Returns cursor-paginated messages within a conversation, newest first. Filter by direction (inbound | outbound).',
+              'operationId': 'ConversationsController_listMessages',
+              'parameters':
+                [{ 'name': 'id', 'required': true, 'in': 'path', 'schema': { 'type': 'string' } }],
+              'responses':
+                {
+                  '200': { 'description': 'Paginated message list' },
+                  '404': { 'description': 'Conversation not found' },
+                },
+              'security': [{ 'cookie': [] }],
+              'summary': 'List messages',
+              'tags': ['Conversations'],
+            },
+          'post':
+            {
+              'description': 'Queues an outbound message for delivery. The message is persisted with status=queued; a background job dispatches it to the provider and updates the status via webhook.',
+              'operationId': 'ConversationsController_sendMessage',
+              'parameters':
+                [{ 'name': 'id', 'required': true, 'in': 'path', 'schema': { 'type': 'string' } }],
+              'responses':
+                {
+                  '201': { 'description': 'Message queued for delivery' },
+                  '404': { 'description': 'Conversation not found' },
+                },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Send message',
+              'tags': ['Conversations'],
+            },
+        },
+      '/api/v1/billing/plans':
+        {
+          'get':
+            {
+              'description': 'Returns all active subscription plans. Public — no auth required.',
+              'operationId': 'BillingController_listPlans',
+              'parameters': [],
+              'responses': { '200': { 'description': 'List of plans' } },
+              'security': [{ 'cookie': [] }],
+              'summary': 'List active plans',
+              'tags': ['Billing'],
+            },
+        },
+      '/api/v1/billing/subscription':
+        {
+          'get':
+            {
+              'description': "Returns the active subscription for the caller's organisation.",
+              'operationId': 'BillingController_getSubscription',
+              'parameters': [],
+              'responses':
+                { '200': { 'description': 'Current subscription or null if not subscribed' } },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Get current subscription',
+              'tags': ['Billing'],
+            },
+        },
+      '/api/v1/billing/stripe/checkout':
+        {
+          'post':
+            {
+              'description': 'Creates a hosted Stripe Checkout session. Redirect the user to the returned `url` to complete payment.',
+              'operationId': 'BillingController_createStripeCheckout',
+              'parameters': [],
+              'responses': { '201': { 'description': 'Checkout session URL' } },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Create Stripe checkout session',
+              'tags': ['Billing'],
+            },
+        },
+      '/api/v1/billing/stripe/portal':
+        {
+          'post':
+            {
+              'description': 'Creates a Stripe Customer Portal session for managing the subscription, payment method, and invoices.',
+              'operationId': 'BillingController_createStripePortal',
+              'parameters': [],
+              'responses': { '201': { 'description': 'Portal session URL' } },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Create Stripe billing portal session',
+              'tags': ['Billing'],
+            },
+        },
+      '/api/v1/billing/stripe/webhook':
+        {
+          'post':
+            {
+              'description': 'Internal — do not call.',
+              'operationId': 'BillingController_stripeWebhook',
+              'parameters':
+                [
+                  {
+                    'name': 'stripe-signature',
+                    'required': true,
+                    'in': 'header',
+                    'schema': { 'type': 'string' },
+                  },
+                ],
+              'responses': { '200': { 'description': '' } },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Stripe webhook receiver',
+              'tags': ['Billing'],
+            },
+        },
+      '/api/v1/billing/billplz/checkout':
+        {
+          'post':
+            {
+              'description': 'Creates a Billplz bill for Malaysian FPX/online banking payment. Redirect the user to the returned `url`.',
+              'operationId': 'BillingController_createBillplzCheckout',
+              'parameters': [],
+              'responses': { '201': { 'description': 'Bill URL and ID' } },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Create Billplz bill',
+              'tags': ['Billing'],
+            },
+        },
+      '/api/v1/billing/billplz/webhook':
+        {
+          'post':
+            {
+              'description': 'Internal — do not call.',
+              'operationId': 'BillingController_billplzWebhook',
+              'parameters':
+                [
+                  {
+                    'name': 'x-billplz-signature',
+                    'required': true,
+                    'in': 'header',
+                    'schema': { 'type': 'string' },
+                  },
+                ],
+              'responses': { '200': { 'description': '' } },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Billplz webhook receiver',
+              'tags': ['Billing'],
+            },
+        },
+      '/api/v1/billing/curlec/checkout':
+        {
+          'post':
+            {
+              'description': 'Creates a Curlec (Razorpay Malaysia) subscription. Redirect the user to the returned `url` to authorise the direct debit mandate.',
+              'operationId': 'BillingController_createCurlecCheckout',
+              'parameters': [],
+              'responses': { '201': { 'description': 'Subscription hosted URL' } },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Create Curlec subscription',
+              'tags': ['Billing'],
+            },
+        },
+      '/api/v1/billing/curlec/webhook':
+        {
+          'post':
+            {
+              'description': 'Internal — do not call.',
+              'operationId': 'BillingController_curlecWebhook',
+              'parameters':
+                [
+                  {
+                    'name': 'x-razorpay-signature',
+                    'required': true,
+                    'in': 'header',
+                    'schema': { 'type': 'string' },
+                  },
+                ],
+              'responses': { '200': { 'description': '' } },
+              'security': [{ 'cookie': [] }],
+              'summary': 'Curlec webhook receiver',
+              'tags': ['Billing'],
+            },
+        },
+    },
+  'info':
+    {
+      'title': "wa'kijo API",
+      'description': 'Multi-tenant B2B SaaS boilerplate — API reference',
+      'version': '1.0',
+      'contact': {},
+    },
+  'tags': [],
+  'servers': [],
+  'components':
+    {
+      'securitySchemes':
+        { 'cookie': { 'type': 'apiKey', 'in': 'cookie', 'name': 'better-auth.session_token' } },
+      'schemas': {},
+    },
+}

@@ -29,14 +29,15 @@ export default function NotificationsPage() {
               Coming in Phase 5
             </Badge>
           </div>
-          <CardDescription>
-            Notification preferences will be configurable here.
-          </CardDescription>
+          <CardDescription>Notification preferences will be configurable here.</CardDescription>
         </CardHeader>
         <CardContent>
           <ul className="space-y-3">
             {preferences.map((pref) => (
-              <li key={pref.label} className="flex items-center justify-between rounded-md border p-3 opacity-50">
+              <li
+                key={pref.label}
+                className="flex items-center justify-between rounded-md border p-3 opacity-50"
+              >
                 <div>
                   <p className="text-sm font-medium">{pref.label}</p>
                   <p className="text-xs text-muted-foreground">{pref.description}</p>

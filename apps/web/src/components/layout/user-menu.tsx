@@ -70,10 +70,7 @@ export function UserMenu() {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
-        className={cn(
-          'w-60 rounded-xl border-border/60 p-1',
-          'glass shadow-soft-lg',
-        )}
+        className={cn('w-60 rounded-xl border-border/60 p-1', 'glass shadow-soft-lg')}
         align="end"
         sideOffset={8}
         forceMount

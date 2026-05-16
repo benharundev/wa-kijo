@@ -53,9 +53,6 @@ export class MessageDispatchProcessor extends WorkerHost {
       },
     });
 
-    this.logger.log(
-      { jobId: job.id, messageId, externalId },
-      'Message dispatched (stub)',
-    );
+    this.logger.log({ jobId: job.id, messageId, externalId }, 'Message dispatched (stub)');
   }
 }

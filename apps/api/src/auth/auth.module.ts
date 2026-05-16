@@ -62,8 +62,13 @@ async function esmImport(specifier: string): Promise<any> {
           },
 
           emailVerification: {
-            sendVerificationEmail: async ({ user, url }: { user: { email: string; name: string }; url: string }) =>
-              email.sendVerification({ email: user.email, name: user.name }, url),
+            sendVerificationEmail: async ({
+              user,
+              url,
+            }: {
+              user: { email: string; name: string };
+              url: string;
+            }) => email.sendVerification({ email: user.email, name: user.name }, url),
             autoSignInAfterVerification: true,
             expiresIn: 60 * 60 * 24, // 24 hours
           },

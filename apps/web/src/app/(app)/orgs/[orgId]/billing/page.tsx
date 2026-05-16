@@ -70,7 +70,10 @@ function parseFeatures(raw: string | null): string[] {
   } catch {
     // Fall through — treat as comma-separated string
   }
-  return raw.split(',').map((s) => s.trim()).filter(Boolean);
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 function formatDate(iso: string): string {
@@ -121,7 +124,11 @@ export default function BillingPage() {
     queryFn: () => fetcher<ApiPlan[]>('/api/v1/billing/plans'),
   });
 
-  const { data: subscription, isLoading: subLoading, refetch: refetchSub } = useQuery({
+  const {
+    data: subscription,
+    isLoading: subLoading,
+    refetch: refetchSub,
+  } = useQuery({
     queryKey: ['billing', 'subscription', orgId],
     queryFn: () => fetcher<ApiSubscription | null>('/api/v1/billing/subscription'),
     enabled: !!orgId,
@@ -181,9 +188,7 @@ export default function BillingPage() {
   // actively subscribed (excludes 'canceled' and 'incomplete' statuses).
   // Using it directly in JSX lets TypeScript narrow naturally.
   const activeSubscription: ApiSubscription | null =
-    subscription &&
-    subscription.status !== 'canceled' &&
-    subscription.status !== 'incomplete'
+    subscription && subscription.status !== 'canceled' && subscription.status !== 'incomplete'
       ? subscription
       : null;
   const isSubscribed = activeSubscription !== null;
@@ -343,10 +348,7 @@ export default function BillingPage() {
             </CardContent>
           </Card>
         ) : (
-          <div
-            className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
-            data-testid="plans-grid"
-          >
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" data-testid="plans-grid">
             {plans.map((plan) => {
               const price = interval === 'month' ? plan.priceMonthly : plan.priceYearly;
               const features = parseFeatures(plan.features);
@@ -364,9 +366,7 @@ export default function BillingPage() {
                       <CardTitle>{plan.name}</CardTitle>
                       {isCurrentPlan && <Badge variant="default">Current</Badge>}
                     </div>
-                    {plan.description && (
-                      <CardDescription>{plan.description}</CardDescription>
-                    )}
+                    {plan.description && <CardDescription>{plan.description}</CardDescription>}
                   </CardHeader>
 
                   <CardContent className="space-y-4">

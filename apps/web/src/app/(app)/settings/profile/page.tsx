@@ -19,7 +19,12 @@ const ProfileSchema = z.object({
 type ProfileValues = z.infer<typeof ProfileSchema>;
 
 function getInitials(name: string): string {
-  return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 }
 
 export default function ProfilePage() {

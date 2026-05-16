@@ -47,8 +47,7 @@ export function ActivitySparkline({
   const linePath = `M ${points.join(' L ')}`;
 
   // Area fill path (close below the line)
-  const areaPath =
-    `M ${padding},${height} L ${linePath.slice(2)} L ${width - padding},${height} Z`;
+  const areaPath = `M ${padding},${height} L ${linePath.slice(2)} L ${width - padding},${height} Z`;
 
   useEffect(() => {
     if (!animated || !pathRef.current) return;

@@ -54,30 +54,30 @@ pnpm dev
 
 ## Environment variables
 
-| Variable | Required | Default | Notes |
-|---|---|---|---|
-| `NODE_ENV` | No | `development` | `production` disables Swagger UI and enables secure cookies |
-| `PORT` | No | `3000` | API port |
-| `API_PREFIX` | No | `api/v1` | URL prefix for all NestJS routes |
-| `DATABASE_URL` | **Yes** | — | Full Postgres connection string |
-| `REDIS_HOST` | No | `localhost` | |
-| `REDIS_PORT` | No | `6379` | Docker default is `6381` — see `.env.example` |
-| `REDIS_PASSWORD` | No | — | Required in production |
-| `CORS_ORIGIN` | No | `http://localhost:3001` | Frontend URL |
-| `LOG_LEVEL` | No | `debug` | `fatal \| error \| warn \| info \| debug \| trace` |
-| `SENTRY_DSN` | No | — | Error tracking; omit to disable |
-| `BETTER_AUTH_SECRET` | **Yes** | — | Min 32 chars — `openssl rand -base64 32` |
-| `BETTER_AUTH_URL` | **Yes** | — | API base URL (no trailing slash) |
-| `RESEND_API_KEY` | **Yes** | — | `re_...` — from resend.com |
-| `EMAIL_FROM` | **Yes** | — | Verified sender address |
-| `GOOGLE_CLIENT_ID` | No | — | Google OAuth — omit to disable |
-| `GOOGLE_CLIENT_SECRET` | No | — | |
-| `STRIPE_SECRET_KEY` | No | — | Billing — omit to disable |
-| `STRIPE_WEBHOOK_SECRET` | No | — | |
-| `STRIPE_PUBLISHABLE_KEY` | No | — | |
-| `BILLPLZ_API_KEY` | No | — | Malaysian billing — omit to disable |
-| `BILLPLZ_X_SIGNATURE_KEY` | No | — | |
-| `BILLPLZ_COLLECTION_ID` | No | — | |
+| Variable                  | Required | Default                 | Notes                                                       |
+| ------------------------- | -------- | ----------------------- | ----------------------------------------------------------- |
+| `NODE_ENV`                | No       | `development`           | `production` disables Swagger UI and enables secure cookies |
+| `PORT`                    | No       | `3000`                  | API port                                                    |
+| `API_PREFIX`              | No       | `api/v1`                | URL prefix for all NestJS routes                            |
+| `DATABASE_URL`            | **Yes**  | —                       | Full Postgres connection string                             |
+| `REDIS_HOST`              | No       | `localhost`             |                                                             |
+| `REDIS_PORT`              | No       | `6379`                  | Docker default is `6381` — see `.env.example`               |
+| `REDIS_PASSWORD`          | No       | —                       | Required in production                                      |
+| `CORS_ORIGIN`             | No       | `http://localhost:3001` | Frontend URL                                                |
+| `LOG_LEVEL`               | No       | `debug`                 | `fatal \| error \| warn \| info \| debug \| trace`          |
+| `SENTRY_DSN`              | No       | —                       | Error tracking; omit to disable                             |
+| `BETTER_AUTH_SECRET`      | **Yes**  | —                       | Min 32 chars — `openssl rand -base64 32`                    |
+| `BETTER_AUTH_URL`         | **Yes**  | —                       | API base URL (no trailing slash)                            |
+| `RESEND_API_KEY`          | **Yes**  | —                       | `re_...` — from resend.com                                  |
+| `EMAIL_FROM`              | **Yes**  | —                       | Verified sender address                                     |
+| `GOOGLE_CLIENT_ID`        | No       | —                       | Google OAuth — omit to disable                              |
+| `GOOGLE_CLIENT_SECRET`    | No       | —                       |                                                             |
+| `STRIPE_SECRET_KEY`       | No       | —                       | Billing — omit to disable                                   |
+| `STRIPE_WEBHOOK_SECRET`   | No       | —                       |                                                             |
+| `STRIPE_PUBLISHABLE_KEY`  | No       | —                       |                                                             |
+| `BILLPLZ_API_KEY`         | No       | —                       | Malaysian billing — omit to disable                         |
+| `BILLPLZ_X_SIGNATURE_KEY` | No       | —                       |                                                             |
+| `BILLPLZ_COLLECTION_ID`   | No       | —                       |                                                             |
 
 ---
 
@@ -90,7 +90,8 @@ pnpm db:migrate
 # Prisma prompts for a migration name — use snake_case (e.g. add_contacts_table)
 ```
 
-> Never hand-edit migration files. If a migration goes wrong, roll it back and re-generate.
+> Never hand-edit migration files. If a migration goes wrong, roll it back and
+> re-generate.
 
 ### Generating the Prisma client after schema changes
 
@@ -132,11 +133,11 @@ pnpm db:seed
 
 Creates (idempotent — safe to re-run):
 
-| User | Role | Org |
-|---|---|---|
-| admin@example.com / password123 | owner | wa'kijo HQ (SYSTEM) + Acme Agency (AGENCY) |
-| agency@example.com / password123 | owner | Acme Agency (AGENCY) |
-| member@example.com / password123 | member | Acme Workspace (WORKSPACE) |
+| User                             | Role   | Org                                        |
+| -------------------------------- | ------ | ------------------------------------------ |
+| admin@example.com / password123  | owner  | wa'kijo HQ (SYSTEM) + Acme Agency (AGENCY) |
+| agency@example.com / password123 | owner  | Acme Agency (AGENCY)                       |
+| member@example.com / password123 | member | Acme Workspace (WORKSPACE)                 |
 
 Org hierarchy: `wa'kijo HQ → Acme Agency → Acme Workspace`
 
@@ -159,10 +160,10 @@ docker compose -f docker-compose.dev.yml restart redis
 
 Default ports (configured to avoid conflicts with local services):
 
-| Service | Port |
-|---|---|
+| Service    | Port |
+| ---------- | ---- |
 | PostgreSQL | 5434 |
-| Redis | 6381 |
+| Redis      | 6381 |
 
 ---
 
@@ -178,7 +179,8 @@ pnpm --filter @wa-kijo/api test -- --run src/modules/contacts/contacts.service.s
 
 ### Integration tests
 
-Require Docker. Each suite spins up its own Postgres container via Testcontainers. Runs serially — do not parallelise.
+Require Docker. Each suite spins up its own Postgres container via
+Testcontainers. Runs serially — do not parallelise.
 
 ```bash
 pnpm test:integration
@@ -186,7 +188,8 @@ pnpm test:integration
 
 ### End-to-end tests
 
-Playwright automatically starts the API and web servers before running. Make sure ports 3000 and 3001 are free.
+Playwright automatically starts the API and web servers before running. Make
+sure ports 3000 and 3001 are free.
 
 ```bash
 pnpm test:e2e
@@ -200,10 +203,10 @@ pnpm --filter @wa-kijo/web test:e2e -- tests/e2e/sign-in.spec.ts
 
 ### Coverage targets
 
-| Area | Minimum |
-|---|---|
+| Area                            | Minimum           |
+| ------------------------------- | ----------------- |
 | Auth, billing, tenant isolation | 80% line coverage |
-| Everything else | 60% line coverage |
+| Everything else                 | 60% line coverage |
 
 ---
 
@@ -211,7 +214,8 @@ pnpm --filter @wa-kijo/web test:e2e -- tests/e2e/sign-in.spec.ts
 
 1. **Schema** — add the Prisma model to `packages/db/prisma/schema.prisma`
 2. **Migrate** — `pnpm db:migrate` (name the migration descriptively)
-3. **DTO** — create `packages/shared/src/dto/<feature>.ts` with Zod schema + type
+3. **DTO** — create `packages/shared/src/dto/<feature>.ts` with Zod schema +
+   type
 4. **Build shared** — `pnpm --filter @wa-kijo/shared build`
 5. **Scaffold module** — create under `apps/api/src/modules/<feature>/`:
    - `<feature>.module.ts`
@@ -220,8 +224,10 @@ pnpm --filter @wa-kijo/web test:e2e -- tests/e2e/sign-in.spec.ts
    - `<feature>.repository.ts` — extends `BaseRepository<T>`
    - `<feature>.service.spec.ts` — unit tests
 6. **Register** — import the module in `apps/api/src/app.module.ts`
-7. **Permission** — if the feature needs new permissions, add them to `packages/shared/src/auth/permissions.ts`
-8. **ADR** — if this is an architectural decision, document it in `docs/decisions/NNNN-title.md`
+7. **Permission** — if the feature needs new permissions, add them to
+   `packages/shared/src/auth/permissions.ts`
+8. **ADR** — if this is an architectural decision, document it in
+   `docs/decisions/NNNN-title.md`
 
 ---
 
@@ -231,7 +237,8 @@ Available at `http://localhost:3000/api/docs` in development.
 
 - **JSON spec:** `http://localhost:3000/api/docs/json`
 - Disabled automatically in production (`NODE_ENV=production`)
-- Cookie auth (`wa-kijo.session_token`) is pre-configured — sign in via the web app, then use the Authorize button in Swagger
+- Cookie auth (`wa-kijo.session_token`) is pre-configured — sign in via the web
+  app, then use the Authorize button in Swagger
 
 ---
 
@@ -252,7 +259,8 @@ pnpm --filter @wa-kijo/db generate
 
 ### Shared package changes not reflected in API
 
-The API resolves `@wa-kijo/shared` and `@wa-kijo/db` from compiled `dist/`. After editing either package:
+The API resolves `@wa-kijo/shared` and `@wa-kijo/db` from compiled `dist/`.
+After editing either package:
 
 ```bash
 pnpm --filter @wa-kijo/shared build
@@ -264,11 +272,13 @@ pnpm --filter @wa-kijo/db build
 
 1. Check `RESEND_API_KEY` is set and starts with `re_`
 2. Check `EMAIL_FROM` is a verified sender in your Resend account
-3. In dev, temporarily set `requireEmailVerification: false` in `apps/api/src/auth/auth.module.ts` to bypass the flow, then re-enable
+3. In dev, temporarily set `requireEmailVerification: false` in
+   `apps/api/src/auth/auth.module.ts` to bypass the flow, then re-enable
 
 ### Sign-in returns 401
 
 Email address not verified. Either:
+
 - Click the link in the verification email
 - Manually set `emailVerified = true` in Prisma Studio
 - Re-run `pnpm db:seed` (seed users are created with `emailVerified: true`)
@@ -279,7 +289,8 @@ Email address not verified. Either:
 WARN Unsupported engine: wanted: {"node":">=22.0.0"}
 ```
 
-Switch to Node 22: `nvm use 22`. The warning is cosmetic — the app runs on v20, but v22 is required for production.
+Switch to Node 22: `nvm use 22`. The warning is cosmetic — the app runs on v20,
+but v22 is required for production.
 
 ---
 

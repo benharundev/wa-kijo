@@ -26,10 +26,7 @@ export class FilteredLogger implements LoggerService {
   }
 
   warn(message: unknown, ...args: unknown[]): void {
-    if (
-      typeof message === 'string' &&
-      message.includes('Unsupported route path')
-    ) {
+    if (typeof message === 'string' && message.includes('Unsupported route path')) {
       return; // see class comment above
     }
     this.inner.warn(message as string, ...args);

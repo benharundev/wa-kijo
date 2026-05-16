@@ -31,11 +31,11 @@ export const PERMISSIONS = {
 
   // Contacts
   'contact:create': ['owner', 'admin', 'member'],
-  'contact:read':   ['owner', 'admin', 'member'],
+  'contact:read': ['owner', 'admin', 'member'],
   'contact:update': ['owner', 'admin', 'member'],
   'contact:delete': ['owner', 'admin'],
   'contact:import': ['owner', 'admin'],
-  'contact:block':  ['owner', 'admin'],
+  'contact:block': ['owner', 'admin'],
 
   // Tags
   'tag:create': ['owner', 'admin'],
@@ -44,9 +44,9 @@ export const PERMISSIONS = {
 
   // Conversations
   'conversation:create': ['owner', 'admin', 'member'],
-  'conversation:read':   ['owner', 'admin', 'member'],
+  'conversation:read': ['owner', 'admin', 'member'],
   'conversation:assign': ['owner', 'admin'],
-  'conversation:close':  ['owner', 'admin', 'member'],
+  'conversation:close': ['owner', 'admin', 'member'],
   'conversation:delete': ['owner', 'admin'],
 
   // Messages

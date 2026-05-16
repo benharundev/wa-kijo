@@ -39,10 +39,10 @@ export class ConversationsRepository extends BaseRepository<
 
     const where: Prisma.ConversationWhereInput = {
       organizationId: ctx.orgId,
-      ...(query.status           && { status:           query.status }),
-      ...(query.contactId        && { contactId:        query.contactId }),
+      ...(query.status && { status: query.status }),
+      ...(query.contactId && { contactId: query.contactId }),
       ...(query.assignedToUserId && { assignedToUserId: query.assignedToUserId }),
-      ...(query.channel          && { channel:          query.channel }),
+      ...(query.channel && { channel: query.channel }),
     };
 
     const results = await this.prisma.conversation.findMany({

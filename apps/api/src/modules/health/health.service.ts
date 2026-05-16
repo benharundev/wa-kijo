@@ -19,8 +19,7 @@ export class HealthService {
       this.checkRedis(),
     ]);
 
-    const status: ServiceStatus =
-      postgresStatus === 'ok' && redisStatus === 'ok' ? 'ok' : 'down';
+    const status: ServiceStatus = postgresStatus === 'ok' && redisStatus === 'ok' ? 'ok' : 'down';
 
     return {
       status,

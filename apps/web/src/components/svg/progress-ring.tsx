@@ -77,11 +77,11 @@ export function ProgressRing({
       {/* Center content */}
       {(label || sublabel) && (
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          {label && (
-            <span className="text-sm font-bold leading-none text-foreground">{label}</span>
-          )}
+          {label && <span className="text-sm font-bold leading-none text-foreground">{label}</span>}
           {sublabel && (
-            <span className="mt-0.5 text-[10px] leading-none text-muted-foreground">{sublabel}</span>
+            <span className="mt-0.5 text-[10px] leading-none text-muted-foreground">
+              {sublabel}
+            </span>
           )}
         </div>
       )}

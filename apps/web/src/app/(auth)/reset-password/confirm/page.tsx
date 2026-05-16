@@ -129,7 +129,15 @@ function ResetPasswordConfirmInner() {
 
 export default function ResetPasswordConfirmPage() {
   return (
-    <Suspense fallback={<Card><CardHeader><CardTitle>Loading…</CardTitle></CardHeader></Card>}>
+    <Suspense
+      fallback={
+        <Card>
+          <CardHeader>
+            <CardTitle>Loading…</CardTitle>
+          </CardHeader>
+        </Card>
+      }
+    >
       <ResetPasswordConfirmInner />
     </Suspense>
   );

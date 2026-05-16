@@ -123,7 +123,9 @@ export default function SignUpPage() {
         className="space-y-4"
       >
         <motion.div variants={staggerItem} className="space-y-1.5">
-          <Label htmlFor="name" className="text-sm font-medium">Full name</Label>
+          <Label htmlFor="name" className="text-sm font-medium">
+            Full name
+          </Label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
             <Input
@@ -139,7 +141,9 @@ export default function SignUpPage() {
         </motion.div>
 
         <motion.div variants={staggerItem} className="space-y-1.5">
-          <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+          <Label htmlFor="email" className="text-sm font-medium">
+            Email
+          </Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
             <Input
@@ -157,7 +161,9 @@ export default function SignUpPage() {
         </motion.div>
 
         <motion.div variants={staggerItem} className="space-y-1.5">
-          <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+          <Label htmlFor="password" className="text-sm font-medium">
+            Password
+          </Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
             <Input
@@ -174,7 +180,9 @@ export default function SignUpPage() {
         </motion.div>
 
         <motion.div variants={staggerItem} className="space-y-1.5">
-          <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm password</Label>
+          <Label htmlFor="confirmPassword" className="text-sm font-medium">
+            Confirm password
+          </Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
             <Input

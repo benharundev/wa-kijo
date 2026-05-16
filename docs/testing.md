@@ -1,18 +1,17 @@
 # Testing strategy
 
-> **Audience:** wa'kijo developers writing tests, customers extending the
-> test suite for their own modules.
+> **Audience:** wa'kijo developers writing tests, customers extending the test
+> suite for their own modules.
 >
-> The shipped test pyramid favours **fast, parallel, isolated** unit tests
-> for business logic, **realistic-but-controlled** integration tests for
-> anything that touches the database or queues, and **end-to-end** browser
-> tests for the user-visible flows that have to keep working through every
-> refactor.
+> The shipped test pyramid favours **fast, parallel, isolated** unit tests for
+> business logic, **realistic-but-controlled** integration tests for anything
+> that touches the database or queues, and **end-to-end** browser tests for the
+> user-visible flows that have to keep working through every refactor.
 
-This document is the source of truth for test runners, file locations,
-naming, fixtures, mocks, coverage targets, and CI gating. The terse
-internal rules in [`.claude/rules/testing.md`](../.claude/rules/testing.md)
-are a quick-reference subset of this file.
+This document is the source of truth for test runners, file locations, naming,
+fixtures, mocks, coverage targets, and CI gating. The terse internal rules in
+[`.claude/rules/testing.md`](../.claude/rules/testing.md) are a quick-reference
+subset of this file.
 
 ---
 
@@ -34,19 +33,19 @@ are a quick-reference subset of this file.
    └────────────────────────────────────────────┘
 ```
 
-Inversely-shaped pyramids (lots of E2E, few unit tests) are slow,
-flaky, and painful to refactor. Resist them.
+Inversely-shaped pyramids (lots of E2E, few unit tests) are slow, flaky, and
+painful to refactor. Resist them.
 
 ---
 
 ## 2. Runners and commands
 
-| Suite | Runner | Command |
-|---|---|---|
-| Unit | [Vitest](https://vitest.dev/) | `pnpm test` |
-| Integration | Vitest + [Testcontainers](https://testcontainers.com) | `pnpm test:integration` |
-| E2E | [Playwright](https://playwright.dev/) | `pnpm test:e2e` |
-| Coverage | Vitest + V8 | `pnpm --filter @wa-kijo/api test:coverage` |
+| Suite       | Runner                                                | Command                                    |
+| ----------- | ----------------------------------------------------- | ------------------------------------------ |
+| Unit        | [Vitest](https://vitest.dev/)                         | `pnpm test`                                |
+| Integration | Vitest + [Testcontainers](https://testcontainers.com) | `pnpm test:integration`                    |
+| E2E         | [Playwright](https://playwright.dev/)                 | `pnpm test:e2e`                            |
+| Coverage    | Vitest + V8                                           | `pnpm --filter @wa-kijo/api test:coverage` |
 
 Run a single file:
 
@@ -65,17 +64,17 @@ pnpm --filter @wa-kijo/api test:watch
 
 ## 3. File location and naming
 
-| Test type | Location | Naming |
-|---|---|---|
-| Unit | Next to the file under test | `<name>.spec.ts` |
-| Integration | `apps/api/test/integration/<feature>/` | `<scenario>.itest.ts` |
-| E2E | `apps/web/tests/e2e/` | `<flow>.e2e.spec.ts` |
-| Fixtures | `apps/api/test/fixtures/` | `<entity>.fixture.ts` |
-| Test helpers | `apps/api/test/utils/` | `<purpose>.ts` |
+| Test type    | Location                               | Naming                |
+| ------------ | -------------------------------------- | --------------------- |
+| Unit         | Next to the file under test            | `<name>.spec.ts`      |
+| Integration  | `apps/api/test/integration/<feature>/` | `<scenario>.itest.ts` |
+| E2E          | `apps/web/tests/e2e/`                  | `<flow>.e2e.spec.ts`  |
+| Fixtures     | `apps/api/test/fixtures/`              | `<entity>.fixture.ts` |
+| Test helpers | `apps/api/test/utils/`                 | `<purpose>.ts`        |
 
 The vitest config picks up `**/*.spec.ts` for unit and (separate config)
-`**/*.itest.ts` for integration so the two suites can have different
-timeouts and parallelism settings.
+`**/*.itest.ts` for integration so the two suites can have different timeouts
+and parallelism settings.
 
 ### Inside a single test file
 
@@ -84,21 +83,33 @@ Group tests by behaviour, not by method name:
 ```ts
 describe('ContactsService', () => {
   describe('when creating a contact', () => {
-    it('rejects duplicate phone numbers within the org', () => { /* ... */ });
-    it('accepts the same phone in a different org', () => { /* ... */ });
-    it('triggers a contact.created event', () => { /* ... */ });
+    it('rejects duplicate phone numbers within the org', () => {
+      /* ... */
+    });
+    it('accepts the same phone in a different org', () => {
+      /* ... */
+    });
+    it('triggers a contact.created event', () => {
+      /* ... */
+    });
   });
 
   describe('when listing contacts', () => {
-    it('returns a cursor-paginated page of 25 by default', () => { /* ... */ });
-    it('respects the limit query parameter, capped at 100', () => { /* ... */ });
-    it('filters out soft-deleted records', () => { /* ... */ });
+    it('returns a cursor-paginated page of 25 by default', () => {
+      /* ... */
+    });
+    it('respects the limit query parameter, capped at 100', () => {
+      /* ... */
+    });
+    it('filters out soft-deleted records', () => {
+      /* ... */
+    });
   });
 });
 ```
 
-Each `it` block tests **one behaviour**. If you find yourself writing
-"and" in the description, split it.
+Each `it` block tests **one behaviour**. If you find yourself writing "and" in
+the description, split it.
 
 ---
 
@@ -106,18 +117,18 @@ Each `it` block tests **one behaviour**. If you find yourself writing
 
 Enforced in CI via Vitest's `--coverage` flag with thresholds.
 
-| Area | Minimum line coverage |
-|---|---|
-| `apps/api/src/auth/**` | **80%** — non-negotiable |
-| `apps/api/src/modules/billing/**` (when added) | **80%** — non-negotiable |
-| `apps/api/src/base/**` (BaseRepository) | **80%** — non-negotiable |
-| `apps/api/src/common/guards/**` | **80%** — non-negotiable |
-| Everything else in `apps/api` | 60% |
-| `packages/shared` | 75% (pure logic, easy to test) |
-| `apps/web` | 50% line coverage; rely on E2E for the rest |
+| Area                                           | Minimum line coverage                       |
+| ---------------------------------------------- | ------------------------------------------- |
+| `apps/api/src/auth/**`                         | **80%** — non-negotiable                    |
+| `apps/api/src/modules/billing/**` (when added) | **80%** — non-negotiable                    |
+| `apps/api/src/base/**` (BaseRepository)        | **80%** — non-negotiable                    |
+| `apps/api/src/common/guards/**`                | **80%** — non-negotiable                    |
+| Everything else in `apps/api`                  | 60%                                         |
+| `packages/shared`                              | 75% (pure logic, easy to test)              |
+| `apps/web`                                     | 50% line coverage; rely on E2E for the rest |
 
-Coverage is a floor, not a ceiling. A high coverage number with low-value
-tests is worse than a moderate number with sharp tests.
+Coverage is a floor, not a ceiling. A high coverage number with low-value tests
+is worse than a moderate number with sharp tests.
 
 ---
 
@@ -137,15 +148,18 @@ tests is worse than a moderate number with sharp tests.
 
 ### Mocking
 
-We use Vitest's built-in `vi.fn()` and `vi.mock()`. Avoid heavyweight
-mocking libraries.
+We use Vitest's built-in `vi.fn()` and `vi.mock()`. Avoid heavyweight mocking
+libraries.
 
 ```ts
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ContactsService } from './contacts.service';
 
 describe('ContactsService', () => {
-  let repo: { create: ReturnType<typeof vi.fn>; findByPhone: ReturnType<typeof vi.fn> };
+  let repo: {
+    create: ReturnType<typeof vi.fn>;
+    findByPhone: ReturnType<typeof vi.fn>;
+  };
   let service: ContactsService;
 
   beforeEach(() => {
@@ -165,15 +179,15 @@ describe('ContactsService', () => {
 });
 ```
 
-**Always assert the negative.** "Did we *not* call the side effect we
-shouldn't have?" catches more bugs than asserting only the happy path.
+**Always assert the negative.** "Did we _not_ call the side effect we shouldn't
+have?" catches more bugs than asserting only the happy path.
 
 ---
 
 ## 6. Integration tests
 
-These are the tests we lean on hardest because they cover the seams that
-unit tests can't see.
+These are the tests we lean on hardest because they cover the seams that unit
+tests can't see.
 
 ### Setup pattern
 
@@ -209,8 +223,8 @@ afterAll(async () => {
 });
 ```
 
-A reusable `setupTestDatabase()` helper in `apps/api/test/utils/db.ts`
-bundles the above. Use it.
+A reusable `setupTestDatabase()` helper in `apps/api/test/utils/db.ts` bundles
+the above. Use it.
 
 ### Tenant isolation tests — the most important class
 
@@ -243,18 +257,17 @@ describe('ContactsRepository — tenant isolation', () => {
 });
 ```
 
-These tests are the foundation of wa'kijo's tenant isolation guarantee. A
-new module without them does not get merged.
+These tests are the foundation of wa'kijo's tenant isolation guarantee. A new
+module without them does not get merged.
 
 ### Performance: parallelism
 
-Integration tests run **serially** within a file (one Postgres container
-per file, recycled for each test). Across files they run in parallel,
-each with its own container.
+Integration tests run **serially** within a file (one Postgres container per
+file, recycled for each test). Across files they run in parallel, each with its
+own container.
 
-This is slower than fully-parallel unit tests but ~5× faster than a
-single shared container with rollback per test. The trade-off is worth
-it.
+This is slower than fully-parallel unit tests but ~5× faster than a single
+shared container with rollback per test. The trade-off is worth it.
 
 ---
 
@@ -270,7 +283,7 @@ WEB_SKIP_WEBSERVER=1 pnpm test:e2e
 
 ### What to test
 
-The flows that *must* keep working through every refactor:
+The flows that _must_ keep working through every refactor:
 
 - Sign-up → email verification → sign-in.
 - Magic-link sign-in.
@@ -280,13 +293,13 @@ The flows that *must* keep working through every refactor:
 - Theme toggle (light / dark / system).
 - 401 redirect from a protected page.
 
-Coverage by area, not exhaustive scenarios. Don't use Playwright to test
-"every input variant" — that's a unit test job.
+Coverage by area, not exhaustive scenarios. Don't use Playwright to test "every
+input variant" — that's a unit test job.
 
 ### Selectors
 
-Prefer `getByRole` and `getByLabel` over CSS selectors. They're stable
-across UI refactors and double as accessibility audits.
+Prefer `getByRole` and `getByLabel` over CSS selectors. They're stable across UI
+refactors and double as accessibility audits.
 
 ```ts
 await page.getByRole('button', { name: 'Sign in' }).click();
@@ -309,7 +322,8 @@ export async function orgFixture(
 ): Promise<Organization> {
   return prisma.organization.create({
     data: {
-      name: overrides.name ?? `test-org-${Math.random().toString(36).slice(2, 8)}`,
+      name:
+        overrides.name ?? `test-org-${Math.random().toString(36).slice(2, 8)}`,
       slug: overrides.slug ?? `test-${Math.random().toString(36).slice(2, 8)}`,
       orgType: overrides.orgType ?? 'WORKSPACE',
       parentOrgId: overrides.parentOrgId ?? null,
@@ -323,10 +337,9 @@ Rules for fixtures:
 
 - One factory function per model.
 - Always accept an `overrides` object.
-- Generate unique fields (slug, email) by default to avoid collision in
-  parallel tests.
-- Never depend on other fixtures implicitly — pass parents in via
-  overrides.
+- Generate unique fields (slug, email) by default to avoid collision in parallel
+  tests.
+- Never depend on other fixtures implicitly — pass parents in via overrides.
 
 ---
 
@@ -343,21 +356,21 @@ A PR cannot merge unless:
 7. At least one code-owner approval (two for auth/billing/schema).
 
 Tests that are temporarily broken **must be skipped explicitly** with
-`it.skip(..., 'TODO: re-enable after #142')`. Silent disabling via comment
-is forbidden.
+`it.skip(..., 'TODO: re-enable after #142')`. Silent disabling via comment is
+forbidden.
 
 ---
 
 ## 10. Common pitfalls
 
-| Pitfall | How to spot it | Fix |
-|---|---|---|
-| Test depends on wall-clock time | Flakes around midnight UTC, near DST boundaries | Inject `Date.now`, use `vi.useFakeTimers()` |
-| Test depends on test execution order | Passes alone, fails in suite | Reset state in `beforeEach`; never share mutable globals |
-| Database state leaks between tests | Counts grow over a test run | Use a unique org per test; let soft delete clean up |
-| Network call to a real service | Slow; flakes under wifi | Mock at the SDK boundary (e.g. `vi.mock('resend')`) |
-| `expect(...).toBe(undefined)` after an async typo | Test passes silently | Always `await` async assertions; ESLint rule enforces this |
-| E2E test asserts after a navigation without waiting | Flakes locally fine, fails in CI | `await expect(page).toHaveURL(...)` before next assertion |
+| Pitfall                                             | How to spot it                                  | Fix                                                        |
+| --------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------- |
+| Test depends on wall-clock time                     | Flakes around midnight UTC, near DST boundaries | Inject `Date.now`, use `vi.useFakeTimers()`                |
+| Test depends on test execution order                | Passes alone, fails in suite                    | Reset state in `beforeEach`; never share mutable globals   |
+| Database state leaks between tests                  | Counts grow over a test run                     | Use a unique org per test; let soft delete clean up        |
+| Network call to a real service                      | Slow; flakes under wifi                         | Mock at the SDK boundary (e.g. `vi.mock('resend')`)        |
+| `expect(...).toBe(undefined)` after an async typo   | Test passes silently                            | Always `await` async assertions; ESLint rule enforces this |
+| E2E test asserts after a navigation without waiting | Flakes locally fine, fails in CI                | `await expect(page).toHaveURL(...)` before next assertion  |
 
 ---
 
@@ -381,9 +394,9 @@ Mirror this in your PR:
 
 ## 12. Further reading
 
-- [`backend.md`](../.claude/rules/backend.md) — backend rules for what
-  goes in services vs repositories.
-- [`security.md`](../.claude/rules/security.md) — security checklist
-  every test should reinforce, especially tenant isolation.
-- The `nestjs-prisma` skill — generates a module scaffold including all
-  the test files above, pre-wired.
+- [`backend.md`](../.claude/rules/backend.md) — backend rules for what goes in
+  services vs repositories.
+- [`security.md`](../.claude/rules/security.md) — security checklist every test
+  should reinforce, especially tenant isolation.
+- The `nestjs-prisma` skill — generates a module scaffold including all the test
+  files above, pre-wired.

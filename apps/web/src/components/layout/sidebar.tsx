@@ -78,9 +78,7 @@ function NavLink({ item, baseHref = '' }: { item: NavItem; baseHref?: string }) 
           isActive ? 'text-white' : 'text-sidebar-foreground group-hover:text-foreground',
         )}
       />
-      <span className="relative z-10 flex-1">
-        {item.label}
-      </span>
+      <span className="relative z-10 flex-1">{item.label}</span>
       {item.badge && (
         <span className="relative z-10 ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-500/20 px-1.5 text-[10px] font-semibold text-brand-600 dark:bg-brand-400/20 dark:text-brand-400">
           {item.badge}

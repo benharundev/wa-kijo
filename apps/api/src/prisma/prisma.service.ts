@@ -4,12 +4,7 @@ import { Prisma, PrismaClient } from '@wa-kijo/db';
 // Only these models have a deletedAt column. Better Auth models (Session,
 // Account, Verification) do not — injecting deletedAt: null into their
 // queries would cause a Prisma schema validation error at runtime.
-const SOFT_DELETE_MODELS = new Set<string>([
-  'User',
-  'Organization',
-  'Contact',
-  'Conversation',
-]);
+const SOFT_DELETE_MODELS = new Set<string>(['User', 'Organization', 'Contact', 'Conversation']);
 
 // Hard-delete actions that must be redirected to soft delete.
 const DELETE_ACTIONS = new Set<Prisma.PrismaAction>(['delete', 'deleteMany']);

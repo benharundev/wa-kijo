@@ -83,7 +83,10 @@ export class ContactsRepository extends BaseRepository<
   async findByIdWithTags(
     ctx: RequestContext,
     id: string,
-  ): Promise<(Contact & { tags: { tag: { id: string; name: string; color: string; slug: string } }[] }) | null> {
+  ): Promise<
+    | (Contact & { tags: { tag: { id: string; name: string; color: string; slug: string } }[] })
+    | null
+  > {
     return this.prisma.contact.findFirst({
       where: { id, organizationId: ctx.orgId },
       include: { tags: { include: { tag: true } } },

@@ -1,8 +1,6 @@
 # ADR 0001 — Better Auth with Parent-Child Org Hierarchy
 
-**Date:** 2026-05-02
-**Status:** Accepted
-**Deciders:** wa-kijo core team
+**Date:** 2026-05-02 **Status:** Accepted **Deciders:** wa-kijo core team
 
 ---
 
@@ -10,13 +8,14 @@
 
 wa-kijo targets agencies and SaaS companies that manage multiple sub-tenants
 (brands, clients, workspaces). This requires a multi-level tenancy model:
+
 - **AGENCY** — the top-level billing entity; manages many WORKSPACE orgs
 - **WORKSPACE** — an end-customer tenant; daily users work here
 - **SYSTEM** — platform-level ops (support tooling, billing overrides)
 
-We also needed a production-grade auth library that covers email/password,
-magic link, OAuth, email verification, and session management without us
-owning the crypto.
+We also needed a production-grade auth library that covers email/password, magic
+link, OAuth, email verification, and session management without us owning the
+crypto.
 
 ---
 
@@ -31,9 +30,9 @@ expiry) is fully delegated to Better Auth. The organization plugin handles
 membership CRUD, invitation flows, and active-org switching.
 
 Better Auth is mounted on Fastify via `toNodeHandler()` in an `onRequest` hook
-in `main.ts`. This intercepts `/api/auth/*` before NestJS's request pipeline
-so Better Auth reads the raw body stream directly (required for HMAC-signed
-webhook payloads).
+in `main.ts`. This intercepts `/api/auth/*` before NestJS's request pipeline so
+Better Auth reads the raw body stream directly (required for HMAC-signed webhook
+payloads).
 
 NestJS DI provides the Better Auth instance via a factory provider in
 `AuthModule`. Guards (`AuthGuard`, `PermissionGuard`) are registered globally
@@ -45,12 +44,14 @@ done in `AuthService.resolveContext()`.
 ## Alternatives considered
 
 ### Auth.js (NextAuth)
+
 - Primarily designed for Next.js. Adapting to a standalone NestJS server
   requires significant effort and community plugins.
 - No built-in organization/multi-tenant support.
 - Rejected: wrong runtime target.
 
 ### Lucia Auth
+
 - Low-level: gives primitives, not complete auth flows.
 - No magic link or OAuth out of the box. We'd own the email verification,
   session expiry, and token rotation logic.
@@ -58,12 +59,14 @@ done in `AuthService.resolveContext()`.
 - Rejected: too much ownership risk for a v1 product.
 
 ### Custom JWT implementation
+
 - Requires owning: key management, rotation, revocation, CSRF mitigations,
   secure cookie setup, and refresh token logic.
 - Historically the source of auth vulnerabilities in AI-generated code.
 - Rejected: violates the "not a crypto library" principle.
 
 ### Clerk / Auth0 (hosted)
+
 - Strong products. But buyers of wa-kijo want self-hostable auth — no
   third-party data residency dependency.
 - Monthly cost scales with MAUs, affecting boilerplate pricing.
@@ -76,15 +79,16 @@ done in `AuthService.resolveContext()`.
 Better Auth's `organization` plugin assumes flat organisations. We added two
 fields to the `organization` table to support hierarchy:
 
-| Field | Type | Purpose |
-|---|---|---|
-| `parentOrgId` | `String?` | FK to the parent org (null for root orgs) |
-| `orgType` | `String` | `AGENCY \| WORKSPACE \| SYSTEM` classification |
+| Field         | Type      | Purpose                                        |
+| ------------- | --------- | ---------------------------------------------- |
+| `parentOrgId` | `String?` | FK to the parent org (null for root orgs)      |
+| `orgType`     | `String`  | `AGENCY \| WORKSPACE \| SYSTEM` classification |
 
 These are declared as `additionalFields` in the plugin config. Better Auth
 stores and returns them transparently; no plugin internals change.
 
 **Hierarchy traversal** is implemented in `AuthService.resolveEffectiveRole()`:
+
 - When populating `RequestContext.userRole`, the service walks up `parentOrgId`
   chains (max 3 levels) and returns the highest role across the chain.
 - This means an AGENCY OWNER automatically has `owner` authority in all child
@@ -141,16 +145,18 @@ server-side enforcement and future client-side `<Can />` components.
 ## Consequences
 
 **Good:**
+
 - Zero custom crypto. Session, password hashing, CSRF, and OAuth are
   library-owned and audited.
-- Organization switching, invitation lifecycle, and email verification work
-  out of the box.
+- Organization switching, invitation lifecycle, and email verification work out
+  of the box.
 - The `additionalFields` pattern keeps our schema extensions compatible with
   Better Auth upgrades — no forking.
 - Hierarchy role resolution is transparent to all consuming code (just reads
   `ctx.userRole`).
 
 **Trade-offs:**
+
 - `resolveContext()` makes 2 DB queries per authenticated request (session +
   member lookup). Better Auth's cookie cache (5 min TTL) mitigates most reads.
   Full Redis caching of the resolved context is a Phase 4 optimisation.

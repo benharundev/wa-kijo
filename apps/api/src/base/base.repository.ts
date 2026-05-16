@@ -71,8 +71,7 @@ export abstract class BaseRepository<
     const hasMore = results.length > take;
     const data = hasMore ? results.slice(0, take) : results;
     const last = data[data.length - 1];
-    const nextCursor =
-      hasMore && last ? ((last as Record<string, unknown>)['id'] as string) : null;
+    const nextCursor = hasMore && last ? ((last as Record<string, unknown>)['id'] as string) : null;
 
     return { data, nextCursor, hasMore };
   }
@@ -81,11 +80,7 @@ export abstract class BaseRepository<
     return this.delegate.create({ data: input });
   }
 
-  async update(
-    _ctx: RequestContext,
-    where: WhereUniqueInput,
-    data: UpdateInput,
-  ): Promise<M> {
+  async update(_ctx: RequestContext, where: WhereUniqueInput, data: UpdateInput): Promise<M> {
     return this.delegate.update({ where, data });
   }
 

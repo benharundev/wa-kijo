@@ -23,127 +23,126 @@ wa'kijo Pro (Tier B) or higher.
 
 > **Strategic pivot (2026-05-10):** wa'kijo is evolving from a
 > boilerplate-to-fork into a **platform with pluggable business modules**.
-> Future products (wa'lawe chess tournaments, Workshop / wa-bengkel, etc.)
-> ship as **modules on top of one shared platform** — not as separate forks.
-> Forking is the **fallback** of last resort.
+> Future products (wa'lawe chess tournaments, Workshop / wa-bengkel, etc.) ship
+> as **modules on top of one shared platform** — not as separate forks. Forking
+> is the **fallback** of last resort.
 >
-> The platform layers, in order: SaaS Core (auth, RBAC, tenancy, audit) →
-> Module Registry (ADR-0008) → Shared Engines (Booking Core / ADR-0010) →
-> Business Modules (wa'lawe, Workshop, …) → Customization Layer (Config,
-> Custom Fields, Hooks, Policies, UI Slots).
+> The platform layers, in order: SaaS Core (auth, RBAC, tenancy, audit) → Module
+> Registry (ADR-0008) → Shared Engines (Booking Core / ADR-0010) → Business
+> Modules (wa'lawe, Workshop, …) → Customization Layer (Config, Custom Fields,
+> Hooks, Policies, UI Slots).
 >
 > Read **ADR-0008, ADR-0009, ADR-0010** before designing anything new.
 
-> **⚠ Reversed (2026-05-17):** the 2026-05-10 platform pivot above is
-> rolled back for v1.0 scope. wa'kijo is now positioned as the
-> **enterprise SaaS foundation under wa'lawe**, not a platform with
-> pluggable modules. wa'lawe ships as a normal feature module inside the
-> wa'kijo NestJS app. **Module Registry, Customization Layer, and kernel
-> governance are dropped from v1.0.** Pragmatic DDD becomes a recommended
-> internal pattern, not enforced kernel governance. Booking Core stays as
-> the scheduling engine for wa'lawe but lives at
-> `apps/api/src/modules/booking/` — no separate workspace package, no
-> public API freeze, no SemVer ceremony.
+> **⚠ Reversed (2026-05-17):** the 2026-05-10 platform pivot above is rolled
+> back for v1.0 scope. wa'kijo is now positioned as the **enterprise SaaS
+> foundation under wa'lawe**, not a platform with pluggable modules. wa'lawe
+> ships as a normal feature module inside the wa'kijo NestJS app. **Module
+> Registry, Customization Layer, and kernel governance are dropped from v1.0.**
+> Pragmatic DDD becomes a recommended internal pattern, not enforced kernel
+> governance. Booking Core stays as the scheduling engine for wa'lawe but lives
+> at `apps/api/src/modules/booking/` — no separate workspace package, no public
+> API freeze, no SemVer ceremony.
 >
-> ADRs 0008 (Module Registry), 0009 (Pragmatic DDD), and 0010 (Booking
-> Core kernel) are **partially superseded** by this narrowing. A
-> follow-up ADR-0011 should formalize the reversal.
+> ADRs 0008 (Module Registry), 0009 (Pragmatic DDD), and 0010 (Booking Core
+> kernel) are **partially superseded** by this narrowing. A follow-up ADR-0011
+> should formalize the reversal.
 
 **See `@docs/prd.md` for full scope. See `@docs/architecture.md` for decision
 rationale. ADRs 0008/0009/0010 in `@docs/decisions/` capture the original
-platform pivot — read them as historical context, but the 2026-05-17
-reversal above is the current source of truth.**
+platform pivot — read them as historical context, but the 2026-05-17 reversal
+above is the current source of truth.**
 
 ## Current phase status
 
-> **Strategic re-sort (2026-05-17, final):** two decisions reshape the
-> roadmap:
+> **Strategic re-sort (2026-05-17, final):** two decisions reshape the roadmap:
 >
-> 1. **Enterprise day-one positioning.** SSO/SCIM/SAML in P0, not P1.
->    Outbound webhooks + public API + API keys are core, not paid add-ons.
-> 2. **wa'kijo + wa'lawe only, "engines first" build order (Path 2 + b).**
->    No platform thesis. No Module Registry. No Customization Layer. All
->    11 shared engines build into wa'kijo *before* wa'lawe development
->    starts. wa'lawe ships as a normal feature module inside wa'kijo.
+> 1. **Enterprise day-one positioning.** SSO/SCIM/SAML in P0, not P1. Outbound
+>    webhooks + public API + API keys are core, not paid add-ons.
+> 2. **wa'kijo + wa'lawe only, "engines first" build order (Path 2 + b).** No
+>    platform thesis. No Module Registry. No Customization Layer. All 11 shared
+>    engines build into wa'kijo _before_ wa'lawe development starts. wa'lawe
+>    ships as a normal feature module inside wa'kijo.
 >
-> v1.0 estimate: **~15–22 months** from 2026-05-17. The wider range
-> reflects the speculative-engine risk (Workflow, Report, Inventory
-> Core, Invoice Core have no in-scope consumer — see "eyes-wide-open"
-> note below).
+> v1.0 estimate: **~15–22 months** from 2026-05-17. The wider range reflects the
+> speculative-engine risk (Workflow, Report, Inventory Core, Invoice Core have
+> no in-scope consumer — see "eyes-wide-open" note below).
 
-| Phase     | Epoch                                | Scope                                                                                                                                                            | Status         |
-| --------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
-| 1         | Foundation                           | Repo skeleton, tooling, Docker Compose, tsconfig                                                                                                                 | ✅ Complete    |
-| 2         | Foundation                           | NestJS API scaffold, Prisma schema, BaseRepository                                                                                                               | ✅ Complete    |
-| 3         | Foundation                           | Better Auth, multi-tenant org hierarchy                                                                                                                          | ✅ Complete    |
-| 4         | Foundation                           | Next.js frontend scaffold                                                                                                                                        | ✅ Complete    |
-| 5         | Foundation                           | Domain feature modules (contacts, conversations, messages, tags, audit log)                                                                                      | ✅ Complete    |
-| **6**     | **A · Platform Hardening**           | Audit engine (hardening) · Storage engine · MFA/2FA · SSO (SAML+OIDC) · SCIM 2.0 · session mgmt UI · impersonation · IP allowlist · org lifecycle · maintenance mode | 🚧 In progress |
-| **7**     | **B · Compliance & DX**              | OpenTelemetry · metrics · Sentry · GDPR export · right-to-delete · field-level encryption · retention policies · OpenAPI auto-gen · public API + keys · outbound webhooks | Planned        |
-| **8**     | **C · Commerce & White-Label**       | Notification engine · Communication engine · usage metering · quota enforcement · invoices/receipts UI · tax/VAT · manual invoicing · custom domains · white-labeling · full i18n | Planned        |
-| **9**     | **D · Engines Build-out**            | **Booking Core** (with Availability folded in) · **Workflow** · **Document** · **Report** · **Inventory Core** · **Invoice Core**. Engines-only — no business module yet | Planned        |
-| **10**    | **E · wa'lawe + v1.0 GA**            | **wa'lawe (chess tournaments)** built on the completed engine foundation · super-admin console full · tenant lifecycle ops · sandbox/test mode · TypeScript SDK · Bull-Board with RBAC · Mintlify customer docs at `docs.wakijo.dev` · v1.0 Enterprise GA tag | Planned        |
-| **Post-1.0** | —                                 | Second business module (TBD) · search (Postgres FTS → Meilisearch) · push notifications · Python SDK · trusted device mgmt · brand kit · coupons/promo · dunning · data residency | Backlog        |
+| Phase        | Epoch                          | Scope                                                                                                                                                                                                                                                         | Status         |
+| ------------ | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| 1            | Foundation                     | Repo skeleton, tooling, Docker Compose, tsconfig                                                                                                                                                                                                              | ✅ Complete    |
+| 2            | Foundation                     | NestJS API scaffold, Prisma schema, BaseRepository                                                                                                                                                                                                            | ✅ Complete    |
+| 3            | Foundation                     | Better Auth, multi-tenant org hierarchy                                                                                                                                                                                                                       | ✅ Complete    |
+| 4            | Foundation                     | Next.js frontend scaffold                                                                                                                                                                                                                                     | ✅ Complete    |
+| 5            | Foundation                     | Domain feature modules (contacts, conversations, messages, tags, audit log)                                                                                                                                                                                   | ✅ Complete    |
+| **6**        | **A · Platform Hardening**     | Audit engine (hardening) · Storage engine · MFA/2FA · SSO (SAML+OIDC) · SCIM 2.0 · session mgmt UI · impersonation · IP allowlist · org lifecycle · maintenance mode                                                                                          | 🚧 In progress |
+| **7**        | **B · Compliance & DX**        | OpenTelemetry · metrics · Sentry · GDPR export · right-to-delete · field-level encryption · retention policies · OpenAPI auto-gen · public API + keys · outbound webhooks                                                                                     | Planned        |
+| **8**        | **C · Commerce & White-Label** | Notification engine · Communication engine · usage metering · quota enforcement · invoices/receipts UI · tax/VAT · manual invoicing · custom domains · white-labeling · full i18n                                                                             | Planned        |
+| **9**        | **D · Engines Build-out**      | **Booking Core** (with Availability folded in) · **Workflow** · **Document** · **Report** · **Inventory Core** · **Invoice Core**. Engines-only — no business module yet                                                                                      | Planned        |
+| **10**       | **E · wa'lawe + v1.0 GA**      | **wa'lawe (chess tournaments)** built on the completed engine foundation · super-admin console full · tenant lifecycle ops · sandbox/test mode · TypeScript SDK · Bull-Board with RBAC · Mintlify customer docs at `docs.wakijo.dev` · v1.0 Enterprise GA tag | Planned        |
+| **Post-1.0** | —                              | Second business module (TBD) · search (Postgres FTS → Meilisearch) · push notifications · Python SDK · trusted device mgmt · brand kit · coupons/promo · dunning · data residency                                                                             | Backlog        |
 
-Phases 1–5 are complete. The API has: `health/`, `contacts/`,
-`conversations/`, `billing/` (Stripe + Billplz + Curlec providers),
-`queues/` (BullMQ), `audit log`, and cross-tenant fuzz tests, plus the
-full auth/context infrastructure. The frontend billing UI at
+Phases 1–5 are complete. The API has: `health/`, `contacts/`, `conversations/`,
+`billing/` (Stripe + Billplz + Curlec providers), `queues/` (BullMQ),
+`audit log`, and cross-tenant fuzz tests, plus the full auth/context
+infrastructure. The frontend billing UI at
 `apps/web/src/app/(app)/orgs/[orgId]/billing/page.tsx` is currently a stub
 awaiting the plan selection and checkout flow.
 
-**Phase 6 is the new critical path.** Audit engine hardening + Storage
-engine must ship first — every downstream phase writes files and audit
-events. The existing Booking Core kernel scaffold (was 6b) and Pragmatic
-DDD `_template/` (was 6c) stay in the repo as architectural patterns but
-are no longer load-bearing kernel governance — they get folded into
-Phase 9's engines build-out as regular NestJS modules.
+**Phase 6 is the new critical path.** Audit engine hardening + Storage engine
+must ship first — every downstream phase writes files and audit events. The
+existing Booking Core kernel scaffold (was 6b) and Pragmatic DDD `_template/`
+(was 6c) stay in the repo as architectural patterns but are no longer
+load-bearing kernel governance — they get folded into Phase 9's engines
+build-out as regular NestJS modules.
 
-**Engines first, wa'lawe second.** All 11 shared engines must complete
-before any wa'lawe code is written:
+**Engines first, wa'lawe second.** All 11 shared engines must complete before
+any wa'lawe code is written:
 
-- **Phase 6 engines:** Audit, Storage (P0 SaaS Core, needed regardless of modules)
+- **Phase 6 engines:** Audit, Storage (P0 SaaS Core, needed regardless of
+  modules)
 - **Phase 8 engines:** Notification, Communication (pair with commerce UX work)
-- **Phase 9 engines:** Booking Core (+Availability), Workflow, Document, Report, Inventory Core, Invoice Core (built before any consumer exists)
-- **Phase 10 module:** wa'lawe consumes the engines, validates abstractions, ships with v1.0 GA polish
+- **Phase 9 engines:** Booking Core (+Availability), Workflow, Document, Report,
+  Inventory Core, Invoice Core (built before any consumer exists)
+- **Phase 10 module:** wa'lawe consumes the engines, validates abstractions,
+  ships with v1.0 GA polish
 
 **⚠ Eyes-wide-open caveat (recorded 2026-05-17).** Under the (b) scope
 narrowing, four of the 11 engines have no in-scope consumer in v1.0:
 
-- **Workflow** — wa'lawe's lifecycle is a simple 5-state machine that
-  could live inline
+- **Workflow** — wa'lawe's lifecycle is a simple 5-state machine that could live
+  inline
 - **Report** — wa'lawe standings live inside wa'lawe
 - **Inventory Core** — no wa-stok in scope
 - **Invoice Core** — no wa-invois in scope; platform Billing handles SaaS subs
 
-These four are built speculatively because the user explicitly chose
-Path 2 ("build complete engine foundation first"). Acceptable trade-off
-if the goal is a feel-complete foundation; high risk that 1–2 of these
-need refactoring if a real consumer ever arrives. **Do not invent
-abstractions you can't validate** — when in doubt while building these
-four, prefer the simplest schema and clearest extension point over
-elegance. Future consumers will tell you what was actually needed.
+These four are built speculatively because the user explicitly chose Path 2
+("build complete engine foundation first"). Acceptable trade-off if the goal is
+a feel-complete foundation; high risk that 1–2 of these need refactoring if a
+real consumer ever arrives. **Do not invent abstractions you can't validate** —
+when in doubt while building these four, prefer the simplest schema and clearest
+extension point over elegance. Future consumers will tell you what was actually
+needed.
 
-**Shared engines packaging (locked 2026-05-17):** none of the 11
-engines ship as workspace packages in v1.0. All live as in-API NestJS
-modules under `apps/api/src/modules/`. The existing
-`@wa-kijo/booking-core` workspace package is rolled back into
-`apps/api/src/modules/booking/`. Workspace-package promotion is a
-post-v1.0 decision triggered by an actual second module needing
-independent SemVer.
+**Shared engines packaging (locked 2026-05-17):** none of the 11 engines ship as
+workspace packages in v1.0. All live as in-API NestJS modules under
+`apps/api/src/modules/`. The existing `@wa-kijo/booking-core` workspace package
+is rolled back into `apps/api/src/modules/booking/`. Workspace-package promotion
+is a post-v1.0 decision triggered by an actual second module needing independent
+SemVer.
 
 **Open decisions:**
 
-- **SSO/SCIM build vs buy** — WorkOS ($125/connection/month, ships SSO +
-  SCIM + Directory Sync + Audit Logs as one integration, ~6–8 weeks faster
-  to enterprise-ready) vs roll-your-own. No ADR yet.
+- **SSO/SCIM build vs buy** — WorkOS ($125/connection/month, ships SSO + SCIM +
+  Directory Sync + Audit Logs as one integration, ~6–8 weeks faster to
+  enterprise-ready) vs roll-your-own. No ADR yet.
 - **ADR-0011 follow-up** — write a new ADR that formally supersedes the
-  platform-thesis portions of ADR-0008, 0009, 0010 and records the (b) +
-  Path 2 decision with rationale.
-- **Speculative-engine scope** — Workflow, Report, Inventory Core, Invoice
-  Core have no in-scope consumer. Open question: build them as thin
-  abstract-stub kernels (cheap, may need refactor) or as fuller speculative
-  designs (expensive, higher refactor risk)? Recommend thin stubs.
+  platform-thesis portions of ADR-0008, 0009, 0010 and records the (b) + Path 2
+  decision with rationale.
+- **Speculative-engine scope** — Workflow, Report, Inventory Core, Invoice Core
+  have no in-scope consumer. Open question: build them as thin abstract-stub
+  kernels (cheap, may need refactor) or as fuller speculative designs
+  (expensive, higher refactor risk)? Recommend thin stubs.
 
 ## Tech stack — non-negotiable
 

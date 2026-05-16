@@ -13,7 +13,12 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { setupTestDb, teardownTestDb, type TestDb } from '../setup/testcontainers';
-import { createTestTenant, createTestOrg, createTestUser, createTestMember } from '../setup/test-factories';
+import {
+  createTestTenant,
+  createTestOrg,
+  createTestUser,
+  createTestMember,
+} from '../setup/test-factories';
 import type { RequestContext } from '../../../src/common/context/request-context';
 
 // ---------------------------------------------------------------------------
@@ -159,9 +164,7 @@ describe('Cross-tenant isolation — MemberRepository', () => {
 
   it('property: random cross-org findById always returns null', async () => {
     // Create 5 orgs, each with 1 member. Assert each org can only see its own.
-    const tenants = await Promise.all(
-      Array.from({ length: 5 }, () => createTestTenant(db.prisma)),
-    );
+    const tenants = await Promise.all(Array.from({ length: 5 }, () => createTestTenant(db.prisma)));
 
     for (const tenantA of tenants) {
       for (const tenantB of tenants) {

@@ -63,7 +63,14 @@ export function LogoAnimated({ width = 32, height = 32, className }: RiveLogoPro
       <circle cx="22" cy="10" r="2" fill="white" fillOpacity="0.6" className="animate-pulse-soft" />
 
       <defs>
-        <linearGradient id="logo-gradient" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+        <linearGradient
+          id="logo-gradient"
+          x1="0"
+          y1="0"
+          x2="32"
+          y2="32"
+          gradientUnits="userSpaceOnUse"
+        >
           <stop stopColor="hsl(258 90% 60%)" />
           <stop offset="1" stopColor="hsl(280 90% 55%)" />
         </linearGradient>

@@ -8,7 +8,8 @@
 
 - [ ] Bug fix (non-breaking)
 - [ ] New feature (non-breaking)
-- [ ] Breaking change (`BREAKING CHANGE:` footer + CHANGELOG + upgrade guide entry required)
+- [ ] Breaking change (`BREAKING CHANGE:` footer + CHANGELOG + upgrade guide
+      entry required)
 - [ ] Docs only
 - [ ] Refactor (no behavior change)
 - [ ] Test / CI / build
@@ -23,12 +24,15 @@
 
 ## Checklist
 
-- [ ] My commits use [Conventional Commits](https://www.conventionalcommits.org/) and are signed off (`git commit -s`)
+- [ ] My commits use
+      [Conventional Commits](https://www.conventionalcommits.org/) and are
+      signed off (`git commit -s`)
 - [ ] `pnpm typecheck` passes locally
 - [ ] `pnpm test` passes locally
 - [ ] `pnpm lint` passes locally
 - [ ] For schema changes: `pnpm db:migrate` generates a clean migration
-- [ ] For schema / behavior changes: `pnpm test:integration` passes (Docker required)
+- [ ] For schema / behavior changes: `pnpm test:integration` passes (Docker
+      required)
 - [ ] I've added or updated tests for the change
 - [ ] I've updated `CHANGELOG.md` under `[Unreleased]` if user-visible
 - [ ] I've updated `docs/upgrade-guide.md` if this is a breaking change

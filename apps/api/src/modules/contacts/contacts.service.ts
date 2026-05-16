@@ -35,10 +35,10 @@ export class ContactsService {
 
   async list(ctx: RequestContext, query: ContactQueryDto) {
     return this.repo.search(ctx, {
-      cursor:    query.cursor,
-      take:      query.take,
-      search:    query.search,
-      tagId:     query.tagId,
+      cursor: query.cursor,
+      take: query.take,
+      search: query.search,
+      tagId: query.tagId,
       isBlocked: query.isBlocked,
     });
   }
@@ -66,9 +66,7 @@ export class ContactsService {
         organizationId: ctx.orgId,
         createdBy: ctx.userId,
         updatedBy: ctx.userId,
-        tags: tagIds.length
-          ? { create: tagIds.map((tagId) => ({ tagId })) }
-          : undefined,
+        tags: tagIds.length ? { create: tagIds.map((tagId) => ({ tagId })) } : undefined,
       },
       include: { tags: { include: { tag: true } } },
     });

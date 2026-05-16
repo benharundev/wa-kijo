@@ -39,7 +39,12 @@ const InviteSchema = z.object({
 type InviteValues = z.infer<typeof InviteSchema>;
 
 function getInitials(name: string): string {
-  return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 }
 
 const ROLE_VARIANTS: Record<Role, 'default' | 'secondary' | 'outline'> = {
@@ -66,7 +71,9 @@ export default function MembersPage() {
   const { data: members } = useQuery({
     queryKey: ['members', orgId],
     queryFn: async () => {
-      const result = await authClient.organization.getFullOrganization({ query: { organizationId: orgId } });
+      const result = await authClient.organization.getFullOrganization({
+        query: { organizationId: orgId },
+      });
       return result.data?.members ?? [];
     },
   });
@@ -94,7 +101,10 @@ export default function MembersPage() {
   }
 
   async function removeMember(memberId: string) {
-    await authClient.organization.removeMember({ organizationId: orgId, memberIdOrEmail: memberId });
+    await authClient.organization.removeMember({
+      organizationId: orgId,
+      memberIdOrEmail: memberId,
+    });
     void queryClient.invalidateQueries({ queryKey: ['members', orgId] });
   }
 
@@ -134,7 +144,9 @@ export default function MembersPage() {
                     {...form.register('email')}
                   />
                   {form.formState.errors.email && (
-                    <p className="text-xs text-destructive">{form.formState.errors.email.message}</p>
+                    <p className="text-xs text-destructive">
+                      {form.formState.errors.email.message}
+                    </p>
                   )}
                 </div>
 
@@ -186,9 +198,7 @@ export default function MembersPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Badge variant={ROLE_VARIANTS[member.role as Role] ?? 'outline'}>
-                {member.role}
-              </Badge>
+              <Badge variant={ROLE_VARIANTS[member.role as Role] ?? 'outline'}>{member.role}</Badge>
               <Can do="member:remove">
                 <Button
                   variant="ghost"

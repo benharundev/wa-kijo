@@ -32,7 +32,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               wa<span className="text-gradient">&apos;kijo</span>
             </h1>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Production-grade multi-tenant SaaS platform for NestJS developers building B2B products.
+              Production-grade multi-tenant SaaS platform for NestJS developers building B2B
+              products.
             </p>
           </div>
 
@@ -52,17 +53,40 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <div className="animate-float">
             <svg width="200" height="140" viewBox="0 0 200 140" fill="none" aria-hidden="true">
               <defs>
-                <linearGradient id="ill-grad" x1="0" y1="0" x2="200" y2="140" gradientUnits="userSpaceOnUse">
+                <linearGradient
+                  id="ill-grad"
+                  x1="0"
+                  y1="0"
+                  x2="200"
+                  y2="140"
+                  gradientUnits="userSpaceOnUse"
+                >
                   <stop stopColor="hsl(258 90% 60% / 0.3)" />
                   <stop offset="1" stopColor="hsl(280 90% 55% / 0.15)" />
                 </linearGradient>
-                <linearGradient id="ill-grad2" x1="0" y1="0" x2="200" y2="140" gradientUnits="userSpaceOnUse">
+                <linearGradient
+                  id="ill-grad2"
+                  x1="0"
+                  y1="0"
+                  x2="200"
+                  y2="140"
+                  gradientUnits="userSpaceOnUse"
+                >
                   <stop stopColor="hsl(258 90% 60% / 0.6)" />
                   <stop offset="1" stopColor="hsl(280 90% 55% / 0.4)" />
                 </linearGradient>
               </defs>
               {/* Browser window mock */}
-              <rect x="20" y="20" width="160" height="100" rx="10" fill="url(#ill-grad)" stroke="hsl(258 90% 60% / 0.3)" strokeWidth="1" />
+              <rect
+                x="20"
+                y="20"
+                width="160"
+                height="100"
+                rx="10"
+                fill="url(#ill-grad)"
+                stroke="hsl(258 90% 60% / 0.3)"
+                strokeWidth="1"
+              />
               {/* Title bar dots */}
               <circle cx="36" cy="34" r="3" fill="hsl(0 84% 70% / 0.7)" />
               <circle cx="48" cy="34" r="3" fill="hsl(38 92% 60% / 0.7)" />
@@ -72,7 +96,15 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               <rect x="36" y="62" width="60" height="4" rx="2" fill="hsl(258 90% 60% / 0.2)" />
               <rect x="36" y="74" width="40" height="4" rx="2" fill="hsl(258 90% 60% / 0.15)" />
               {/* Card mockups */}
-              <rect x="36" y="88" width="38" height="22" rx="4" fill="url(#ill-grad2)" opacity="0.5" />
+              <rect
+                x="36"
+                y="88"
+                width="38"
+                height="22"
+                rx="4"
+                fill="url(#ill-grad2)"
+                opacity="0.5"
+              />
               <rect x="82" y="88" width="38" height="22" rx="4" fill="hsl(158 64% 52% / 0.4)" />
               <rect x="128" y="88" width="38" height="22" rx="4" fill="hsl(38 92% 60% / 0.4)" />
             </svg>
@@ -105,9 +137,14 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
         <p className="mt-8 text-center text-xs text-muted-foreground">
           By continuing, you agree to our{' '}
-          <Link href="#" className="underline hover:text-foreground">Terms</Link>{' '}
+          <Link href="#" className="underline hover:text-foreground">
+            Terms
+          </Link>{' '}
           and{' '}
-          <Link href="#" className="underline hover:text-foreground">Privacy Policy</Link>.
+          <Link href="#" className="underline hover:text-foreground">
+            Privacy Policy
+          </Link>
+          .
         </p>
       </div>
     </div>

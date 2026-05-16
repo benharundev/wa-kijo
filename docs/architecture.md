@@ -1,6 +1,8 @@
 # Architecture
 
-This document describes the system design of wa'kijo: how the layers fit together, why key decisions were made, and what a developer needs to understand before touching production code.
+This document describes the system design of wa'kijo: how the layers fit
+together, why key decisions were made, and what a developer needs to understand
+before touching production code.
 
 ---
 
@@ -16,7 +18,9 @@ wa-kijo/
 └── packages/shared  Zod schemas + RBAC types — shared by api and web
 ```
 
-The API and frontend are **independently deployable**. The frontend calls the API over HTTP; they do not share a server process. This makes it straightforward to scale them separately or replace the frontend entirely.
+The API and frontend are **independently deployable**. The frontend calls the
+API over HTTP; they do not share a server process. This makes it straightforward
+to scale them separately or replace the frontend entirely.
 
 ---
 
@@ -80,10 +84,13 @@ NestJS pipeline (all other routes)
 
 ## Authentication
 
-Better Auth is mounted as an HTTP handler **outside** the NestJS pipeline. This is necessary because:
+Better Auth is mounted as an HTTP handler **outside** the NestJS pipeline. This
+is necessary because:
 
-1. Better Auth reads the raw request body stream. NestJS's body parsing middleware would consume it first.
-2. Better Auth manages its own JSON response shape; wrapping it in NestJS's `TransformInterceptor` would break it.
+1. Better Auth reads the raw request body stream. NestJS's body parsing
+   middleware would consume it first.
+2. Better Auth manages its own JSON response shape; wrapping it in NestJS's
+   `TransformInterceptor` would break it.
 
 **Session flow:**
 
@@ -97,13 +104,13 @@ Subsequent requests → AuthGuard calls auth.api.getSession({ headers })
 
 **Better Auth config summary:**
 
-| Setting | Value |
-|---|---|
-| Session expiry | 30 days, sliding (renews every 24h) |
-| Cookie | HttpOnly, SameSite=Lax, Secure in production |
-| Cookie prefix | `wa-kijo` |
-| Email verification | Required before first sign-in |
-| Magic link expiry | 15 minutes, single-use |
+| Setting            | Value                                        |
+| ------------------ | -------------------------------------------- |
+| Session expiry     | 30 days, sliding (renews every 24h)          |
+| Cookie             | HttpOnly, SameSite=Lax, Secure in production |
+| Cookie prefix      | `wa-kijo`                                    |
+| Email verification | Required before first sign-in                |
+| Magic link expiry  | 15 minutes, single-use                       |
 
 ---
 
@@ -117,21 +124,29 @@ SYSTEM    ← the SaaS platform itself; one per installation
     └── WORKSPACE    ← an individual client's workspace
 ```
 
-All three levels are the same `Organization` Prisma model, distinguished by the `orgType` field. The `parentOrgId` field links child to parent.
+All three levels are the same `Organization` Prisma model, distinguished by the
+`orgType` field. The `parentOrgId` field links child to parent.
 
 ### Tenant scoping
 
-Every domain entity has an `organizationId` (or `orgId`) column. `BaseRepository` injects `ctx.orgId` into every Prisma query via its `tenantWhere()` method, which subclasses implement. This prevents cross-tenant data leakage at the database layer.
+Every domain entity has an `organizationId` (or `orgId`) column.
+`BaseRepository` injects `ctx.orgId` into every Prisma query via its
+`tenantWhere()` method, which subclasses implement. This prevents cross-tenant
+data leakage at the database layer.
 
-**Cross-tenant access is the most critical bug class in this product.** See `ADR-0001` and `.claude/rules/security.md` for the full ruleset.
+**Cross-tenant access is the most critical bug class in this product.** See
+`ADR-0001` and `.claude/rules/security.md` for the full ruleset.
 
 ### Role inheritance
 
-A user can be a `Member` of multiple orgs simultaneously, each with its own role. When a session has an active org:
+A user can be a `Member` of multiple orgs simultaneously, each with its own
+role. When a session has an active org:
 
 1. `AuthService.resolveContext()` loads the user's direct role in that org.
-2. It then walks up the org hierarchy (up to 3 levels) via `resolveEffectiveRole()`.
-3. The highest role across the chain is used. An `owner` in a parent AGENCY org therefore has `owner` authority in all child WORKSPACEs.
+2. It then walks up the org hierarchy (up to 3 levels) via
+   `resolveEffectiveRole()`.
+3. The highest role across the chain is used. An `owner` in a parent AGENCY org
+   therefore has `owner` authority in all child WORKSPACEs.
 
 Role precedence: `owner (30) > admin (20) > member (10)`
 
@@ -139,23 +154,28 @@ Role precedence: `owner (30) > admin (20) > member (10)`
 
 ## RBAC
 
-Permissions are defined in `packages/shared/src/auth/permissions.ts` as a static map:
+Permissions are defined in `packages/shared/src/auth/permissions.ts` as a static
+map:
 
 ```ts
 export const PERMISSIONS = {
-  'member:invite':      ['owner', 'admin'],
-  'member:remove':      ['owner'],
-  'org:update':         ['owner', 'admin'],
-  'billing:manage':     ['owner'],
+  'member:invite': ['owner', 'admin'],
+  'member:remove': ['owner'],
+  'org:update': ['owner', 'admin'],
+  'billing:manage': ['owner'],
   // ...
 } satisfies Record<string, readonly Role[]>;
 ```
 
 This is the **single source of truth** used by both:
-- `@RequirePermission('member:invite')` on API controllers (server-side enforcement)
-- `useCan()` / `<Can do="..." />` in the frontend (UX hint only — not a security boundary)
 
-Adding a new permission requires only a new entry in this map. No guard code changes needed.
+- `@RequirePermission('member:invite')` on API controllers (server-side
+  enforcement)
+- `useCan()` / `<Can do="..." />` in the frontend (UX hint only — not a security
+  boundary)
+
+Adding a new permission requires only a new entry in this map. No guard code
+changes needed.
 
 ---
 
@@ -163,18 +183,20 @@ Adding a new permission requires only a new entry in this map. No guard code cha
 
 ### Schema conventions
 
-| Convention | Detail |
-|---|---|
-| IDs | `cuid()` — URL-safe, globally unique |
-| Timestamps | `createdAt`, `updatedAt` on every model |
-| Soft delete | `deletedAt`, `deletedBy` on User and Organization |
-| Audit | `createdBy`, `updatedBy` on mutable models |
-| Enums | Stored as `String`, not Prisma enum (Better Auth compatibility) |
-| Table names | Lowercase via `@@map` (Better Auth adapter requirement) |
+| Convention  | Detail                                                          |
+| ----------- | --------------------------------------------------------------- |
+| IDs         | `cuid()` — URL-safe, globally unique                            |
+| Timestamps  | `createdAt`, `updatedAt` on every model                         |
+| Soft delete | `deletedAt`, `deletedBy` on User and Organization               |
+| Audit       | `createdBy`, `updatedBy` on mutable models                      |
+| Enums       | Stored as `String`, not Prisma enum (Better Auth compatibility) |
+| Table names | Lowercase via `@@map` (Better Auth adapter requirement)         |
 
 ### Soft delete
 
-`BaseRepository.findAll()` and `findById()` filter `deletedAt: null` by default. Pass `{ includeDeleted: true }` to opt out. Hard deletes only happen in scheduled cleanup jobs.
+`BaseRepository.findAll()` and `findById()` filter `deletedAt: null` by default.
+Pass `{ includeDeleted: true }` to opt out. Hard deletes only happen in
+scheduled cleanup jobs.
 
 ### Cursor pagination
 
@@ -184,7 +206,8 @@ All list endpoints use cursor-based pagination:
 { "data": [...], "nextCursor": "cuid..." | null, "hasMore": true }
 ```
 
-Offset pagination is available only in admin/system endpoints where tables are small and consistency requirements are relaxed.
+Offset pagination is available only in admin/system endpoints where tables are
+small and consistency requirements are relaxed.
 
 ---
 
@@ -279,23 +302,26 @@ const { data } = useQuery({
 });
 ```
 
-`fetcher` in `apps/web/src/lib/fetcher.ts` always sends `credentials: 'include'`, redirects on 401, and throws typed `ApiError` on non-2xx responses.
+`fetcher` in `apps/web/src/lib/fetcher.ts` always sends
+`credentials: 'include'`, redirects on 401, and throws typed `ApiError` on
+non-2xx responses.
 
 **Server vs client component decisions:**
 
-| Need | Component type |
-|---|---|
-| Session guard in layout | Server component + `getSession()` |
-| Reactive session in UI | Client component + `useSession()` |
-| Static page, no browser APIs | Server component |
-| Form, dialog, toggle, dropdown | Client component |
+| Need                           | Component type                    |
+| ------------------------------ | --------------------------------- |
+| Session guard in layout        | Server component + `getSession()` |
+| Reactive session in UI         | Client component + `useSession()` |
+| Static page, no browser APIs   | Server component                  |
+| Form, dialog, toggle, dropdown | Client component                  |
 
 ---
 
 ## Architecture Decision Records
 
-| ADR | Decision |
-|---|---|
+| ADR                                                      | Decision                                                             |
+| -------------------------------------------------------- | -------------------------------------------------------------------- |
 | [0001](decisions/0001-better-auth-with-org-hierarchy.md) | Better Auth ≥1.5 with extended org plugin for parent–child hierarchy |
 
-New decisions should be documented as `docs/decisions/NNNN-title.md` before implementation. Future customers and maintainers will read these.
+New decisions should be documented as `docs/decisions/NNNN-title.md` before
+implementation. Future customers and maintainers will read these.

@@ -47,7 +47,11 @@ export class ContactsController {
 
   @Get()
   @RequirePermission('contact:read')
-  @ApiOperation({ summary: 'List contacts', description: 'Returns a cursor-paginated list of contacts for the active organisation. Supports full-text search and filtering by tag or blocked status.' })
+  @ApiOperation({
+    summary: 'List contacts',
+    description:
+      'Returns a cursor-paginated list of contacts for the active organisation. Supports full-text search and filtering by tag or blocked status.',
+  })
   @ApiOkResponse({ description: 'Paginated contact list' })
   list(
     @CurrentUser() ctx: RequestContext,
@@ -58,7 +62,11 @@ export class ContactsController {
 
   @Get(':id')
   @RequirePermission('contact:read')
-  @ApiOperation({ summary: 'Get contact by ID', description: 'Returns a single contact with its tags. Returns 404 if the contact does not exist within the active organisation.' })
+  @ApiOperation({
+    summary: 'Get contact by ID',
+    description:
+      'Returns a single contact with its tags. Returns 404 if the contact does not exist within the active organisation.',
+  })
   @ApiOkResponse({ description: 'Contact with tags' })
   @ApiNotFoundResponse({ description: 'Contact not found' })
   findOne(@CurrentUser() ctx: RequestContext, @Param('id') id: string) {
@@ -67,7 +75,11 @@ export class ContactsController {
 
   @Post()
   @RequirePermission('contact:create')
-  @ApiOperation({ summary: 'Create contact', description: 'Creates a new contact in the active organisation. Phone must be in E.164 format and unique within the org.' })
+  @ApiOperation({
+    summary: 'Create contact',
+    description:
+      'Creates a new contact in the active organisation. Phone must be in E.164 format and unique within the org.',
+  })
   @ApiCreatedResponse({ description: 'Contact created' })
   create(
     @CurrentUser() ctx: RequestContext,
@@ -78,7 +90,10 @@ export class ContactsController {
 
   @Patch(':id')
   @RequirePermission('contact:update')
-  @ApiOperation({ summary: 'Update contact', description: 'Partially updates a contact. Supplying tagIds replaces the full tag set.' })
+  @ApiOperation({
+    summary: 'Update contact',
+    description: 'Partially updates a contact. Supplying tagIds replaces the full tag set.',
+  })
   @ApiOkResponse({ description: 'Updated contact' })
   @ApiNotFoundResponse({ description: 'Contact not found' })
   update(
@@ -92,7 +107,11 @@ export class ContactsController {
   @Delete(':id')
   @RequirePermission('contact:delete')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete contact', description: 'Soft-deletes a contact. The record is retained and can be restored via Prisma Studio or a future admin endpoint.' })
+  @ApiOperation({
+    summary: 'Delete contact',
+    description:
+      'Soft-deletes a contact. The record is retained and can be restored via Prisma Studio or a future admin endpoint.',
+  })
   @ApiNoContentResponse({ description: 'Contact deleted' })
   @ApiNotFoundResponse({ description: 'Contact not found' })
   async remove(@CurrentUser() ctx: RequestContext, @Param('id') id: string) {
@@ -108,7 +127,10 @@ export class TagsController {
 
   @Get()
   @RequirePermission('contact:read')
-  @ApiOperation({ summary: 'List tags', description: 'Returns all tags defined in the active organisation, ordered by name.' })
+  @ApiOperation({
+    summary: 'List tags',
+    description: 'Returns all tags defined in the active organisation, ordered by name.',
+  })
   @ApiOkResponse({ description: 'Tag list' })
   list(@CurrentUser() ctx: RequestContext) {
     return this.contacts.listTags(ctx);
@@ -116,7 +138,11 @@ export class TagsController {
 
   @Post()
   @RequirePermission('tag:create')
-  @ApiOperation({ summary: 'Create tag', description: 'Creates a new label for categorising contacts. Name must be unique within the org.' })
+  @ApiOperation({
+    summary: 'Create tag',
+    description:
+      'Creates a new label for categorising contacts. Name must be unique within the org.',
+  })
   @ApiCreatedResponse({ description: 'Tag created' })
   create(
     @CurrentUser() ctx: RequestContext,
@@ -141,7 +167,10 @@ export class TagsController {
   @Delete(':id')
   @RequirePermission('tag:delete')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete tag', description: 'Permanently deletes a tag and removes it from all contacts in the organisation.' })
+  @ApiOperation({
+    summary: 'Delete tag',
+    description: 'Permanently deletes a tag and removes it from all contacts in the organisation.',
+  })
   @ApiNoContentResponse({ description: 'Tag deleted' })
   @ApiNotFoundResponse({ description: 'Tag not found' })
   async remove(@CurrentUser() ctx: RequestContext, @Param('id') id: string) {

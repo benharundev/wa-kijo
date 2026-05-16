@@ -85,10 +85,7 @@ export class StripeBillingProvider implements BillingProvider {
     return { url: session.url!, sessionId: session.id };
   }
 
-  async createPortalSession(
-    customerId: string,
-    returnUrl: string,
-  ): Promise<PortalSessionResult> {
+  async createPortalSession(customerId: string, returnUrl: string): Promise<PortalSessionResult> {
     const session = await this.stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: returnUrl,
@@ -106,11 +103,7 @@ export class StripeBillingProvider implements BillingProvider {
 
     let event: Stripe.Event;
     try {
-      event = this.stripe.webhooks.constructEvent(
-        payload,
-        signature,
-        webhookSecret,
-      );
+      event = this.stripe.webhooks.constructEvent(payload, signature, webhookSecret);
     } catch (err) {
       // Keep error message generic — do not leak signing details
       throw new Error(`Stripe webhook verification failed: ${(err as Error).message}`);

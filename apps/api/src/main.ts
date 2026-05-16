@@ -163,13 +163,19 @@ async function bootstrap(): Promise<void> {
         const auth = (request.headers['authorization'] as string | undefined) ?? '';
         const [type, encoded] = auth.split(' ');
         if (type !== 'Basic' || !encoded) {
-          void reply.code(401).header('WWW-Authenticate', 'Basic realm="Bull Board"').send('Unauthorized');
+          void reply
+            .code(401)
+            .header('WWW-Authenticate', 'Basic realm="Bull Board"')
+            .send('Unauthorized');
           return;
         }
         const decoded = Buffer.from(encoded, 'base64').toString('utf8');
         const [user, pass] = decoded.split(':');
         if (user !== bullBoardUser || pass !== bullBoardPass) {
-          void reply.code(401).header('WWW-Authenticate', 'Basic realm="Bull Board"').send('Unauthorized');
+          void reply
+            .code(401)
+            .header('WWW-Authenticate', 'Basic realm="Bull Board"')
+            .send('Unauthorized');
         }
       };
     }

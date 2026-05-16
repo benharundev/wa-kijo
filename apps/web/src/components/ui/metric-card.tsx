@@ -115,9 +115,7 @@ export function MetricCard({
                 <TrendIcon className="h-3 w-3" />
                 {trend.value}
               </span>
-              {trend.label && (
-                <span className="text-xs text-muted-foreground">{trend.label}</span>
-              )}
+              {trend.label && <span className="text-xs text-muted-foreground">{trend.label}</span>}
             </div>
           )}
         </div>

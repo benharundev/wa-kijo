@@ -1,10 +1,4 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import type { CreateCheckoutDto, CreatePortalDto } from '@wa-kijo/shared';
 import type { RequestContext } from '../../common/context/request-context';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -106,7 +100,10 @@ export class BillingService {
     // Get the org to resolve the owner's email/name for the provider
     const org = await this.prisma.organization.findUniqueOrThrow({
       where: { id: ctx.orgId },
-      select: { name: true, members: { where: { role: 'owner' }, include: { user: true }, take: 1 } },
+      select: {
+        name: true,
+        members: { where: { role: 'owner' }, include: { user: true }, take: 1 },
+      },
     });
 
     const ownerEmail = dto.email ?? org.members[0]?.user.email ?? '';
@@ -142,7 +139,7 @@ export class BillingService {
 
     if (!sub.stripeCustomerId) {
       throw new BadRequestException(
-        'No Stripe customer ID on this subscription. wa\'kijo Community only supports the Stripe Customer Portal.',
+        "No Stripe customer ID on this subscription. wa'kijo Community only supports the Stripe Customer Portal.",
       );
     }
 
@@ -284,10 +281,7 @@ export class BillingService {
     this.logger.warn({ orgId }, 'Payment failed — subscription marked past_due');
   }
 
-  private extractOrgId(
-    _providerName: string,
-    data: Record<string, unknown>,
-  ): string | null {
+  private extractOrgId(_providerName: string, data: Record<string, unknown>): string | null {
     // Stripe — orgId set as metadata at checkout-session creation.
     const metadata = data['metadata'] as Record<string, string> | undefined;
     return metadata?.['orgId'] ?? null;
@@ -312,18 +306,19 @@ export class BillingService {
     // Try to find the matching plan by Stripe price ID
     const stripePriceId = String(
       ((data['items'] as Record<string, unknown> | undefined)?.['data'] as unknown[])?.[0]
-        ? (((data['items'] as Record<string, unknown>)?.['data'] as unknown[])?.[0] as
-            Record<string, unknown>)?.['price']
+        ? (
+            ((data['items'] as Record<string, unknown>)?.['data'] as unknown[])?.[0] as Record<
+              string,
+              unknown
+            >
+          )?.['price']
         : '',
     );
 
     if (stripePriceId) {
       const plan = await this.prisma.plan.findFirst({
         where: {
-          OR: [
-            { stripePriceMonthlyId: stripePriceId },
-            { stripePriceYearlyId: stripePriceId },
-          ],
+          OR: [{ stripePriceMonthlyId: stripePriceId }, { stripePriceYearlyId: stripePriceId }],
         },
       });
       if (plan) return plan.id;

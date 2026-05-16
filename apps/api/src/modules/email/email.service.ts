@@ -22,7 +22,10 @@ export class EmailService {
     });
 
     if (error) {
-      this.logger.error({ userId: user.email, error: error.message }, 'Failed to send verification email');
+      this.logger.error(
+        { userId: user.email, error: error.message },
+        'Failed to send verification email',
+      );
     } else {
       this.logger.log({ email: user.email }, 'Verification email sent');
     }
@@ -58,7 +61,10 @@ export class EmailService {
     });
 
     if (error) {
-      this.logger.error({ email: params.email, error: error.message }, 'Failed to send invitation email');
+      this.logger.error(
+        { email: params.email, error: error.message },
+        'Failed to send invitation email',
+      );
     } else {
       this.logger.log({ email: params.email, orgName: params.orgName }, 'Invitation email sent');
     }

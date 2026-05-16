@@ -22,30 +22,30 @@ export type UpdateTagDto = z.infer<typeof UpdateTagSchema>;
 // ── Contact DTOs ──────────────────────────────────────────────────────────────
 
 export const CreateContactSchema = z.object({
-  phone:  PhoneSchema,
-  name:   z.string().min(1).max(100),
-  email:  z.string().email().optional(),
-  notes:  z.string().max(2000).optional(),
+  phone: PhoneSchema,
+  name: z.string().min(1).max(100),
+  email: z.string().email().optional(),
+  notes: z.string().max(2000).optional(),
   source: z.string().max(50).optional(),
   tagIds: z.array(z.string()).default([]),
 });
 export type CreateContactDto = z.infer<typeof CreateContactSchema>;
 
 export const UpdateContactSchema = z.object({
-  name:      z.string().min(1).max(100).optional(),
-  email:     z.string().email().nullable().optional(),
-  notes:     z.string().max(2000).nullable().optional(),
-  source:    z.string().max(50).optional(),
+  name: z.string().min(1).max(100).optional(),
+  email: z.string().email().nullable().optional(),
+  notes: z.string().max(2000).nullable().optional(),
+  source: z.string().max(50).optional(),
   isBlocked: z.boolean().optional(),
-  tagIds:    z.array(z.string()).optional(),
+  tagIds: z.array(z.string()).optional(),
 });
 export type UpdateContactDto = z.infer<typeof UpdateContactSchema>;
 
 export const ContactQuerySchema = z.object({
-  cursor:    z.string().optional(),
-  take:      z.coerce.number().int().min(1).max(100).default(20),
-  search:    z.string().optional(),
-  tagId:     z.string().optional(),
+  cursor: z.string().optional(),
+  take: z.coerce.number().int().min(1).max(100).default(20),
+  search: z.string().optional(),
+  tagId: z.string().optional(),
   isBlocked: z.coerce.boolean().optional(),
 });
 export type ContactQueryDto = z.infer<typeof ContactQuerySchema>;

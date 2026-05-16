@@ -62,9 +62,7 @@ export default function SessionsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Active sessions</CardTitle>
-          <CardDescription>
-            These devices are currently signed into your account.
-          </CardDescription>
+          <CardDescription>These devices are currently signed into your account.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">

@@ -4,9 +4,7 @@ import { Bell, Search } from 'lucide-react';
 
 export function TopBar() {
   return (
-    <header
-      className="relative flex h-14 items-center justify-between gap-3 border-b border-border/60 bg-background/80 px-5 backdrop-blur-xl"
-    >
+    <header className="relative flex h-14 items-center justify-between gap-3 border-b border-border/60 bg-background/80 px-5 backdrop-blur-xl">
       {/* Left: Search trigger (Apple HIG ⌘K pattern) */}
       <button
         className="group flex h-8 items-center gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 text-sm text-muted-foreground transition-all duration-150 hover:border-brand-500/40 hover:bg-muted/70 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"

@@ -62,7 +62,10 @@ export class ConversationsController {
 
   @Get(':id')
   @RequirePermission('conversation:read')
-  @ApiOperation({ summary: 'Get conversation by ID', description: 'Returns a single conversation with its contact summary.' })
+  @ApiOperation({
+    summary: 'Get conversation by ID',
+    description: 'Returns a single conversation with its contact summary.',
+  })
   @ApiOkResponse({ description: 'Conversation with contact' })
   @ApiNotFoundResponse({ description: 'Conversation not found' })
   findOne(@CurrentUser() ctx: RequestContext, @Param('id') id: string) {
@@ -88,7 +91,8 @@ export class ConversationsController {
   @RequirePermission('conversation:read')
   @ApiOperation({
     summary: 'Update conversation',
-    description: 'Update status (open | closed | snoozed) or assigned agent. Requires conversation:assign permission to change assignedToUserId.',
+    description:
+      'Update status (open | closed | snoozed) or assigned agent. Requires conversation:assign permission to change assignedToUserId.',
   })
   @ApiOkResponse({ description: 'Updated conversation' })
   @ApiNotFoundResponse({ description: 'Conversation not found' })
@@ -103,7 +107,10 @@ export class ConversationsController {
   @Delete(':id')
   @RequirePermission('conversation:delete')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete conversation', description: 'Soft-deletes a conversation and all its messages.' })
+  @ApiOperation({
+    summary: 'Delete conversation',
+    description: 'Soft-deletes a conversation and all its messages.',
+  })
   @ApiNoContentResponse({ description: 'Conversation deleted' })
   @ApiNotFoundResponse({ description: 'Conversation not found' })
   async remove(@CurrentUser() ctx: RequestContext, @Param('id') id: string) {
@@ -116,7 +123,8 @@ export class ConversationsController {
   @RequirePermission('message:read')
   @ApiOperation({
     summary: 'List messages',
-    description: 'Returns cursor-paginated messages within a conversation, newest first. Filter by direction (inbound | outbound).',
+    description:
+      'Returns cursor-paginated messages within a conversation, newest first. Filter by direction (inbound | outbound).',
   })
   @ApiOkResponse({ description: 'Paginated message list' })
   @ApiNotFoundResponse({ description: 'Conversation not found' })
