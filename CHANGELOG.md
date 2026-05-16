@@ -14,17 +14,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> **Strategic pivot — wa'kijo evolves from boilerplate-to-fork into a
+> platform with pluggable business modules.** Future products (wa'lawe,
+> Workshop, etc.) ship as modules on top of one shared platform instead
+> of as forks. Diagrammatic reference and rationale captured in
+> ADR-0008 (Module Registry), ADR-0009 (Pragmatic DDD layout), and
+> ADR-0010 (Booking Core kernel).
+
 ### Added
 
-- _(add new entries here as they land on `main`)_
+- **ADR-0008** — Module Registry & per-tenant module enablement.
+- **ADR-0009** — Pragmatic DDD layout for module bounded contexts.
+- **ADR-0010** — Booking Core kernel and the dual-consumer test.
+- **Module Registry runtime** under `apps/api/src/platform/module-registry/`:
+  - `Module` and `TenantModule` Prisma models (migration name `add_module_registry`).
+  - `ModuleRegistryService` (`OnApplicationBootstrap`) discovers `module.manifest.ts` files, validates each manifest against `ModuleManifestSchema`, runs the dependency resolver, upserts `Module` rows, and retires orphans.
+  - `ModuleScanner`, `dependency-resolver` (Kahn topological sort + semver matcher: caret, tilde, `>=`, exact, `*`).
+  - `RequireModuleGuard` returns **404** (not 403) for unknown / disabled / no-org-context — see ADR-0008 § "Cross-tenant non-disclosure".
+- **Module-admin endpoints** under `/api/v1/admin/modules`:
+  - `GET /admin/modules` — registry snapshot.
+  - `GET /admin/modules/enabled` — per-active-org enablement, including `enabledAt`, `enabledBy`, and per-tenant config snapshot.
+  - `PUT /admin/modules/:slug` — enable for the active org (idempotent). Refuses with 409 if any manifest-declared dependency is not yet enabled.
+  - `DELETE /admin/modules/:slug` — disable for the active org. Refuses with 409 if any other enabled module declares this as a dependency.
+- **New permissions**: `module:list` (owner / admin), `module:toggle` (owner only) — added to `@wa-kijo/shared/auth/permissions`.
+- **Manifest files** for the existing `contacts` and `conversations` modules. They register with the new runtime without behaviour changes.
+- **Tests:**
+  - `dependency-resolver.spec.ts` — 17 cases (caret / tilde / diamond / cycle / missing / external).
+  - `module-manifest.schema.spec.ts` — 10 cases for slug / version / permission / hook stability.
+  - `modules-admin.service.spec.ts` — enable / disable happy paths + dependency-conflict cases.
+  - `require-module.guard.spec.ts` — 6 cases focusing on the 404-not-403 invariant.
+  - `test/integration/platform/module-registry.spec.ts` — Testcontainers spec asserting cross-tenant DB-level isolation and history-safe retirement.
+- **`@wa-kijo/booking-core` workspace package (v0.1.0 scaffold)** —
+  shared scheduling kernel with `TimeRange`, `BookingState`, `Resource`,
+  `Schedulable`, `AvailabilityRule`, `ConflictDetectionService`,
+  `AvailabilityCheckService`, 5 lifecycle events, `SchedulableRepositoryPort`,
+  `DomainEventPublisherPort`. Persistence-agnostic; framework-agnostic;
+  90% line / 85% branch coverage threshold enforced.
+- **`apps/api/src/modules/_template/`** — canonical four-layer module
+  scaffold (`domain / application / infrastructure / presentation`)
+  with `module.manifest.ts`, hook handler, policy, mapper, and
+  failing test stubs in every mandatory test-first zone.
+- **PRD § 5.11–5.16** — FR-1100/1200/1300/1400/1500/1600 series for
+  Module Registry, Booking Core, Pragmatic DDD, Customization Layer,
+  wa'lawe-as-module, Workshop-as-module.
+- **PRD § 4 — Phases 6a, 6b, 6c, 6d, 6e, 6f, 7 (wa'lawe), 8 (Workshop)**
+  inserted into the phase table.
 
 ### Changed
 
-- _nothing yet_
+- Updated `docs-site/roadmap.mdx` to reflect platform-pivot phases and
+  the wa'lawe-as-module first consumer.
+- `CLAUDE.md` and `README.md` documentation index now reference the
+  new ADRs and the booking-core package.
 
 ### Deprecated
 
-- _nothing yet_
+- The implicit "fork wa-kijo per product" model is now the **fallback**
+  path of last resort, not the default. Documented in ADR-0010 §
+  "When forking is the right answer" and surfaced in
+  `docs/customization.md`.
 
 ### Removed
 

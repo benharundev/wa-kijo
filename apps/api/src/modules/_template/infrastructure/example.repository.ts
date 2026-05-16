@@ -5,6 +5,43 @@ import type { RequestContext } from '../../../common/context/request-context';
 import type { Example } from '../domain/example.entity';
 import { PrismaExampleMapper } from './prisma-example.mapper';
 
+interface ExampleRow {
+  readonly id: string;
+  readonly organizationId: string;
+}
+
+type ExampleDelegate = {
+  findFirst(args?: { where?: Record<string, unknown> }): Promise<ExampleRow | null>;
+  findMany(args?: {
+    where?: Record<string, unknown>;
+    cursor?: Record<string, unknown>;
+    take?: number;
+    skip?: number;
+    orderBy?: Record<string, unknown> | Record<string, unknown>[];
+  }): Promise<ExampleRow[]>;
+  create(args: { data: Record<string, unknown> }): Promise<ExampleRow>;
+  update(args: { where: { id: string }; data: Record<string, unknown> }): Promise<ExampleRow>;
+  count(args?: { where?: Record<string, unknown> }): Promise<number>;
+};
+
+const unimplementedDelegate: ExampleDelegate = {
+  findFirst: async () => {
+    throw new Error('Template repository delegate must be replaced by a real Prisma delegate');
+  },
+  findMany: async () => {
+    throw new Error('Template repository delegate must be replaced by a real Prisma delegate');
+  },
+  create: async () => {
+    throw new Error('Template repository delegate must be replaced by a real Prisma delegate');
+  },
+  update: async () => {
+    throw new Error('Template repository delegate must be replaced by a real Prisma delegate');
+  },
+  count: async () => {
+    throw new Error('Template repository delegate must be replaced by a real Prisma delegate');
+  },
+};
+
 /**
  * Persistence adapter. Bridges the domain aggregate (`Example`) and
  * the Prisma row.
@@ -16,17 +53,18 @@ import { PrismaExampleMapper } from './prisma-example.mapper';
  * implement `save` / `findById` against it.
  */
 @Injectable()
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class ExampleRepository extends BaseRepository<any> {
+export class ExampleRepository extends BaseRepository<
+  ExampleRow,
+  Record<string, unknown>,
+  Record<string, unknown>,
+  { id: string },
+  ExampleDelegate
+> {
   constructor(prisma: PrismaService) {
-    super(prisma);
+    super(prisma, unimplementedDelegate, ExampleRepository.name);
   }
 
-  protected get model(): string {
-    return 'example';
-  }
-
-  protected tenantWhere(ctx: RequestContext): Record<string, unknown> {
+  protected override tenantWhere(ctx: RequestContext): Record<string, unknown> {
     return { organizationId: ctx.orgId };
   }
 
@@ -40,7 +78,7 @@ export class ExampleRepository extends BaseRepository<any> {
     PrismaExampleMapper.toRow; // referenced so importing the mapper isn't unused
   }
 
-  async findById(_ctx: RequestContext, _id: string): Promise<Example | null> {
+  async findExampleById(_ctx: RequestContext, _id: string): Promise<Example | null> {
     // Real implementation:
     //   const row = await BaseRepository.findById -> map via PrismaExampleMapper.toDomain
     return null;

@@ -11,19 +11,84 @@ For shipped work see the [Changelog](/changelog).
 
 ---
 
-## Now (next 1–2 minor releases)
+## Strategic pivot — platform with pluggable modules
+
+> **What changed.** Future products (wa'lawe, Workshop, future
+> verticals) ship as **modules** on top of one shared platform —
+> not as separate forks of wa-kijo. Forking is now the **fallback**
+> path of last resort, not the default. The diagrammatic reference
+> for this is captured in ADR-0008, ADR-0009, and ADR-0010 in the
+> repo.
+
+The pivot reshapes the next several phases. Items below are ordered
+by dependency, not by calendar date.
+
+## Now (next 2–3 minor releases)
 
 <CardGroup cols={2}>
+  <Card title="Phase 6a — Module Registry" icon="boxes-stacked">
+    `Module` + `TenantModule` Prisma models, manifest scanner,
+    semver-aware dependency resolver, `@RequireModule()` guard.
+    Existing `contacts` and `conversations` refactored to register
+    via manifest. The runtime that turns wa-kijo into a platform.
+  </Card>
+  <Card title="Phase 6b — Booking Core kernel" icon="calendar-check">
+    `@wa-kijo/booking-core` v0.1.0 — persistence-agnostic scheduling
+    kernel. `TimeRange`, `BookingState`, conflict detection,
+    availability rules, 5 lifecycle events. The shared engine every
+    scheduling module consumes.
+  </Card>
+  <Card title="Phase 6c — Pragmatic DDD layout" icon="diagram-project">
+    Per-module `domain / application / infrastructure / presentation`
+    folders. ESLint dependency-rule guard. `_template/` module
+    scaffold with failing test stubs in every mandatory test-first
+    zone.
+  </Card>
   <Card title="Phase 6 — Billing module" icon="credit-card">
-    `BillingProvider` interface with three implementations: Stripe (default),
-    Billplz (Malaysian), ToyyibPay (Malaysian). Decoupled `Plan` model;
-    webhook signature verification; idempotent webhook handling; customer
-    portal redirect.
+    `BillingProvider` interface (Stripe + Billplz + ToyyibPay) lands
+    alongside the platform pivot — billing also gets the manifest
+    treatment.
+  </Card>
+</CardGroup>
+
+<CardGroup cols={2}>
+  <Card title="Phase 6d — Config + Custom Fields" icon="sliders">
+    Per-tenant Zod-validated config overrides; `CustomFieldDefinition`
+    table with JSONB storage on extending entities. Customers
+    customise without forking.
+  </Card>
+  <Card title="Phase 6e — Hooks" icon="plug">
+    Typed event bus on top of BullMQ. `@Hook('hook.point')` decorator,
+    contract test harness, SemVer'd hook signatures. The most
+    important public-API surface in the platform.
+  </Card>
+  <Card title="Phase 6f — Policies + UI Slots" icon="shield">
+    Resource-level authorization (`canEdit(ctx, resource)`) beyond
+    static RBAC. Next.js slot system — pages declare slots, modules
+    register fillers.
   </Card>
   <Card title="Webhook ingest framework" icon="diagram-project">
     Generic inbound-webhook controller pattern with HMAC verification,
-    idempotency via provider event ID, and queue-based processing. Used
-    by billing, messaging, and your own integrations.
+    idempotency via provider event ID, queue-based processing.
+  </Card>
+</CardGroup>
+
+## First two business modules
+
+<CardGroup cols={2}>
+  <Card title="Phase 7 — wa'lawe (chess tournaments)" icon="chess-knight">
+    First real consumer of the Booking Core. Tournament + Round +
+    Pairing aggregates; Swiss / round-robin / knockout pairing
+    algorithms; Elo / FIDE ratings; tie-breaks (Buchholz,
+    Sonneborn-Berger, direct encounter); standings; multi-stage
+    workflows (groups → knockouts).
+  </Card>
+  <Card title="Phase 8 — Workshop / wa-bengkel" icon="screwdriver-wrench">
+    Second consumer of the Booking Core — proves the kernel
+    abstractions generalise. Service appointments, mechanic skill
+    matching, parts + labour line items. Module CLI
+    (`pnpm module:create`, `pnpm module:upgrade`) and FORK.md
+    governance ship in this phase.
   </Card>
 </CardGroup>
 

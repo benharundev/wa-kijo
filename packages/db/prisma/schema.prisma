@@ -131,6 +131,7 @@ model Organization {
   tags          Tag[]
   conversations Conversation[]
   subscription  Subscription?
+  modules       TenantModule[]
 
   @@index([slug])
   @@index([parentOrgId])
@@ -393,4 +394,53 @@ model Invitation {
   @@index([organizationId])
   @@index([status])
   @@map("invitation")
+}
+
+// ---------------------------------------------------------------------------
+// Module Registry (ADR-0008) — pluggable business modules.
+//
+// `Module` is the registry row — one per installed module, keyed by slug.
+// `TenantModule` is the per-organisation enable/disable + per-tenant config.
+// Manifest scanner upserts `Module` at boot from each module's
+// module.manifest.ts; tenants flip TenantModule.enabled via the admin UI.
+//
+// Migration name: add_module_registry
+// ---------------------------------------------------------------------------
+
+// status: active | deprecated | retired (history-preserving)
+model Module {
+  id           String  @id @default(cuid())
+  slug         String  @unique
+  name         String
+  version      String                            // SemVer; bumps on manifest change
+  status       String  @default("active")
+  manifestJson Json                              // full manifest snapshot
+  installedAt  DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenants      TenantModule[]
+
+  @@index([status])
+  @@map("module")
+}
+
+// Composite primary key (organizationId, moduleId) — at most one row per
+// (org, module) pair. enabled=false rows are kept so config history survives
+// a disable/re-enable cycle.
+model TenantModule {
+  organizationId String
+  moduleId       String
+  enabled        Boolean   @default(false)
+  configJson     Json?                            // tenant overrides; validated against module's config schema
+  enabledAt      DateTime?
+  enabledBy      String?
+  updatedAt      DateTime  @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  module         Module       @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, moduleId])
+  @@index([organizationId])
+  @@index([moduleId])
+  @@map("tenant_module")
 }

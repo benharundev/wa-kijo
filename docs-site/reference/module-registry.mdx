@@ -1,0 +1,210 @@
+---
+title: "Module Registry"
+description: "Per-tenant module enablement — endpoints, lifecycle, and the 404-not-403 rule."
+---
+
+The Module Registry is the runtime that turns wa'kijo from a
+boilerplate-to-fork into a **platform with pluggable business
+modules**. See [ADR-0008](https://github.com/wakijo/wa-kijo/blob/main/docs/decisions/0008-module-registry.md)
+for the full rationale.
+
+## Concepts
+
+| Concept | What it is |
+|---|---|
+| **Module** | A registered business module — `contacts`, `conversations`, eventually `tournament` (wa'lawe), `workshop`, etc. Each ships a `module.manifest.ts` declaring its slug, version, dependencies, exposed permissions, hooks, custom fields, UI slots, and routes |
+| **TenantModule** | Per-organisation enablement. A `Module` in the platform is **not** automatically active for every tenant — each tenant explicitly enables what they want |
+| **Manifest scanner** | Boot-time discovery of `module.manifest.ts` files. Validates each against the Zod `ModuleManifestSchema` and refuses to start the app if any are malformed |
+| **Dependency resolver** | Topologically sorts modules and rejects cycles, missing dependencies, or version-incompatible pairs **at boot** |
+| **`@RequireModule('slug')`** | Decorator on a controller or route handler that returns **404** (not 403) when the active organisation has not enabled the module |
+
+## The 404-not-403 rule
+
+A request to a feature whose module is not enabled for the active
+tenant must return **404 Not Found**, not 403 Forbidden. Returning
+403 leaks the existence of a feature the tenant doesn't have — exactly
+the kind of disclosure that helps competitors and attackers fingerprint
+your platform.
+
+The same convention applies when:
+
+- The slug is unknown to this build (typo, retired module, missing
+  manifest).
+- The slug is known but the active org has not enabled it.
+- There is no active org context.
+
+All four cases produce identical responses. Indistinguishable.
+
+## Admin endpoints
+
+Auth: cookie session. Permissions: `module:list` (owner / admin) for
+reads, `module:toggle` (owner) for writes.
+
+<AccordionGroup>
+  <Accordion title="GET /api/v1/admin/modules">
+    Registry snapshot — every module compiled into this build, regardless of per-tenant enablement.
+
+    ```jsonc
+    {
+      "data": [
+        { "slug": "contacts",      "name": "Contacts",      "version": "0.5.0", "status": "active",  ... },
+        { "slug": "conversations", "name": "Conversations", "version": "0.5.0", "status": "active",  ... }
+      ]
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="GET /api/v1/admin/modules/enabled">
+    Per-active-org enablement. One row per installed module.
+
+    ```jsonc
+    {
+      "data": [
+        {
+          "slug": "contacts",
+          "enabled": true,
+          "enabledAt": "2026-05-10T08:30:00.000Z",
+          "enabledBy": "user_abc",
+          "config": null
+        },
+        {
+          "slug": "conversations",
+          "enabled": false,
+          "enabledAt": null,
+          "enabledBy": null,
+          "config": null
+        }
+      ]
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="PUT /api/v1/admin/modules/:slug">
+    Enable a module for the active organisation. Idempotent.
+
+    ```bash
+    curl -b cookies.txt \
+      -X PUT https://api.your-saas.com/api/v1/admin/modules/conversations \
+      -H 'Content-Type: application/json' \
+      -d '{ "config": { "default_channel": "whatsapp" } }'
+    ```
+
+    Returns **409 Conflict** with `details.missingDependencies` if any
+    manifest-declared dependency is not yet enabled:
+
+    ```jsonc
+    {
+      "success": false,
+      "statusCode": 409,
+      "error": "CONFLICT",
+      "message": "Cannot enable \"conversations\" — required modules are not enabled",
+      "details": { "missingDependencies": ["contacts"] }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="DELETE /api/v1/admin/modules/:slug">
+    Disable a module for the active organisation. Idempotent.
+
+    Returns **409 Conflict** if any other enabled module declares this as a dependency:
+
+    ```jsonc
+    {
+      "success": false,
+      "statusCode": 409,
+      "error": "CONFLICT",
+      "message": "Cannot disable \"contacts\" — other enabled modules depend on it",
+      "details": { "dependents": ["conversations"] }
+    }
+    ```
+
+    Disable the dependents first (`conversations` then `contacts`), or
+    cascade explicitly if the platform CLI ships a flag for it later.
+  </Accordion>
+</AccordionGroup>
+
+## Lifecycle for a new module
+
+<Steps>
+  <Step title="Module ships in the build">
+    A new `apps/api/src/modules/<slug>/module.manifest.ts` lands on
+    `main`. The manifest scanner picks it up at next boot, the
+    dependency resolver verifies it, and the registry upserts a
+    `Module` row with `status='active'`.
+  </Step>
+  <Step title="Tenants discover it">
+    Customer admins see the new module in `GET /admin/modules`. It is
+    NOT enabled by default — the platform never auto-enables on the
+    customer's behalf.
+  </Step>
+  <Step title="Tenant enables it">
+    Owner posts `PUT /admin/modules/<slug>` (optionally with a config
+    payload). If transitive dependencies aren't enabled, the request
+    returns 409 with the missing slugs.
+  </Step>
+  <Step title="Module-gated routes start working">
+    Routes decorated `@RequireModule(<slug>)` switch from returning
+    404 to whatever the controller would otherwise return.
+  </Step>
+  <Step title="Tenant disables it (later)">
+    `DELETE /admin/modules/<slug>`. Returns 409 if other enabled
+    modules depend on it. Otherwise the row is updated to
+    `enabled=false` (kept around so config history survives a
+    re-enable).
+  </Step>
+  <Step title="Module retired upstream">
+    A future release removes the module. The scanner marks the
+    `Module` row `status='retired'` — historical references in
+    `TenantModule` and `AuditLog` keep resolving the slug to a
+    human-readable name.
+  </Step>
+</Steps>
+
+## Manifest dependencies
+
+Modules can declare dependencies on:
+
+- **Other modules** by slug — e.g. `conversations` depends on
+  `contacts`. Resolved against the in-build manifest set.
+- **Workspace packages** by name — e.g. wa'lawe depends on
+  `@wa-kijo/booking-core: '^0.1.0'`. Resolved against the
+  installed-package versions known to the registry at boot.
+
+Example manifest fragment:
+
+```ts
+export const manifest = {
+  slug: 'tournament',
+  name: 'Tournament',
+  version: '0.1.0',
+  description: 'Chess tournament module on top of the Booking Core kernel.',
+  dependencies: {
+    contacts: '^0.5.0',
+    '@wa-kijo/booking-core': '^0.1.0',
+  },
+  exposes: { /* permissions, hooks, customFields, uiSlots, routes */ },
+  config:   { schema: {}, defaults: {} },
+  lifecycle: {},
+} as const;
+```
+
+## SemVer support
+
+The boot-time matcher honours:
+
+- **Caret** — `^1.2.0` (same major; npm-style `^0.x` locks to same minor).
+- **Tilde** — `~1.2.0` (same minor).
+- **Greater-or-equal** — `>= 1.0.0`.
+- **Exact** — `1.2.3`.
+- **Wildcard** — `*` matches anything.
+
+Hyphen ranges, OR-clauses, and pre-release comparison logic land when
+we adopt the `semver` npm package — tracked in ADR-0008's
+implementation notes.
+
+## When to look here vs elsewhere
+
+- **Architecture rationale** → [ADR-0008](https://github.com/wakijo/wa-kijo/blob/main/docs/decisions/0008-module-registry.md)
+- **Per-module folder shape** → [ADR-0009](https://github.com/wakijo/wa-kijo/blob/main/docs/decisions/0009-pragmatic-ddd-layout.md) and [`apps/api/src/modules/_template/`](https://github.com/wakijo/wa-kijo/blob/main/apps/api/src/modules/_template)
+- **Customisation hierarchy** (config → custom fields → hooks → policies → UI slots → fork) → [Customise branding & opinions](/guides/customise-branding)
+- **Forking governance** (when modules → forks is the right call) → [ADR-0010 § "When forking is the right answer"](https://github.com/wakijo/wa-kijo/blob/main/docs/decisions/0010-booking-core-kernel.md#when-forking-is-the-right-answer)

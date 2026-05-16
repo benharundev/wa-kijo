@@ -101,7 +101,8 @@
               "reference/configuration",
               "reference/cli",
               "reference/error-codes",
-              "reference/permissions"
+              "reference/permissions",
+              "reference/module-registry"
             ]
           },
           {

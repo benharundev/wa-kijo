@@ -16,7 +16,7 @@ export class GetExampleQuery {
   constructor(private readonly repo: ExampleRepository) {}
 
   async execute(ctx: RequestContext, id: string): Promise<Example> {
-    const found = await this.repo.findById(ctx, id);
+    const found = await this.repo.findExampleById(ctx, id);
     if (!found) {
       // Returns 404 (not 403) for cross-tenant — the BaseRepository
       // already filters by ctx.orgId, so a missing record means
