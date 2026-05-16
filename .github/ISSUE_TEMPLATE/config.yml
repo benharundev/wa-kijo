@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Question / discussion
+    url: https://github.com/benharundev/wa-kijo/discussions
+    about: Open-ended questions, "how do I…" help, design feedback. Bugs go through Issues.
+  - name: 🔒 Security vulnerability
+    url: https://github.com/benharundev/wa-kijo/blob/main/SECURITY.md
+    about: Please disclose privately — do NOT file a public issue.
+  - name: 💼 wa'kijo Pro support
+    url: https://github.com/benharundev/wa-kijo/blob/main/SUPPORT.md
+    about: Paid-tier features (SSO, SCIM, the 11 engines) and SLA-backed support.

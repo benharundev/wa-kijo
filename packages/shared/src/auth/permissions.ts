@@ -53,32 +53,12 @@ export const PERMISSIONS = {
   'message:send': ['owner', 'admin', 'member'],
   'message:read': ['owner', 'admin', 'member'],
 
-  // API keys (future)
+  // API keys (future — public API + key auth comes in a later release)
   'api-key:create': ['owner', 'admin'],
   'api-key:revoke': ['owner'],
 
-  // Template module examples (compile-time scaffold only)
-  'example:create': ['owner', 'admin'],
-  'example:read': ['owner', 'admin', 'member'],
-
-  // Platform — Module Registry (ADR-0008)
-  // module:list  — read what's installed and what's enabled for the org.
-  // module:toggle — enable/disable a module for the active org. Owner-only
-  //                 because flipping a module changes what data the org can
-  //                 produce and which hooks fire on its behalf.
-  'module:list': ['owner', 'admin'],
-  'module:toggle': ['owner'],
-
-  // wa'lawe — Chess tournament module (Phase 7)
-  'tournament:create': ['owner', 'admin'],
-  'tournament:read': ['owner', 'admin', 'member'],
-  'tournament:update': ['owner', 'admin'],
-  'tournament:delete': ['owner'],
-  'tournament:publish': ['owner', 'admin'],
-  'pairing:read': ['owner', 'admin', 'member'],
-  'pairing:update': ['owner', 'admin'],
-  'result:enter': ['owner', 'admin', 'member'],
-  'certificate:issue': ['owner', 'admin'],
+  // Admin / ops
+  'admin:queues': ['owner'],
 } as const satisfies Record<string, readonly Role[]>;
 
 export type Permission = keyof typeof PERMISSIONS;

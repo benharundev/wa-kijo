@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>wa'kijo v0.6.0 — Architecture Infographic</title>
+    <style>
+      :root {
+        --ink: #15120e;
+        --muted: #625c52;
+        --paper: #f7f2e8;
+        --panel: #fffaf0;
+        --line: #d8c8ad;
+        --orange: #f26922;
+        --green: #17745c;
+        --blue: #226b8f;
+        --maroon: #9e3032;
+        --gold: #c98b19;
+        --shadow: 0 22px 80px rgba(47, 36, 20, 0.18);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at 20% 12%, rgba(242, 105, 34, 0.16), transparent 30rem),
+          radial-gradient(circle at 84% 22%, rgba(34, 107, 143, 0.13), transparent 28rem),
+          linear-gradient(135deg, #f4ebdc 0%, #fffaf0 45%, #f3ead8 100%);
+        color: var(--ink);
+        font-family: Avenir Next, Avenir, Trebuchet MS, sans-serif;
+      }
+
+      .sheet {
+        width: min(1600px, calc(100vw - 48px));
+        min-height: 100vh;
+        margin: 24px auto;
+        padding: 42px;
+        border: 1px solid rgba(122, 88, 43, 0.28);
+        background:
+          linear-gradient(rgba(21, 18, 14, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(21, 18, 14, 0.035) 1px, transparent 1px),
+          var(--paper);
+        background-size: 26px 26px;
+        box-shadow: var(--shadow);
+      }
+
+      header {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) 0.9fr;
+        gap: 34px;
+        align-items: end;
+        margin-bottom: 34px;
+      }
+
+      .kicker {
+        display: inline-flex;
+        gap: 10px;
+        align-items: center;
+        width: fit-content;
+        padding: 8px 12px;
+        border: 1px solid var(--line);
+        background: rgba(255, 250, 240, 0.76);
+        color: var(--green);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .kicker::before {
+        content: "";
+        width: 10px;
+        height: 10px;
+        background: var(--green);
+      }
+
+      h1 {
+        max-width: 920px;
+        margin: 18px 0 20px;
+        padding-bottom: 8px;
+        font-family: Georgia, Times New Roman, serif;
+        font-size: clamp(48px, 5.2vw, 96px);
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        max-width: 850px;
+        color: var(--muted);
+        font-size: 22px;
+        line-height: 1.42;
+      }
+
+      .meta {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .meta div {
+        border: 1px solid var(--line);
+        background: rgba(255, 250, 240, 0.8);
+        padding: 14px 16px;
+      }
+
+      .meta b {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--ink);
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+      }
+
+      .meta span {
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.35;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.18fr 1fr 0.86fr;
+        gap: 22px;
+      }
+
+      section {
+        border: 1px solid var(--line);
+        background: rgba(255, 250, 240, 0.86);
+        min-width: 0;
+      }
+
+      .section-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      h2 {
+        margin: 0;
+        font-family: Georgia, Times New Roman, serif;
+        font-size: 30px;
+        line-height: 1;
+      }
+
+      .tag {
+        align-self: start;
+        white-space: nowrap;
+        padding: 6px 9px;
+        background: var(--ink);
+        color: var(--paper);
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .stack { padding: 20px; }
+
+      .layer {
+        position: relative;
+        margin-bottom: 12px;
+        padding: 16px 16px 16px 72px;
+        border: 1px solid var(--line);
+        background: #fffdf7;
+      }
+
+      .layer:last-child { margin-bottom: 0; }
+
+      .num {
+        position: absolute;
+        top: 14px;
+        left: 14px;
+        display: grid;
+        place-items: center;
+        width: 38px;
+        height: 38px;
+        background: var(--orange);
+        color: #fff;
+        font-weight: 900;
+      }
+
+      .layer h3,
+      .flow h3,
+      .tile h3,
+      .node h3 {
+        margin: 0 0 7px;
+        font-size: 20px;
+        line-height: 1.1;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.42;
+      }
+
+      code, .mono {
+        font-family: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+        font-size: 13px;
+        color: #3a3025;
+        background: #f3ead4;
+        padding: 1px 5px;
+        border: 1px solid rgba(122, 88, 43, 0.22);
+      }
+
+      .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-top: 12px;
+      }
+
+      .pill {
+        border: 1px solid rgba(21, 18, 14, 0.2);
+        padding: 5px 8px;
+        color: #2f2921;
+        background: #f7efe1;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .flow-wrap { padding: 20px; }
+
+      .flow {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 14px;
+        align-items: start;
+        position: relative;
+        padding: 0 0 20px;
+      }
+
+      .flow:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        left: 23px;
+        top: 50px;
+        bottom: 2px;
+        width: 2px;
+        background: var(--line);
+      }
+
+      .dot {
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        background: var(--blue);
+        color: #fff;
+        font-weight: 900;
+        border: 4px solid var(--paper);
+        outline: 1px solid var(--line);
+      }
+
+      .side {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 22px;
+      }
+
+      .hierarchy {
+        padding: 20px;
+      }
+
+      .node {
+        position: relative;
+        margin-left: 0;
+        padding: 14px 14px 14px 56px;
+        border: 1px solid var(--line);
+        background: #fffdf7;
+      }
+
+      .node + .node { margin-top: 14px; }
+
+      .node.indent-1 { margin-left: 36px; }
+      .node.indent-2 { margin-left: 72px; }
+
+      .node::before {
+        content: "";
+        position: absolute;
+        left: 14px;
+        top: 18px;
+        width: 28px;
+        height: 28px;
+        background: var(--gold);
+      }
+
+      .node.system::before { background: var(--maroon); }
+      .node.agency::before { background: var(--blue); }
+      .node.workspace::before { background: var(--green); }
+
+      .node .badge {
+        position: absolute;
+        top: 12px;
+        right: 14px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+
+      .node .example {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px dashed rgba(122, 88, 43, 0.28);
+        color: #3a3025;
+        font-size: 13px;
+      }
+
+      .role-explain {
+        padding: 20px;
+      }
+
+      .role-explain .tile { margin-bottom: 12px; }
+      .role-explain .tile:last-child { margin-bottom: 0; }
+
+      .tile {
+        padding: 15px;
+        border: 1px solid var(--line);
+        background: #fffdf7;
+      }
+
+      .tile h3 { font-size: 18px; }
+
+      .wide {
+        grid-column: 1 / -1;
+        margin-top: 22px;
+      }
+
+      .road {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px;
+        padding: 20px;
+      }
+
+      .step {
+        position: relative;
+        min-height: 150px;
+        padding: 15px;
+        background: #fffdf7;
+        border: 1px solid var(--line);
+      }
+
+      .step::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: -11px;
+        width: 10px;
+        height: 2px;
+        background: var(--line);
+      }
+
+      .step:last-child::after { display: none; }
+
+      .step b {
+        display: block;
+        margin-bottom: 10px;
+        color: var(--orange);
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .step strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 18px;
+      }
+
+      footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        margin-top: 22px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      @media (max-width: 1100px) {
+        .sheet {
+          width: min(980px, calc(100vw - 24px));
+          padding: 24px;
+        }
+        header, .grid, .road { grid-template-columns: 1fr; }
+        .side { grid-template-rows: none; }
+        .step::after { display: none; }
+        .node.indent-1, .node.indent-2 { margin-left: 0; }
+      }
+
+      @media print {
+        body { background: white; }
+        .sheet { width: 1600px; margin: 0; box-shadow: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="sheet" aria-label="wa'kijo v0.6.0 architecture infographic">
+      <header>
+        <div>
+          <div class="kicker">Architecture · OSS Community v0.6.0</div>
+          <h1>wa'kijo SaaS Core</h1>
+          <p class="subtitle">
+            A tenant-aware NestJS + Next.js foundation. Three-level org hierarchy with role
+            inheritance. AsyncLocalStorage request context. BaseRepository that scopes every
+            query to the active organisation — no exceptions.
+          </p>
+        </div>
+        <div class="meta" aria-label="release snapshot">
+          <div>
+            <b>Runtime shape</b>
+            <span>NestJS 11 (Fastify) · Next.js 15 (App Router) · Prisma 5 · PostgreSQL 16 · BullMQ + Redis 7</span>
+          </div>
+          <div>
+            <b>Tenancy model</b>
+            <span>Org parent-child hierarchy, three types: SYSTEM · AGENCY · WORKSPACE. Effective role walks up to depth 3.</span>
+          </div>
+          <div>
+            <b>Auth boundary</b>
+            <span>Better Auth sessions, two-guard pipeline (AuthGuard → PermissionGuard), context via AsyncLocalStorage.</span>
+          </div>
+          <div>
+            <b>Billing</b>
+            <span>Stripe-only in Community. BillingProvider interface stays as the extension point for other gateways.</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid">
+        <!-- ────────────── LEFT: SYSTEM ARCHITECTURE ────────────── -->
+        <section aria-labelledby="arch-h">
+          <div class="section-head">
+            <h2 id="arch-h">System architecture</h2>
+            <span class="tag">what runs where</span>
+          </div>
+          <div class="stack">
+            <article class="layer">
+              <span class="num">1</span>
+              <h3>Web client — apps/web</h3>
+              <p>
+                Next.js 15 App Router. Server components by default; <code>'use client'</code>
+                only for forms, dialogs, and reactive state. shadcn/ui primitives live in
+                <code>components/ui</code> and are repo-owned (no upstream upgrade churn).
+              </p>
+              <div class="pill-row">
+                <span class="pill">TanStack Query</span>
+                <span class="pill">React Hook Form</span>
+                <span class="pill">Zod resolver</span>
+                <span class="pill">Tailwind</span>
+              </div>
+            </article>
+
+            <article class="layer">
+              <span class="num">2</span>
+              <h3>API server — apps/api</h3>
+              <p>
+                NestJS 11 on the Fastify adapter (not Express). Two <code>onRequest</code>
+                hooks open the request context and divert <code>/api/auth/*</code> to Better
+                Auth. The rest enters the Nest pipeline with two global guards.
+              </p>
+              <div class="pill-row">
+                <span class="pill">Pino logger</span>
+                <span class="pill">Swagger /api/docs</span>
+                <span class="pill">BullMQ workers</span>
+                <span class="pill">Stripe webhooks</span>
+              </div>
+            </article>
+
+            <article class="layer">
+              <span class="num">3</span>
+              <h3>Shared spine — packages/</h3>
+              <p>
+                <code>@wa-kijo/shared</code> is the single source of truth for Zod schemas,
+                role definitions, and the <code>hasPermission()</code> function — reused by
+                both API and web. <code>@wa-kijo/db</code> owns the Prisma schema, migrations,
+                and seed.
+              </p>
+              <div class="pill-row">
+                <span class="pill">Zod end-to-end</span>
+                <span class="pill">14 Prisma models</span>
+                <span class="pill">Conditional exports</span>
+              </div>
+            </article>
+
+            <article class="layer">
+              <span class="num">4</span>
+              <h3>Data &amp; ops — local infra</h3>
+              <p>
+                PostgreSQL 16 on port <code>5434</code>, Redis 7 on <code>6381</code> (offset
+                from defaults to avoid local conflicts). Stripe is the only billing provider
+                wired in Community. Bull-Board dashboard at <code>/admin/queues</code> (RBAC
+                + Basic Auth gated in non-prod).
+              </p>
+              <div class="pill-row">
+                <span class="pill">Docker Compose</span>
+                <span class="pill">Stripe</span>
+                <span class="pill">Resend (email)</span>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- ────────────── MIDDLE: REQUEST LIFECYCLE ────────────── -->
+        <section aria-labelledby="req-h">
+          <div class="section-head">
+            <h2 id="req-h">Request lifecycle</h2>
+            <span class="tag">cookie → response</span>
+          </div>
+          <div class="flow-wrap">
+            <article class="flow">
+              <span class="dot">A</span>
+              <div>
+                <h3>Fastify onRequest #1</h3>
+                <p>
+                  <code>requestContextStorage.run({ requestId, userId:'', orgId:'' … })</code>
+                  opens the AsyncLocalStorage store. Every downstream async call inherits it
+                  via Node <code>async_hooks</code>.
+                </p>
+              </div>
+            </article>
+            <article class="flow">
+              <span class="dot">B</span>
+              <div>
+                <h3>Fastify onRequest #2</h3>
+                <p>
+                  Requests to <code>/api/auth/*</code> are siphoned to Better Auth's Node
+                  handler and the Fastify lifecycle exits. All other URLs fall through to the
+                  NestJS pipeline.
+                </p>
+              </div>
+            </article>
+            <article class="flow">
+              <span class="dot">C</span>
+              <div>
+                <h3>AuthGuard (APP_GUARD #1)</h3>
+                <p>
+                  Validates the session cookie, calls <code>resolveContext()</code> which
+                  fetches the member + org rows, then mutates the open store with
+                  <code>userId</code>, <code>orgId</code>, <code>orgType</code>,
+                  <code>userRole</code>, <code>globalRole</code>. <code>@Public()</code>
+                  routes skip this guard.
+                </p>
+              </div>
+            </article>
+            <article class="flow">
+              <span class="dot">D</span>
+              <div>
+                <h3>PermissionGuard (APP_GUARD #2)</h3>
+                <p>
+                  Reads <code>@RequirePermission('resource:action')</code> metadata and
+                  checks <code>hasPermission(ctx.userRole, perm)</code> from
+                  <code>@wa-kijo/shared</code>. Default-deny: missing annotation means open
+                  to any authenticated user; missing permission throws 403.
+                </p>
+              </div>
+            </article>
+            <article class="flow">
+              <span class="dot">E</span>
+              <div>
+                <h3>Controller &amp; service</h3>
+                <p>
+                  Business logic reads the full context via <code>getRequestContext()</code>
+                  or the <code>@CurrentUser()</code> param decorator. Domain events emit to
+                  BullMQ; webhook handlers verify provider signatures before processing.
+                </p>
+              </div>
+            </article>
+            <article class="flow">
+              <span class="dot">F</span>
+              <div>
+                <h3>BaseRepository</h3>
+                <p>
+                  Every <code>findById</code>, <code>findAll</code>, <code>count</code> is
+                  scoped by <code>tenantWhere(ctx)</code> which injects
+                  <code>{ organizationId: ctx.orgId }</code> into the Prisma where clause.
+                  Soft-delete (<code>deletedAt: null</code>) is layered on by Prisma
+                  middleware.
+                </p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- ────────────── RIGHT: ORG HIERARCHY + ROLE INHERITANCE ────────────── -->
+        <div class="side">
+          <section aria-labelledby="org-h">
+            <div class="section-head">
+              <h2 id="org-h">Org hierarchy</h2>
+              <span class="tag">three types</span>
+            </div>
+            <div class="hierarchy">
+              <article class="node system">
+                <span class="badge">SYSTEM</span>
+                <h3>Platform root</h3>
+                <p>
+                  One per deployment. Holds the operator's own users, used to
+                  administer all downstream tenants.
+                </p>
+                <div class="example">e.g. <code>wa'kijo HQ</code></div>
+              </article>
+
+              <article class="node agency indent-1">
+                <span class="badge">AGENCY</span>
+                <h3>Reseller / parent tenant</h3>
+                <p>
+                  Optional layer. Holds multiple child workspaces; agency owners inherit
+                  ownership of every workspace beneath them.
+                </p>
+                <div class="example">e.g. <code>Acme Agency</code></div>
+              </article>
+
+              <article class="node workspace indent-2">
+                <span class="badge">WORKSPACE</span>
+                <h3>Operational tenant</h3>
+                <p>
+                  Where the actual work happens. Owns contacts, conversations, members,
+                  billing subscription. Most users only ever see this level.
+                </p>
+                <div class="example">e.g. <code>Acme Workspace</code></div>
+              </article>
+            </div>
+          </section>
+
+          <section aria-labelledby="role-h">
+            <div class="section-head">
+              <h2 id="role-h">Role inheritance</h2>
+              <span class="tag">depth ≤ 3</span>
+            </div>
+            <div class="role-explain">
+              <article class="tile">
+                <h3>Effective role walks up</h3>
+                <p>
+                  <code>resolveEffectiveRole()</code> looks up the member row at the active
+                  org, then walks <code>parentOrgId</code> upward (max 3 hops). At each level
+                  it takes <code>highestRole(directRole, parentRole)</code>.
+                </p>
+              </article>
+              <article class="tile">
+                <h3>Owner-of-parent inheritance</h3>
+                <p>
+                  A user who is <code>owner</code> of <code>Acme Agency</code> is treated as
+                  <code>owner</code> in every child workspace — without an explicit member
+                  row in each. The frontend <code>useCan()</code> mirrors this server-side
+                  check.
+                </p>
+              </article>
+              <article class="tile">
+                <h3>Depth cap is structural</h3>
+                <p>
+                  The 3-level cap is enforced both in <code>AuthService</code> and in
+                  <code>getOrgAncestors()</code>. Exceeding it raises — it indicates a
+                  cyclic or corrupted hierarchy.
+                </p>
+              </article>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- ────────────── WIDE: TENANT ISOLATION BOUNDARIES ────────────── -->
+      <section class="wide">
+        <div class="section-head">
+          <h2>Tenant isolation — where it's enforced</h2>
+          <span class="tag">five boundaries</span>
+        </div>
+        <div class="road">
+          <article class="step">
+            <b>01 · Cookie</b>
+            <strong>HttpOnly + SameSite=Lax</strong>
+            <p>
+              Better Auth session cookie cannot be read by JS, cannot be sent on cross-site
+              top-level POSTs. Argon2id hashing for passwords.
+            </p>
+          </article>
+          <article class="step">
+            <b>02 · AuthGuard</b>
+            <strong>Session → RequestContext</strong>
+            <p>
+              No session, no context. Public routes are explicit via <code>@Public()</code>;
+              everything else must validate.
+            </p>
+          </article>
+          <article class="step">
+            <b>03 · PermissionGuard</b>
+            <strong>Role + permission check</strong>
+            <p>
+              <code>hasPermission()</code> is the single source of truth — same function
+              powers <code>useCan()</code> on the client and <code>@RequirePermission</code>
+              on the server.
+            </p>
+          </article>
+          <article class="step">
+            <b>04 · BaseRepository</b>
+            <strong>Tenant-scoped queries</strong>
+            <p>
+              <code>tenantWhere(ctx)</code> is non-optional. Direct
+              <code>prisma.model.findMany()</code> outside the repository is forbidden by
+              convention and tested for.
+            </p>
+          </article>
+          <article class="step">
+            <b>05 · Cross-tenant tests</b>
+            <strong>Fuzz against real Postgres</strong>
+            <p>
+              <code>test/integration/tenant-isolation/</code> spins up a real container and
+              asserts org A cannot read or write org B's data, on every repository.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <footer>
+        <span>Concept generated from the v0.6.0 OSS Community checkout — Apache 2.0.</span>
+        <span>References: CLAUDE.md · ADR-0011 · apps/api/src/{main,auth,common,base}.ts · @wa-kijo/shared/auth.</span>
+      </footer>
+    </main>
+  </body>
+</html>

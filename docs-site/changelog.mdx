@@ -1,52 +1,48 @@
 ---
 title: "Changelog"
-description: "Customer-relevant release notes. Engineering-detail entries live in CHANGELOG.md in the repo."
+description: "Release notes for wa'kijo. Engineering-detail entries live in CHANGELOG.md in the repo."
 ---
 
-This is the customer-facing changelog. The full engineering changelog
-lives at [`CHANGELOG.md`](https://github.com/wakijo/wa-kijo/blob/main/CHANGELOG.md)
-in the repo, and per-release upgrade steps are in
-[Upgrade guide](/upgrade-guide).
+The full engineering changelog lives at [`CHANGELOG.md`](https://github.com/benharundev/wa-kijo/blob/main/CHANGELOG.md) in the repo, and per-release upgrade steps are in the [Upgrade guide](/upgrade-guide).
 
-The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
-versioning follows [SemVer](https://semver.org/spec/v2.0.0.html).
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## Unreleased
+## 0.6.0 — 2026-05-17 — **OSS Community release** 🎉
 
-> **Strategic pivot — platform with pluggable business modules.**
-> Future products ship as modules on top of one shared platform
-> instead of forks. New ADRs 0008/0009/0010 capture the design.
+> **Major repositioning + first public release.** wa'kijo is now a two-tier product: a public Apache 2.0 Community edition and a private wa'kijo-pro repo with five paid tiers (A–E). The platform-pivot direction set in earlier ADRs is **reversed** per ADR-0011 — wa'kijo Community is the enterprise foundation under a single business module (wa'lawe ships as its own separate OSS repo), not a multi-module platform.
 
 ### Added
 
-- **`@wa-kijo/booking-core`** scheduling kernel — `TimeRange`,
-  `BookingState`, conflict detection, availability checks, 5
-  lifecycle events. Persistence-agnostic; consumed by every business
-  module that schedules anything.
-- **Module template** at `apps/api/src/modules/_template/` — copy
-  this when creating a new business module. Includes the four-layer
-  DDD layout, manifest, hook handler, and failing test stubs in
-  every mandatory test-first zone.
-- New ADRs:
-  - **ADR-0008** — Module Registry & per-tenant module enablement.
-  - **ADR-0009** — Pragmatic DDD layout for module bounded contexts.
-  - **ADR-0010** — Booking Core kernel and the dual-consumer rule.
+- **Apache 2.0 license** for the Community edition. The earlier commercial-license draft moves to the private `wa-kijo-pro` repository.
+- **ADR-0011** — formalises the platform-thesis reversal. Module Registry, Customization Layer, and kernel governance dropped from v1.0. Pragmatic DDD softened to recommended pattern. Booking Core moves from a separate workspace package to an in-API module. Engines-first build order across Phases 6/8/9 before wa'lawe in Phase 10. Partially supersedes ADR-0008, ADR-0009, ADR-0010.
+- **PRD §8 Commercial Tiers** — full feature matrix for Community + five tiers (Starter / Pro / Team / Enterprise / OEM) with one-time pricing and tier-dependent update windows. wa'lawe ships as a separate OSS repo (MIT) that requires Tier B+ to run.
+- **Five-epoch roadmap** — Phases 6–10 reorganised into Platform Hardening, Compliance & DX, Commerce & White-Label, Engines Build-out, and wa'lawe + v1.0 GA. v1.0 estimate updated to ~15–22 months.
+- **Stripe billing UI** — `/orgs/[orgId]/billing` upgraded from a stub to a fully working flow: plan list, monthly / yearly toggle, Stripe Checkout redirect, Customer Portal access, status-aware return-URL toasts, current-subscription view.
+- **Public-facing README** — rewritten for OSS positioning. New `NOTICE` file with the informal "please don't repackage" note.
 
-### Coming next
+### Changed
 
-- **Phase 6a** — Module Registry runtime (`Module`, `TenantModule`
-  Prisma models, manifest scanner, dependency resolver,
-  `@RequireModule()` guard).
-- **Phase 6b** — Refactor existing `contacts` and `conversations`
-  modules into the new four-layer layout.
-- **Phase 6d-6f** — Customization Layer (Config, Custom Fields,
-  Hooks, Policies, UI Slots).
-- **Phase 7** — wa'lawe shipped as the first business module on the
-  new platform.
+- **Phase 6 critical path** is now Audit engine hardening + Storage engine + enterprise identity (MFA / SSO / SCIM / sessions / impersonation / IP allowlist / org lifecycle / maintenance mode). Module Registry runtime work removed.
+- **`BillingService`** narrowed to Stripe-only in Community. The `BillingProvider` interface stays open so wa'kijo-pro can add Billplz / Curlec / others without diverging the contract.
+- Example seed plans (`Starter` / `Growth` / `Enterprise`) are now generic — buyers replace them with their own product's plans.
+- `.env.example` cleaned of paid-tier env vars; Stripe CLI setup hint added.
 
-Subscribe to release notifications via your customer Discord channel.
+### Removed (from Community — preserved in wa-kijo-pro)
+
+- `@wa-kijo/booking-core` workspace package
+- Module Registry runtime (`Module` + `TenantModule` Prisma models, manifest scanner, dependency resolver, `@RequireModule()` guard)
+- `walawe` (chess tournament) module — moves to its own OSS repo
+- `_template` module
+- Billplz + Curlec billing providers
+- Plan + Subscription columns for Billplz / Curlec — Pro repo adds them back via its own migration
+
+### Migration notes
+
+For developers coming from the pre-OSS state: run `pnpm db:migrate --name drop_platform_thesis_models` to drop the orphaned `module`, `tenant_module`, and Billplz / Curlec columns. Pro-tier buyers continue using `wa-kijo-pro` — paid features are preserved on the `archive/platform-thesis` branch.
+
+[Full engineering CHANGELOG entry](https://github.com/benharundev/wa-kijo/blob/main/CHANGELOG.md#060---2026-05-17--oss-community-release-)
 
 ---
 

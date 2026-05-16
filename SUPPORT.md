@@ -1,158 +1,147 @@
 # Support
 
-Welcome. Thank you for being a wa'kijo customer. This document explains how
-to get help, what to expect, and where to look first.
-
-> **TL;DR** — read the docs, search the changelog, then file a ticket. The
-> faster you give us reproducible details, the faster you get a fix.
+How to get help with wa'kijo. Different channels for different levels — pick the one that matches what you need.
 
 ---
 
-## Self-serve first
+## Quick triage
 
-Before opening a support ticket, the answer is probably already in one of
-these:
-
-| Question | Look here |
+| Question | Where to look |
 |---|---|
-| "How do I install / run wa'kijo locally?" | [`docs/runbook.md`](docs/runbook.md) and [`docs-site/quickstart.mdx`](docs-site/quickstart.mdx) |
+| "How do I install / run wa'kijo locally?" | [`README.md` quickstart](README.md#quick-start), [`docs/runbook.md`](docs/runbook.md) |
 | "How does X work?" | [`docs/architecture.md`](docs/architecture.md), [`docs-site/concepts/`](docs-site/concepts) |
-| "How do I add a new feature module?" | [`docs-site/guides/add-feature-module.mdx`](docs-site/guides/add-feature-module.mdx) |
-| "How do I deploy to production?" | [`docs/deployment.md`](docs/deployment.md), [`docs-site/guides/deploy-to-railway.mdx`](docs-site/guides/deploy-to-railway.mdx) |
+| "How do I add a new feature module?" | [`CONTRIBUTING.md` § feature-module checklist](CONTRIBUTING.md#adding-a-feature-module--checklist) |
+| "How do I deploy to production?" | [`docs/deployment.md`](docs/deployment.md), [`docs-site/guides/`](docs-site/guides) |
 | "What changed in this release?" | [`CHANGELOG.md`](CHANGELOG.md) |
 | "How do I upgrade?" | [`docs/upgrade-guide.md`](docs/upgrade-guide.md) |
 | "What does this term mean?" | [`docs/glossary.md`](docs/glossary.md) |
 | "Why is X built this way?" | [`docs/decisions/`](docs/decisions/) (ADRs) |
 
-If you searched everywhere and the answer is missing or wrong, that itself is
-a support issue — please file it as a docs bug.
+If the answer is missing or wrong, that itself is a contribution opportunity — open a PR or a docs issue.
 
 ---
 
-## Support channels by tier
+## Support channels
 
-| Tier | Primary channel | SLA (first response, business hours, Asia/Kuala Lumpur) |
+### wa'kijo Community (Apache 2.0 OSS)
+
+| Channel | What it's for | Response expectation |
 |---|---|---|
-| **Solo** | Customer Discord — `#help` channel | Best-effort, community-supported |
-| **Team** | `support@wakijo.dev` | Within **2 business days** |
-| **Agency** | `support@wakijo.dev` + private Discord channel | Within **1 business day** + 1 hour onboarding call |
-| **Enterprise** | Shared Slack Connect channel + named CSM | Within **same business day**, with named engineer for incidents |
+| [GitHub Discussions](https://github.com/benharundev/wa-kijo/discussions) | Open-ended questions, "how do I…" help, design feedback, roadmap suggestions | Best-effort by maintainers and the community |
+| [GitHub Issues](https://github.com/benharundev/wa-kijo/issues) | Reproducible bugs only — please include version, environment, repro steps | Triaged within 1 week |
+| [`SECURITY.md`](SECURITY.md) | Privately disclosing vulnerabilities | Same-business-day acknowledgment |
 
-A "business day" is Monday through Friday, 09:00–18:00 Asia/Kuala Lumpur,
-excluding Malaysian public holidays.
+Community support is **best-effort, no SLA**. Maintainers are not full-time on this — gentle nudges after a week of silence are fine.
 
-These SLAs cover **first response**. Time-to-resolution depends on severity
-(see [`SECURITY.md`](SECURITY.md) for the security severity matrix; we apply
-the same shape to functional bugs).
+### wa'kijo Pro and higher tiers (commercial)
 
----
+Paid tiers ship from the private [`wa-kijo-pro`](https://github.com/benharundev/wa-kijo-pro) repo and include direct support with response-time commitments.
 
-## What we support
+| Tier | Channel | First-response SLA |
+|---|---|---|
+| **A · Starter** | `support@wakijo.dev` | 3 business days |
+| **B · Pro** | `support@wakijo.dev` | 2 business days |
+| **C · Team** | `support@wakijo.dev` | 1 business day |
+| **D · Enterprise** | Shared Slack Connect + named maintainer | Same business day |
+| **E · OEM** | Direct line + quarterly office hours | Same business day + scheduled cadence |
 
-In scope:
+A "business day" is Monday through Friday, 09:00–18:00 Asia/Kuala Lumpur, excluding Malaysian public holidays.
 
-- Bugs in the wa'kijo source code as shipped on the supported version branch.
-- Documentation errors and gaps.
-- Guidance on the intended usage patterns documented under
-  [`docs-site/concepts/`](docs-site/concepts) and
-  [`docs-site/guides/`](docs-site/guides).
-- Help reading and interpreting the included observability output (logs,
-  Sentry events, BullMQ dashboards).
+The SLAs above cover **first response**. Time-to-resolution depends on severity (see § Severity below).
 
-Best-effort:
-
-- One-off questions about deploying to a specific cloud or platform we don't
-  document. We may not have first-hand experience but will share what we
-  know.
-- Code review of significant customisations on the Agency and Enterprise
-  tiers, on request.
-
-Out of scope:
-
-- Bugs in your own customisations or third-party integrations you wrote on
-  top of wa'kijo.
-- Bugs in third-party dependencies — we'll happily route you to the right
-  upstream maintainer, but the fix has to come from them.
-- Architectural redesigns or feature requests outside the published roadmap.
-- Performance tuning of your specific database, network, or cloud
-  configuration.
-- Onboarding to other tools in your stack (we can recommend, not implement).
+For commercial questions — invoices, tier changes, refunds, custom contracts — email **billing@wakijo.dev**.
 
 ---
 
-## How to file a great ticket
+## How to file a great ticket / issue
 
 A well-written ticket gets resolved 5× faster. Include:
 
-1. **Version and commit hash.** `git rev-parse HEAD` and the contents of the
-   top of `CHANGELOG.md` you have locally.
-2. **Environment.** Node version (`node --version`), pnpm version, OS, and
-   whether this is local dev or a deployed environment.
+1. **Version and commit hash.** Run `git rev-parse HEAD` and the latest line of `CHANGELOG.md` you have locally.
+2. **Environment.** Node version (`node --version`), pnpm version, OS, local dev vs deployed.
 3. **What you did.** The exact commands or HTTP requests.
-4. **What you expected to happen.**
-5. **What happened instead.** Logs, stack traces, screenshots — the full
-   error envelope from the API response is gold:
+4. **What you expected.**
+5. **What happened instead.** Logs, stack traces, screenshots. The full error envelope from the API is gold:
    ```json
    { "success": false, "statusCode": 422, "error": "VALIDATION_ERROR", ... }
    ```
-6. **Minimal repro.** A single failing test, a curl command, or a 5-line
-   snippet beats a 200-line dump.
+6. **Minimal repro.** A failing test, a curl command, or a 5-line snippet beats a 200-line dump.
 7. **Impact.** Are users blocked? Is data at risk? How urgent?
 
-For security-sensitive reports, follow [`SECURITY.md`](SECURITY.md) instead
-of the regular support channel — do not paste secrets, tokens, or PII into a
-shared support thread.
+For security-sensitive reports, follow [`SECURITY.md`](SECURITY.md) — do not paste secrets, tokens, or PII into a public issue or shared support thread.
 
 ---
 
-## Severity definitions for functional bugs
+## What's in scope vs out of scope
 
-| Severity | Description | Target time-to-fix (Agency / Enterprise) |
+### Community (GitHub Issues / Discussions)
+
+**In scope:**
+- Bugs in wa'kijo Community source code on `main` or a tagged release.
+- Documentation errors or gaps in the public docs.
+- Questions about intended usage of features that exist in Community.
+- Help interpreting Community's logs, Pino output, BullMQ dashboards.
+
+**Out of scope** (won't be triaged):
+- Your own customisations or third-party integrations built on top of wa'kijo.
+- Bugs in third-party dependencies — file upstream with the original maintainer.
+- Performance tuning of your specific cloud / DB / network setup.
+- Feature requests for Pro-tier capabilities (SSO, SCIM, the 11 engines, etc.) — those land on the Pro roadmap, not in Community.
+- Architectural redesigns outside the published roadmap.
+
+### Pro and higher tiers
+
+**Additionally in scope:**
+- Bugs in Pro-only features (SSO, SCIM, the 11 shared engines, audit hardening, etc.).
+- One-off questions about deploying to a specific cloud or platform — we'll share what we know.
+- Code review of significant customisations on Team tier and above, on request.
+- Migration assistance between major versions on Enterprise tier and above.
+
+**Still out of scope:**
+- Building your product for you. We support; we don't ship.
+
+---
+
+## Severity definitions (Pro and higher)
+
+| Severity | Description | Target time-to-fix (Team / Enterprise) |
 |---|---|---|
 | **S1 — Critical** | Production is down or data is at risk. No workaround. | Same business day, hotfix release |
 | **S2 — High** | Major feature broken; workaround exists but is painful. | Within 5 business days |
 | **S3 — Medium** | Bug affecting a non-core feature, or with a clear workaround. | Next minor release |
-| **S4 — Low** | Cosmetic, documentation, or quality-of-life improvement. | Best-effort, when prioritised |
+| **S4 — Low** | Cosmetic, documentation, or quality-of-life. | Best-effort, when prioritised |
 
-Solo and Team tiers receive the same fixes via the next regular release; we
-do not commit to hotfix turnaround times below the Agency tier.
+Starter and Pro tiers receive the same fixes via the next regular release; hotfix turnaround time is not committed below Team tier.
 
 ---
 
-## Office hours
+## Office hours (Pro+)
 
-The wa'kijo team holds **open office hours every other Thursday** at
-14:00–15:00 Asia/Kuala Lumpur, on the customer Discord voice channel. Anyone
-on Team tier or above can join with no agenda. Bring questions, design
-sketches, or migration headaches. Recording is opt-in and shared in
-`#announcements` afterwards.
+The wa'kijo team holds **office hours every other Thursday** at 14:00–15:00 Asia/Kuala Lumpur. Anyone on Pro tier or above can join with no agenda — bring questions, design sketches, or migration headaches. Recording is opt-in and shared afterwards.
+
+Community users are welcome to ask the same questions in [Discussions](https://github.com/benharundev/wa-kijo/discussions); they just don't get a synchronous channel.
 
 ---
 
 ## Roadmap and feature requests
 
-The active roadmap is published in `docs-site/roadmap.mdx` (added at 1.0).
-Feature requests are very welcome — open them in your tier's primary
-channel. We prioritise based on:
+The active roadmap is in [`docs/prd.md` §4](docs/prd.md#4-phases). Feature requests are welcome:
 
-1. Customer impact (how many tiers benefit, how often it bites).
+- **Community** — open a [Discussion](https://github.com/benharundev/wa-kijo/discussions). Many users asking for the same thing moves it up.
+- **Pro+** — bring it to office hours or via `support@wakijo.dev`. Enterprise tier includes roadmap influence as part of the contract.
+
+Prioritisation criteria:
+
+1. Impact (how many users benefit, how often it bites).
 2. Strategic fit (does it stay true to the opinionated stack?).
 3. Maintenance cost (will it create ongoing complexity for everyone?).
 
-Enterprise customers can request priority on the roadmap as part of the
-support agreement; talk to your CSM.
+---
+
+## Refunds (Pro and higher)
+
+14-day refund window from purchase, no questions asked, provided the private wa-kijo-pro source hasn't been distributed externally. Email `billing@wakijo.dev`.
 
 ---
 
-## Refunds and seat changes
-
-For commercial questions — invoices, seat counts, tier changes, refunds —
-email **billing@wakijo.dev**. Our refund window is 14 days from purchase, no
-questions asked, provided you have not yet pushed wa'kijo source to a
-public repository or distributed it externally.
-
----
-
-We're a small team that cares a lot about the product. The shorter the path
-from "this is broken" to "here's the diff that fixes it", the better life is
-for everyone. Help us help you.
+We're a small team that cares about the product. The shorter the path from "this is broken" to "here's the diff that fixes it", the better life is for everyone. Help us help you.

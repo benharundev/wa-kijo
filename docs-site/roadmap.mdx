@@ -1,189 +1,221 @@
 ---
 title: "Roadmap"
-description: "What's next for wa'kijo, in rough priority order."
+description: "What's next for wa'kijo, in dependency order."
 ---
 
-This is the public-facing roadmap. **Order is rough**, not contractual.
-Agency and Enterprise customers can request priority on specific items
-as part of their support agreement — talk to your CSM.
+This is the public roadmap. **Order is by dependency**, not by calendar date — the wider the range on the v1.0 estimate (15–22 months), the more uncertainty we're being honest about.
 
-For shipped work see the [Changelog](/changelog).
+Shipped work is in the [Changelog](/changelog). The current foundation tag is **v0.6.0 — OSS Community release** (2026-05-17).
 
 ---
 
-## Strategic pivot — platform with pluggable modules
+## Scope and positioning
 
-> **What changed.** Future products (wa'lawe, Workshop, future
-> verticals) ship as **modules** on top of one shared platform —
-> not as separate forks of wa-kijo. Forking is now the **fallback**
-> path of last resort, not the default. The diagrammatic reference
-> for this is captured in ADR-0008, ADR-0009, and ADR-0010 in the
-> repo.
+wa'kijo ships in two distributions:
 
-The pivot reshapes the next several phases. Items below are ordered
-by dependency, not by calendar date.
+- **wa'kijo Community** — this OSS edition. Apache 2.0. Multi-tenant auth, RBAC, billing (Stripe), domain modules, audit log, frontend shell.
+- **wa'kijo Pro and higher tiers (A–E)** — the private commercial edition. Adds SSO, SCIM, the 11 shared engines, custom domains, white-labeling, public API, SDKs, and the super-admin console. See the [PRD §8](https://github.com/benharundev/wa-kijo/blob/main/docs/prd.md#8-commercial-tiers-and-licensing) for the full feature matrix.
 
-## Now (next 2–3 minor releases)
+The roadmap below is the **Pro** roadmap leading to v1.0 Enterprise GA. Community gets every Pro improvement that fits the open-foundation scope (bug fixes, security patches, dev-experience polish, public-API additions) — it does **not** get the Pro-tier engines or SSO/SCIM/audit-streaming features.
+
+> ⚠ **Reversal note.** Before 2026-05-17, the roadmap described a "platform with pluggable modules" direction (Module Registry, Customization Layer, kernel governance). That direction is **reversed** for v1.0 — wa'kijo is now the enterprise foundation under a single business module (wa'lawe, shipped as its own OSS repo). See [ADR-0011](https://github.com/benharundev/wa-kijo/blob/main/docs/decisions/0011-reverse-platform-pivot.md) for the rationale.
+
+---
+
+## Phase 6 — Platform Hardening (in progress)
+
+Enterprise security questionnaires pass. Foundation engines (Audit + Storage) shipped.
 
 <CardGroup cols={2}>
-  <Card title="Phase 6a — Module Registry" icon="boxes-stacked">
-    `Module` + `TenantModule` Prisma models, manifest scanner,
-    semver-aware dependency resolver, `@RequireModule()` guard.
-    Existing `contacts` and `conversations` refactored to register
-    via manifest. The runtime that turns wa-kijo into a platform.
+  <Card title="Audit engine hardening" icon="shield-check">
+    Immutable append-only log with retention policies, integrity check, and streaming to SIEM (S3 / Splunk / Datadog). Foundation for every Phase 6 item below.
   </Card>
-  <Card title="Phase 6b — Booking Core kernel" icon="calendar-check">
-    `@wa-kijo/booking-core` v0.1.0 — persistence-agnostic scheduling
-    kernel. `TimeRange`, `BookingState`, conflict detection,
-    availability rules, 5 lifecycle events. The shared engine every
-    scheduling module consumes.
+  <Card title="Storage engine" icon="cloud-arrow-up">
+    Uploads, S3 / Cloudflare R2 abstraction, virus scan, image thumbnails, signed URLs.
   </Card>
-  <Card title="Phase 6c — Pragmatic DDD layout" icon="diagram-project">
-    Per-module `domain / application / infrastructure / presentation`
-    folders. ESLint dependency-rule guard. `_template/` module
-    scaffold with failing test stubs in every mandatory test-first
-    zone.
+  <Card title="MFA / 2FA" icon="mobile-screen">
+    TOTP + WebAuthn / passkeys. Org-level policy to enforce per-tenant.
   </Card>
-  <Card title="Phase 6 — Billing module" icon="credit-card">
-    `BillingProvider` interface (Stripe + Billplz + ToyyibPay) lands
-    alongside the platform pivot — billing also gets the manifest
-    treatment.
+  <Card title="SSO (SAML 2.0 + OIDC)" icon="key">
+    Per-org IdP connections — Okta, Azure AD, Google Workspace, Ping. Build-vs-buy decision pending (WorkOS evaluation).
+  </Card>
+  <Card title="SCIM 2.0 provisioning" icon="users">
+    Automated user provisioning and de-provisioning from IdP. Pairs with SSO.
+  </Card>
+  <Card title="Session management UI" icon="display">
+    List active sessions, revoke, force logout, org-wide session policy.
+  </Card>
+  <Card title="Impersonation" icon="user-secret">
+    Support staff log in as a customer with full audit trail. Enterprise contract requirement.
+  </Card>
+  <Card title="IP allowlist + org lifecycle" icon="lock">
+    Per-org CIDR ranges. Org suspension with grace period. Maintenance mode.
   </Card>
 </CardGroup>
 
-<CardGroup cols={2}>
-  <Card title="Phase 6d — Config + Custom Fields" icon="sliders">
-    Per-tenant Zod-validated config overrides; `CustomFieldDefinition`
-    table with JSONB storage on extending entities. Customers
-    customise without forking.
-  </Card>
-  <Card title="Phase 6e — Hooks" icon="plug">
-    Typed event bus on top of BullMQ. `@Hook('hook.point')` decorator,
-    contract test harness, SemVer'd hook signatures. The most
-    important public-API surface in the platform.
-  </Card>
-  <Card title="Phase 6f — Policies + UI Slots" icon="shield">
-    Resource-level authorization (`canEdit(ctx, resource)`) beyond
-    static RBAC. Next.js slot system — pages declare slots, modules
-    register fillers.
-  </Card>
-  <Card title="Webhook ingest framework" icon="diagram-project">
-    Generic inbound-webhook controller pattern with HMAC verification,
-    idempotency via provider event ID, queue-based processing.
-  </Card>
-</CardGroup>
+---
 
-## First two business modules
+## Phase 7 — Compliance and DX
+
+Pass enterprise procurement; let customers integrate without a CSM.
 
 <CardGroup cols={2}>
-  <Card title="Phase 7 — wa'lawe (chess tournaments)" icon="chess-knight">
-    First real consumer of the Booking Core. Tournament + Round +
-    Pairing aggregates; Swiss / round-robin / knockout pairing
-    algorithms; Elo / FIDE ratings; tie-breaks (Buchholz,
-    Sonneborn-Berger, direct encounter); standings; multi-stage
-    workflows (groups → knockouts).
-  </Card>
-  <Card title="Phase 8 — Workshop / wa-bengkel" icon="screwdriver-wrench">
-    Second consumer of the Booking Core — proves the kernel
-    abstractions generalise. Service appointments, mechanic skill
-    matching, parts + labour line items. Module CLI
-    (`pnpm module:create`, `pnpm module:upgrade`) and FORK.md
-    governance ship in this phase.
-  </Card>
-</CardGroup>
-
-## Next (1.0)
-
-<CardGroup cols={2}>
-  <Card title="TOTP MFA" icon="mobile">
-    Better Auth's TOTP plugin enabled, enrolment + challenge UI, recovery
-    codes, admin enforcement at the org level.
-  </Card>
-  <Card title="Custom roles per organisation" icon="user-shield">
-    Database-backed role definitions, with a default seed of the existing
-    `owner / admin / member`. Admin UI for editing.
-  </Card>
-  <Card title="Public API key auth" icon="key">
-    `ApiKey` model, `/api/v1/api-keys` CRUD, header-based auth scheme,
-    per-key scopes and rate limits.
-  </Card>
-  <Card title="Mintlify hosted at docs.wakijo.dev" icon="book">
-    The `docs-site/` you're reading right now, hosted publicly with custom
-    domain, search, and per-version snapshots tied to release tags.
-  </Card>
   <Card title="OpenTelemetry tracing" icon="chart-line">
-    Auto-instrument NestJS, Prisma, BullMQ, Redis, outbound HTTP. OTLP
-    exporter — bring your own backend (Tempo, Honeycomb, Datadog).
+    Auto-instrument NestJS, Prisma, BullMQ, Redis, outbound HTTP. OTLP exporter — bring your own backend.
   </Card>
-  <Card title="Internationalisation" icon="globe">
-    next-intl wired in `apps/web`. English first, ms-MY translation
-    seed. RTL support deferred until a customer needs it.
+  <Card title="Metrics + error tracking" icon="gauge">
+    Prometheus / OTLP metrics endpoint. Sentry integration with PII redaction.
+  </Card>
+  <Card title="GDPR / PDPA tooling" icon="folder-tree">
+    Tenant-scoped data export. 30-day right-to-delete pipeline. Field-level encryption for sensitive columns.
+  </Card>
+  <Card title="OpenAPI auto-gen + Public API" icon="code">
+    OpenAPI 3.1 generated from Zod. API keys / PATs with per-key scopes and rate limits. Read + write surface across existing domain entities.
+  </Card>
+  <Card title="Outbound webhooks" icon="diagram-project">
+    HMAC-signed event subscriptions, retries with exponential backoff, DLQ, customer-facing delivery dashboard.
   </Card>
 </CardGroup>
 
-## Later (1.1+)
+---
+
+## Phase 8 — Commerce and White-Label
+
+Invoice an enterprise customer correctly; look like their product.
 
 <CardGroup cols={2}>
-  <Card title="Passkey (WebAuthn) sign-in" icon="fingerprint">
-    Better Auth passkey plugin. Cross-device, phishing-resistant,
-    user-loved.
+  <Card title="Notification engine" icon="bell">
+    In-app notifications, SSE-driven, per-user preferences per category.
   </Card>
-  <Card title="Sign-out from all devices" icon="right-from-bracket">
-    Revoke every session row for the user; `/settings/sessions`
-    UI gains a "sign out everywhere" button.
+  <Card title="Communication engine" icon="comment-dots">
+    Outbound SMS / email / WhatsApp / voice. Replaces the channel-dispatch stub.
   </Card>
-  <Card title="Restore-from-soft-delete" icon="trash-arrow-up">
-    Admin endpoint and UI for resurrecting soft-deleted records before
-    the cleanup job runs.
+  <Card title="Usage metering + quotas" icon="chart-bar">
+    Per-event metering, aggregation, per-plan quota enforcement middleware.
   </Card>
-  <Card title="SES email adapter" icon="envelope">
-    Alongside Resend. Same `EmailProvider` interface.
+  <Card title="Multi-provider billing + tax" icon="credit-card">
+    Adds Billplz (Malaysian FPX) and Curlec (Razorpay direct debit) to the Stripe base. Stripe Tax integration. Manual invoicing for enterprise (PO, NET-30).
   </Card>
-  <Card title="Prometheus /metrics endpoint" icon="gauge">
-    Token-gated, RPS / latency / error metrics by route.
+  <Card title="Custom domains + white-label" icon="globe">
+    `app.acme.com` CNAME with automated TLS. Logo, colors, email-from-name per tenant.
   </Card>
-  <Card title="Usage-based metering" icon="chart-bar">
-    Per-tenant counters for billable units (messages sent, API calls).
-    Reported to billing for invoicing.
+  <Card title="Full i18n wiring" icon="language">
+    Per-user locale, server-side translation pipeline. English first, more locales as customers need them.
   </Card>
 </CardGroup>
+
+---
+
+## Phase 9 — Engines Build-out
+
+Shared engines all in place before any business module starts. Build engines into wa'kijo Pro as `apps/api/src/modules/*` — not separate workspace packages.
+
+<CardGroup cols={2}>
+  <Card title="Booking Core" icon="calendar-check">
+    Slots, resources, schedulables, availability rules, lifecycle events. The engine `wa-lawe` consumes.
+  </Card>
+  <Card title="Workflow" icon="diagram-project">
+    State machines, approval chains, multi-step processes.
+  </Card>
+  <Card title="Document" icon="file-pdf">
+    PDF generation (invoices, receipts, contracts, brackets), templates, e-signature integration.
+  </Card>
+  <Card title="Report" icon="chart-line">
+    Report definitions, scheduled exports, dashboard query primitives.
+  </Card>
+  <Card title="Inventory Core" icon="boxes-stacked">
+    Stock items, movements, multi-warehouse primitives. Speculative without a consumer in v1.0 — built deliberately as foundation.
+  </Card>
+  <Card title="Invoice Core" icon="file-invoice">
+    Invoice generation, line items, tax-aware totals. Speculative; built deliberately for future modules.
+  </Card>
+</CardGroup>
+
+---
+
+## Phase 10 — wa'lawe + v1.0 GA
+
+First business module ships on the completed engine foundation. v1.0 Enterprise GA tag cut.
+
+<CardGroup cols={2}>
+  <Card title="wa'lawe — chess tournaments" icon="chess-knight">
+    Separate OSS repo, MIT licensed. Runs on wa'kijo Pro (Tier B+). Tournament + Round + Pairing aggregates; Swiss / round-robin / KO pairing algorithms; tie-breaks; standings.
+  </Card>
+  <Card title="Super-admin console" icon="user-shield">
+    Read tenant data with audit, suspend, restore, transfer, force-resync billing, view feature flag state.
+  </Card>
+  <Card title="Sandbox / test mode" icon="flask">
+    Separate API keys hitting isolated test data. Enterprises will not integrate without it.
+  </Card>
+  <Card title="TypeScript SDK" icon="terminal">
+    Auto-generated from the OpenAPI spec. Python SDK is post-v1.0.
+  </Card>
+  <Card title="Bull-Board with RBAC" icon="list-check">
+    Production-grade queue ops dashboard, gated by `admin:queues`.
+  </Card>
+  <Card title="Mintlify docs at docs.wakijo.dev" icon="book">
+    The site you're reading right now, hosted at a custom domain with search and per-version snapshots.
+  </Card>
+</CardGroup>
+
+---
+
+## Post-v1.0 backlog
+
+<CardGroup cols={2}>
+  <Card title="Second business module" icon="layer-group">
+    Candidates: wa-klinik (clinic appointments), wa-kelas (fitness classes), wa-meja (restaurant reservations), wa-rumah (short-stay rental). Picked when v1.0 ships and we see real customer demand.
+  </Card>
+  <Card title="Search" icon="magnifying-glass">
+    Postgres FTS first, Meilisearch / Typesense when scale demands.
+  </Card>
+  <Card title="Push notifications" icon="mobile">
+    Mobile-only, deferred until a mobile client is in scope.
+  </Card>
+  <Card title="Python SDK" icon="code">
+    Generated from OpenAPI alongside the TS SDK once v1.0 lands.
+  </Card>
+  <Card title="Trusted device management" icon="laptop">
+    Per-user device list, device-aware MFA challenge frequency.
+  </Card>
+  <Card title="Coupons + dunning" icon="receipt">
+    Promo codes with time windows; automated failed-payment recovery.
+  </Card>
+</CardGroup>
+
+---
 
 ## Considering (no commitment)
 
-These are the most-asked items that we're evaluating. Vote with your
-support tickets.
+These are evaluated based on customer demand:
 
 - **Helm chart** for Kubernetes deployments.
-- **Inngest / Trigger.dev** as an alternative job system behind a
-  common interface.
+- **Inngest / Trigger.dev** as an alternative job system behind a common interface.
 - **GraphQL adapter** generated from the Zod DTOs.
-- **Public marketplace** for community-contributed wa'kijo modules.
 - **A11y audit + WCAG 2.2 AA conformance** for the shipped frontend.
 - **`@wa-kijo/admin` reference admin app** as a fourth `apps/*` example.
+- **Data residency** — region-pinned tenants for EU customers.
+
+---
 
 ## What we won't build
 
-These come up but are out of scope on purpose:
+Out of scope on purpose:
 
 - A drag-and-drop UI builder, low-code editor, or visual schema designer.
 - A CMS or marketing-site CMS.
-- Support for non-Postgres databases.
+- Support for non-Postgres databases (Postgres 16+ only).
 - Support for Express, Hono, Drizzle, Mongoose, or Auth.js.
 - A managed hosting service — buyers own their deployments.
-- A free tier — wa'kijo is a commercial product.
+- Module Registry / Customization Layer / pluggable-module platform mechanics. See [ADR-0011](https://github.com/benharundev/wa-kijo/blob/main/docs/decisions/0011-reverse-platform-pivot.md) for why this was reversed.
 
-For the full rationale see the [PRD § 7 — Out of scope](https://github.com/wakijo/wa-kijo/blob/main/docs/prd.md#7-out-of-scope-often-requested-but-deliberate).
+Full rationale in [PRD § 7 — Out of scope](https://github.com/benharundev/wa-kijo/blob/main/docs/prd.md#7-out-of-scope-often-requested-but-deliberate).
+
+---
 
 ## Influencing the roadmap
 
-Customer needs drive prioritisation. To make a request count:
+- **Community** — open a [Discussion](https://github.com/benharundev/wa-kijo/discussions). Many users asking for the same thing moves it up.
+- **Pro and higher tiers** — bring it to office hours, email `support@wakijo.dev`, or your CSM. Enterprise tier explicitly includes roadmap influence.
 
-- **Solo / Team** — file a support ticket or post in the customer
-  Discord. Many customers asking for the same thing moves it up.
-- **Agency / Enterprise** — bring it to your office hours or 1:1 with
-  the CSM. Enterprise tier explicitly includes roadmap influence as
-  part of the contract.
-
-We publish quarterly retrospectives in the customer Discord
-`#announcements` channel — what we shipped, what we deferred, and
-what we learned.
+We publish quarterly retrospectives on [GitHub Discussions](https://github.com/benharundev/wa-kijo/discussions) — what we shipped, what we deferred, what we learned.
