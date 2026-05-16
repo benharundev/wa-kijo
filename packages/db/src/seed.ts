@@ -1,9 +1,10 @@
 /**
- * Development seed script.
+ * Development seed script for wa'kijo Community.
  *
- * Organisation hierarchy seeded:
+ * Organisation hierarchy seeded (demonstrates the 3-level AGENCY → WORKSPACE
+ * model — see ADR-0001 and docs/architecture.md):
  *
- *   wa'kijo HQ  (SYSTEM)          ← SaaS owner / platform itself
+ *   wa'kijo HQ  (SYSTEM)          ← The SaaS operator itself
  *   └── Acme Agency  (AGENCY)     ← Agency customer managing multiple clients
  *       └── Acme Workspace  (WORKSPACE)  ← End-client workspace under Acme
  *
@@ -23,66 +24,62 @@ import { PrismaClient } from '@prisma/client';
 
 // ── Subscription plans ───────────────────────────────────────────────────────
 
+// These are generic example plans for the wa'kijo Community boilerplate.
+// Replace them with the plans that fit the product you're building.
+// To enable real Stripe checkout, set stripePriceMonthlyId / stripePriceYearlyId
+// on each Plan row after creating the matching products in your Stripe dashboard.
 const PLANS = [
   {
     name: 'Starter',
     slug: 'starter',
-    description: 'For small teams getting started with WhatsApp automation.',
-    priceMonthly: 4900,    // MYR 49.00
+    description: 'For small teams getting started.',
+    priceMonthly: 4900,    // MYR 49.00 — replace with your currency/amount
     priceYearly: 47040,    // MYR 470.40 (~2 months free)
     currency: 'MYR',
     features: JSON.stringify([
-      '1 WhatsApp number',
       'Up to 1,000 contacts',
-      '5,000 messages/month',
-      '2 agents',
-      'Basic inbox',
+      '2 team members',
       'Email support',
+      'Standard analytics',
     ]),
-    limits: JSON.stringify({ contacts: 1000, messages: 5000, agents: 2, numbers: 1 }),
+    limits: JSON.stringify({ contacts: 1000, members: 2 }),
     isActive: true,
     sortOrder: 0,
   },
   {
     name: 'Growth',
     slug: 'growth',
-    description: 'For growing businesses that need more scale and automation.',
+    description: 'For growing teams that need more scale.',
     priceMonthly: 14900,   // MYR 149.00
     priceYearly: 143040,   // MYR 1,430.40
     currency: 'MYR',
     features: JSON.stringify([
-      '3 WhatsApp numbers',
       'Up to 10,000 contacts',
-      '50,000 messages/month',
-      '10 agents',
-      'Priority inbox + assignments',
-      'Broadcast campaigns',
-      'Chatbot builder (basic)',
+      '10 team members',
       'Priority email support',
+      'Advanced analytics',
+      'API access (read-only)',
     ]),
-    limits: JSON.stringify({ contacts: 10000, messages: 50000, agents: 10, numbers: 3 }),
+    limits: JSON.stringify({ contacts: 10000, members: 10 }),
     isActive: true,
     sortOrder: 1,
   },
   {
     name: 'Enterprise',
     slug: 'enterprise',
-    description: 'For large organisations that need unlimited scale and white-glove support.',
+    description: 'For larger organisations needing unlimited scale.',
     priceMonthly: 49900,   // MYR 499.00
     priceYearly: 479040,   // MYR 4,790.40
     currency: 'MYR',
     features: JSON.stringify([
-      'Unlimited WhatsApp numbers',
       'Unlimited contacts',
-      'Unlimited messages',
-      'Unlimited agents',
-      'Advanced chatbot builder',
-      'API access',
+      'Unlimited team members',
+      'Full API access (read + write)',
       'Custom integrations',
-      'Dedicated account manager',
-      'SLA 99.9% uptime',
+      'Dedicated success manager',
+      '99.9% uptime SLA',
     ]),
-    limits: JSON.stringify({ contacts: -1, messages: -1, agents: -1, numbers: -1 }),
+    limits: JSON.stringify({ contacts: -1, members: -1 }),
     isActive: true,
     sortOrder: 2,
   },

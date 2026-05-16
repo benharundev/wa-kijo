@@ -2,16 +2,18 @@ import { z } from 'zod';
 
 // ── Checkout ──────────────────────────────────────────────────────────────────
 
+/**
+ * The `provider` enum stays open to additional values so that wa'kijo-pro can
+ * accept Billplz / Curlec / etc. without forking this DTO. Community only
+ * accepts 'stripe' at runtime — see BillingService.createCheckout.
+ */
 export const CreateCheckoutSchema = z.object({
   planId: z.string().min(1),
   interval: z.enum(['month', 'year']).default('month'),
   provider: z.enum(['stripe', 'billplz', 'curlec']).default('stripe'),
   successUrl: z.string().url(),
   cancelUrl: z.string().url(),
-  /**
-   * Required for Billplz — the bill is tied to a payer email address.
-   * Optional for Stripe (Stripe checkout collects email during the session).
-   */
+  /** Optional — Stripe Checkout collects email during the session. */
   email: z.string().email().optional(),
 });
 export type CreateCheckoutDto = z.infer<typeof CreateCheckoutSchema>;

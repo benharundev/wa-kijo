@@ -1,13 +1,14 @@
 /**
  * BillingProvider — contract that every payment gateway must implement.
  *
- * Two implementations ship with wa'kijo:
- *  - StripeBillingProvider  (international cards + subscriptions)
- *  - BillplzBillingProvider (Malaysian FPX / online banking)
+ * wa'kijo Community ships with the Stripe implementation only. Additional
+ * providers (Billplz for Malaysian FPX, Curlec for direct-debit, etc.) live
+ * in wa'kijo-pro behind the Tier A+ paywall — the interface stays generic
+ * so adding providers there does not require changes to BillingService.
  *
  * The BillingService selects the provider per-request based on
- * CreateCheckoutDto.provider. Both providers write to the same
- * Subscription row in Postgres after the user completes payment.
+ * CreateCheckoutDto.provider. All providers write to the same Subscription
+ * row in Postgres after the user completes payment.
  */
 export interface CheckoutSessionResult {
   /** Redirect the user to this URL to complete payment. */
@@ -39,6 +40,8 @@ export interface BillingWebhookEvent {
 
 export interface BillingProvider {
   readonly providerName: 'stripe' | 'billplz' | 'curlec';
+  // Note: union kept open so wa'kijo-pro can add providers without diverging
+  // the interface. Only 'stripe' is wired in Community.
 
   /**
    * Find or create a customer record in the provider for this organisation.
@@ -79,5 +82,4 @@ export interface BillingProvider {
 }
 
 export const BILLING_STRIPE_PROVIDER = Symbol('BILLING_STRIPE_PROVIDER');
-export const BILLING_BILLPLZ_PROVIDER = Symbol('BILLING_BILLPLZ_PROVIDER');
-export const BILLING_CURLEC_PROVIDER = Symbol('BILLING_CURLEC_PROVIDER');
+// Additional provider tokens (Billplz, Curlec, etc.) live in wa'kijo-pro.

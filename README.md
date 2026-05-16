@@ -1,6 +1,6 @@
 # wa'kijo
 
-> Production-grade, opinionated SaaS boilerplate for NestJS-first developers building multi-tenant B2B SaaS.
+> Production-grade, opinionated SaaS foundation for NestJS-first teams building multi-tenant B2B products.
 
 <p>
   <img alt="Node" src="https://img.shields.io/badge/node-22%20LTS-339933?logo=node.js&logoColor=white">
@@ -9,31 +9,34 @@
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-15-000000?logo=next.js&logoColor=white">
   <img alt="Prisma" src="https://img.shields.io/badge/Prisma-5-2D3748?logo=prisma&logoColor=white">
   <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white">
-  <img alt="License" src="https://img.shields.io/badge/license-Commercial-blue">
-  <img alt="Status" src="https://img.shields.io/badge/status-Phase%205%20complete%20%E2%80%94%20billing%20WIP-yellow">
+  <img alt="License" src="https://img.shields.io/badge/license-Apache%202.0-blue">
+  <img alt="Status" src="https://img.shields.io/badge/status-Community%20v0.1-green">
 </p>
 
-**wa'kijo** is the foundation of the wa' product portfolio. `wa-kiro` (WhatsApp Business SaaS) and `wa-lawe` (chess tournament manager) are both forked from this repo. Customers who purchase wa'kijo receive a private GitHub repo, Mintlify docs, and 6–24 months of updates depending on tier.
+**wa'kijo Community** is the open-source foundation: multi-tenant auth, RBAC, billing, queues, audit log, and a Next.js shell — already production-tested in [`wa-kiro`](https://github.com/benharundev) (WhatsApp Business SaaS). Clone it, configure six env vars, and you have a working B2B SaaS scaffold at `localhost` — no four-week boilerplate slog before you can start on the features that actually differentiate your product.
 
-> 📚 **Looking for the customer-facing docs?** See [`docs-site/`](docs-site/) — the full Mintlify handbook covers concepts, guides, API reference, and troubleshooting.
+> 💰 **Need enterprise features?** wa'kijo Pro adds SSO, SCIM, the 11 shared engines (booking, document, notification, communication, …), custom domains, audit-log SIEM streaming, the super-admin console, and more. Five tiers from Starter to OEM — see [`docs/prd.md` §8](docs/prd.md#8-commercial-tiers-and-licensing).
 
 ---
 
-## What's included
+## What's included in Community
 
 | Layer | Technology | Notes |
 |---|---|---|
 | API | NestJS 11 + Fastify | High-throughput adapter, not Express |
 | Database | Prisma 5 + PostgreSQL 16 | Soft deletes, audit fields, cursor pagination |
 | Auth | Better Auth ≥1.5 | Email/password, magic link, Google OAuth, session cookies |
-| Multi-tenancy | Parent–child org hierarchy | SYSTEM → AGENCY → WORKSPACE with role inheritance |
+| Multi-tenancy | 3-level org hierarchy | SYSTEM → AGENCY → WORKSPACE with role inheritance, tenant-scoped queries via `BaseRepository<T>` |
 | Frontend | Next.js 15 (App Router) | shadcn/ui, Tailwind, TanStack Query, React Hook Form |
 | Validation | Zod end-to-end | Single schema shared by API and frontend |
 | Jobs | BullMQ + Redis 7 | Retry, dead-letter queue, Bull Board admin panel |
 | Email | Resend + React Email | Verification, magic link, invitation templates |
-| Billing | Stripe + Billplz/ToyyibPay | Malaysian payment gateway support out of the box |
-| Observability | Pino structured logs + Sentry | Request IDs, PII redaction, log levels |
-| Dev tooling | pnpm 9, Vitest, Playwright, Docker Compose | Monorepo-ready |
+| Billing | Stripe | Subscriptions, Customer Portal, webhooks |
+| Audit log | Built-in | Mutation tracking on flagged entities, append via Prisma middleware |
+| Observability | Pino structured logs | Request IDs, PII redaction, log levels |
+| Dev tooling | pnpm 9, Vitest, Playwright, Docker Compose | Monorepo-ready, cross-tenant fuzz tests in CI |
+
+**Not in Community** (lives in wa'kijo Pro): SSO/SAML/OIDC, SCIM 2.0, MFA, multi-provider billing (Billplz, Curlec), the 11 shared engines (Booking Core, Workflow, Document, Report, Inventory, Invoice, Notification, Communication, etc.), white-labeling, custom domains, full i18n, OpenTelemetry/metrics/Sentry, public API + API keys, outbound webhooks, GDPR data export, field-level encryption, super-admin console, sandbox/test mode, TypeScript SDK, and the higher-tier roadmap items. See [`docs/prd.md` §8.3](docs/prd.md#83-feature-matrix) for the full feature matrix.
 
 ---
 
@@ -48,7 +51,9 @@
 ## Quick start
 
 ```bash
-# 1. Install dependencies
+# 1. Clone and install
+git clone https://github.com/benharundev/wa-kijo.git
+cd wa-kijo
 pnpm install
 
 # 2. Configure environment
@@ -61,7 +66,7 @@ pnpm docker:up
 # 4. Apply database migrations
 pnpm db:migrate
 
-# 5. Seed dev data (users + 3-org hierarchy)
+# 5. Seed dev data (3 users, 3-org hierarchy, 3 example plans)
 pnpm db:seed
 
 # 6. Start dev servers
@@ -81,9 +86,22 @@ Created automatically by `pnpm db:seed`:
 
 | Email | Password | Role |
 |---|---|---|
-| admin@example.com | password123 | Owner — wa'kijo HQ (SYSTEM) |
-| agency@example.com | password123 | Owner — Acme Agency (AGENCY) |
-| member@example.com | password123 | Member — Acme Workspace (WORKSPACE) |
+| `admin@example.com` | `password123` | Owner — wa'kijo HQ (SYSTEM) |
+| `agency@example.com` | `password123` | Owner — Acme Agency (AGENCY) |
+| `member@example.com` | `password123` | Member — Acme Workspace (WORKSPACE) |
+
+### Stripe (optional, for billing testing)
+
+The billing UI works without Stripe keys — it just shows the plans and "Subscribe" buttons return a clear "not configured" error. To exercise the full flow:
+
+```bash
+# 1. Get test keys at https://dashboard.stripe.com/test/apikeys
+# 2. Add them to .env: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PUBLISHABLE_KEY
+# 3. In one terminal, forward webhooks locally:
+stripe listen --forward-to localhost:3000/api/v1/billing/stripe/webhook
+# 4. Create matching products and prices in your Stripe dashboard and put the
+#    price IDs into the Plan rows (Prisma Studio is easiest for this).
+```
 
 ---
 
@@ -98,11 +116,65 @@ wa-kijo/
 │   ├── db/                   # Prisma schema, migrations, seed (@wa-kijo/db)
 │   └── shared/               # Zod DTOs + types shared by api and web (@wa-kijo/shared)
 ├── docs/
-│   ├── architecture.md       # System design, request flow, tenant model
-│   ├── runbook.md            # Day-to-day operations reference
+│   ├── architecture.md       # System design, request lifecycle, tenant model
+│   ├── runbook.md            # Day-to-day local-development operations
+│   ├── prd.md                # Product requirements + tier feature matrix
 │   └── decisions/            # Architecture Decision Records (ADRs)
-└── .claude/rules/            # Claude Code context (backend, frontend, security, testing)
+└── .claude/rules/            # Project-specific Claude Code context
 ```
+
+---
+
+## Architecture overview
+
+Every authenticated request flows through:
+
+```
+Fastify onRequest hook  → AsyncLocalStorage.run({ requestId, userId, orgId, … })
+                          /api/auth/* is intercepted here for Better Auth
+NestJS AuthGuard        → validates session cookie, populates the context store
+NestJS PermissionGuard  → reads @RequirePermission metadata, checks the role map
+Controller / Service    → reads context via getRequestContext() — no prop-drilling
+BaseRepository<T>       → auto-scopes every query to ctx.orgId — no manual filtering
+```
+
+A user with `owner` role in a parent AGENCY org automatically receives `owner` authority in all child WORKSPACEs (depth limit: 3 levels). `BaseRepository.findMany` defaults to filtering `deletedAt: null` — pass `{ includeDeleted: true }` to override. Cross-tenant isolation is asserted by a fuzz test that runs in CI.
+
+Full architecture in [`docs/architecture.md`](docs/architecture.md).
+
+---
+
+## Multi-tenant model
+
+```
+SYSTEM        ← the SaaS operator itself (one per installation)
+└── AGENCY    ← customer managing multiple client accounts
+    └── WORKSPACE   ← individual client workspace
+```
+
+Users belong to orgs via the `Member` table with a role of `owner`, `admin`, or `member`. The active org is tracked in the Better Auth session and validated on every request.
+
+---
+
+## Adding a feature module
+
+```bash
+# 1. Add the Prisma model in packages/db/prisma/schema.prisma
+pnpm db:migrate
+
+# 2. Add a Zod DTO to packages/shared/src/dto/<feature>.ts
+pnpm --filter @wa-kijo/shared build
+
+# 3. Scaffold under apps/api/src/modules/<feature>/
+#    <feature>.module.ts      — NestJS module wiring
+#    <feature>.controller.ts  — HTTP endpoints, @ApiTags, @RequirePermission
+#    <feature>.service.ts     — business logic
+#    <feature>.repository.ts  — extends BaseRepository<T>
+
+# 4. Import the new module in apps/api/src/app.module.ts
+```
+
+The `contacts` module is the canonical reference — copy its structure for the cleanest pattern.
 
 ---
 
@@ -124,8 +196,8 @@ pnpm typecheck              # tsc --noEmit across all packages
 pnpm format                 # Auto-format everything
 
 # Database
-pnpm db:migrate             # Prisma migrate dev (prompts for migration name)
-pnpm db:seed                # Seed dev users + organisations
+pnpm db:migrate             # Prisma migrate dev
+pnpm db:seed                # Seed dev users, orgs, and example plans
 pnpm db:studio              # Open Prisma Studio
 
 # Docker
@@ -134,117 +206,85 @@ pnpm docker:down            # Stop containers
 pnpm docker:logs            # Tail container logs
 
 # Scoped
-pnpm --filter @wa-kijo/api  test -- --run src/path/to/file.spec.ts
+pnpm --filter @wa-kijo/api test -- --run src/path/to/file.spec.ts
 pnpm --filter @wa-kijo/shared build   # Rebuild after editing shared package
 ```
 
 ---
 
-## Architecture overview
-
-See [`docs/architecture.md`](docs/architecture.md) for the full design.
-
-**Key points:**
-
-- Every request runs through an `AsyncLocalStorage` context populated by `AuthGuard`. Services and repositories read `orgId`, `userId`, and `userRole` from this context without prop-drilling.
-- Better Auth mounts at `/api/auth/*` via a Fastify `onRequest` hook **before** the NestJS pipeline. CORS for auth routes is handled separately at this hook level.
-- `BaseRepository<T>` auto-scopes every query to `ctx.orgId`. Raw `prisma.<model>` calls outside `BaseRepository` are forbidden except for system-level queries.
-- Role inheritance: `owner` in an AGENCY org automatically inherits `owner` authority in all child WORKSPACEs (depth limit: 3 levels).
-
----
-
-## Multi-tenant model
-
-```
-SYSTEM org       ← the SaaS platform itself (one per installation)
-└── AGENCY       ← customer managing multiple client accounts
-    └── WORKSPACE    ← individual client workspace
-```
-
-Users belong to orgs via the `Member` table with a role of `owner`, `admin`, or `member`. The active org is tracked in the Better Auth session and validated on every request.
-
----
-
-## Adding a feature module
-
-```bash
-# 1. Add the Prisma model in packages/db/prisma/schema.prisma, then migrate
-pnpm db:migrate
-
-# 2. Add a Zod DTO to packages/shared/src/dto/<feature>.ts, then rebuild
-pnpm --filter @wa-kijo/shared build
-
-# 3. Scaffold under apps/api/src/modules/<feature>/
-#    <feature>.module.ts      — NestJS module wiring
-#    <feature>.controller.ts  — HTTP endpoints, @ApiTags, @RequirePermission
-#    <feature>.service.ts     — business logic
-#    <feature>.repository.ts  — extends BaseRepository<T>
-
-# 4. Import the new module in apps/api/src/app.module.ts
-```
-
-Consult the `nestjs-prisma` skill in Claude Code for the canonical pattern with full examples.
-
----
-
 ## Environment variables
 
-See [`.env.example`](.env.example) for the full reference with descriptions.
-
-**Minimum required:**
+See [`.env.example`](.env.example) for the full reference. **Minimum required:**
 
 | Variable | Example |
 |---|---|
-| `DATABASE_URL` | `postgres://wakijo:wakijo@localhost:5434/wakijo` |
+| `DATABASE_URL` | `postgresql://wakijo:wakijo_dev_password@localhost:5434/wakijo?schema=public` |
 | `BETTER_AUTH_SECRET` | 32-char random string — `openssl rand -base64 32` |
 | `BETTER_AUTH_URL` | `http://localhost:3000` |
-| `RESEND_API_KEY` | `re_...` |
+| `RESEND_API_KEY` | `re_...` (sign up free at [resend.com](https://resend.com)) |
 | `EMAIL_FROM` | `noreply@yourdomain.com` |
 
 ---
 
 ## Documentation
 
-| Path | Audience | Purpose |
-|---|---|---|
-| [`docs-site/`](docs-site/) | Customers | Mintlify-rendered handbook — concepts, guides, API reference |
-| [`docs/architecture.md`](docs/architecture.md) | Engineers | System design, request lifecycle, tenant model |
-| [`docs/prd.md`](docs/prd.md) | Engineers, PM | Product requirements, scoped features, FR catalogue |
-| [`docs/api-conventions.md`](docs/api-conventions.md) | Engineers | REST conventions, response envelope, error shape |
-| [`docs/deployment.md`](docs/deployment.md) | Ops, Customers | Production deployment recipes (Railway, AWS, self-hosted) |
-| [`docs/observability.md`](docs/observability.md) | Ops | Logging, tracing, metrics, alerting playbook |
-| [`docs/customization.md`](docs/customization.md) | Customers | How to brand, extend, and remove parts you don't need |
-| [`docs/upgrade-guide.md`](docs/upgrade-guide.md) | Customers | Upgrading between wa'kijo releases |
-| [`docs/runbook.md`](docs/runbook.md) | Engineers | Day-to-day local dev operations |
-| [`docs/glossary.md`](docs/glossary.md) | Everyone | Plain-English definitions of every term used |
-| [`docs/decisions/`](docs/decisions/) | Engineers | Architecture Decision Records (ADRs) |
-| [`docs/api/openapi.yaml`](docs/api/openapi.yaml) | Engineers, integrators | Static OpenAPI 3.1 snapshot of the API |
+| Path | Purpose |
+|---|---|
+| [`docs/architecture.md`](docs/architecture.md) | System design, request lifecycle, tenant model |
+| [`docs/prd.md`](docs/prd.md) | Product requirements, phase plan, tier feature matrix |
+| [`docs/api-conventions.md`](docs/api-conventions.md) | REST conventions, response envelope, error shape |
+| [`docs/deployment.md`](docs/deployment.md) | Production deployment recipes (Railway, AWS, self-hosted) |
+| [`docs/observability.md`](docs/observability.md) | Logging, tracing, metrics, alerting playbook |
+| [`docs/runbook.md`](docs/runbook.md) | Day-to-day local-development operations |
+| [`docs/glossary.md`](docs/glossary.md) | Plain-English definitions of every term used |
+| [`docs/decisions/`](docs/decisions/) | Architecture Decision Records (ADRs) |
 
-## Project policies
+ADR-0011 (the 2026-05-17 platform-thesis reversal) is the most important one for understanding why the repo is shaped the way it is.
 
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) — branching, commit conventions, PR process
-- [`SECURITY.md`](SECURITY.md) — vulnerability disclosure policy
-- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) — community expectations
-- [`SUPPORT.md`](SUPPORT.md) — how to get help (by tier)
-- [`CHANGELOG.md`](CHANGELOG.md) — release history (Keep a Changelog format)
-
-## Support tiers
-
-| Tier | Repo access | Updates | Support SLA | Indicative price |
-|---|---|---|---|---|
-| **Solo** | Private repo, single seat | 6 months of patches | Community (Discord) | from MYR 1,499 |
-| **Team** | Private repo, up to 5 seats | 12 months of patches & minor releases | 48-hr business email | from MYR 4,999 |
-| **Agency** | Private repo, unlimited seats per legal entity | 24 months incl. major upgrades | 24-hr business email + 1 onboarding call | from MYR 12,999 |
-| **Enterprise** | Private repo + custom CLA | 24 months + roadmap influence | Same-business-day Slack Connect | Contact sales |
-
-> Pricing and SLAs are indicative. The current commercial terms ship with the
-> repo as `LICENSE` — read it before redistributing.
+---
 
 ## License
 
-Commercial license. See [`LICENSE`](LICENSE) for the full terms.
+[Apache 2.0](LICENSE). Build whatever you want with it — commercial products are explicitly fine.
 
-In summary: each purchased seat may use wa'kijo to build and operate one
-private commercial product. Redistribution of the source — verbatim or
-modified — is not permitted. Open-source dependencies retain their original
-licenses.
+**One ask** (not legally binding, just community norm): please don't repackage wa'kijo itself as a competing boilerplate product. We make our living from wa'kijo Pro and the higher tiers — the Community edition exists because we believe a strong open foundation grows the whole ecosystem, not just to be repackaged. See [`NOTICE`](NOTICE) for the full informal note.
+
+---
+
+## wa'kijo Pro and higher tiers
+
+The Pro repo lives at [`github.com/benharundev/wa-kijo-pro`](https://github.com/benharundev/wa-kijo-pro). Access is granted on purchase.
+
+| Tier | Headline capability | Indicative price |
+|---|---|---|
+| **A · Starter** | + Multi-provider billing (Billplz, Curlec), MFA TOTP | $199 one-time |
+| **B · Pro** | + Booking Core, Workflow, Document, Report, Notification, Communication engines, WebAuthn | $499 one-time |
+| **C · Team** | + Storage, Inventory Core, Invoice Core, custom domains, white-labeling, public API + keys, outbound webhooks | $999 one-time |
+| **D · Enterprise** | + SSO (SAML+OIDC), SCIM 2.0, audit log hardening, encryption, GDPR tools, impersonation, OpenTelemetry, super-admin | $2,499 one-time |
+| **E · OEM** | + White-label rights, source modification, reseller terms, lifetime updates | $9,999+ custom |
+
+Prices are placeholders pending market calibration. Full feature matrix in [`docs/prd.md` §8.3](docs/prd.md#83-feature-matrix).
+
+---
+
+## Contributing
+
+Issues and pull requests welcome. Read [`CONTRIBUTING.md`](CONTRIBUTING.md) for the branching model, commit conventions, and PR process. Before opening a big PR, please open a discussion first so we can align on direction.
+
+## Security
+
+Report vulnerabilities privately per [`SECURITY.md`](SECURITY.md). Please don't open public issues for security problems.
+
+## Code of conduct
+
+We expect contributors to follow the [Contributor Covenant](CODE_OF_CONDUCT.md). Be kind. Disagree with ideas, not people.
+
+## Support
+
+| Where | What |
+|---|---|
+| [GitHub Discussions](https://github.com/benharundev/wa-kijo/discussions) | Community Q&A — best-effort, no SLA |
+| [GitHub Issues](https://github.com/benharundev/wa-kijo/issues) | Reproducible bugs only |
+| [wa'kijo Pro+](https://github.com/benharundev/wa-kijo-pro) | Email support with response-time SLAs by tier |
+
+See [`SUPPORT.md`](SUPPORT.md) for details.

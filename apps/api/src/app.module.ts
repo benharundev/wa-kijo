@@ -44,6 +44,7 @@ import { EnvService } from './config/env.service';
 
     PrismaModule,
     RedisModule,
+
     EmailModule,          // @Global() — EmailService injectable everywhere
     AuthModule,           // @Global() — BETTER_AUTH token + AuthService injectable everywhere
     HealthModule,

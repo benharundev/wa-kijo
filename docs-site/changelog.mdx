@@ -15,8 +15,38 @@ versioning follows [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-Tracking work for the next release. Subscribe to release notifications
-via your customer Discord channel.
+> **Strategic pivot — platform with pluggable business modules.**
+> Future products ship as modules on top of one shared platform
+> instead of forks. New ADRs 0008/0009/0010 capture the design.
+
+### Added
+
+- **`@wa-kijo/booking-core`** scheduling kernel — `TimeRange`,
+  `BookingState`, conflict detection, availability checks, 5
+  lifecycle events. Persistence-agnostic; consumed by every business
+  module that schedules anything.
+- **Module template** at `apps/api/src/modules/_template/` — copy
+  this when creating a new business module. Includes the four-layer
+  DDD layout, manifest, hook handler, and failing test stubs in
+  every mandatory test-first zone.
+- New ADRs:
+  - **ADR-0008** — Module Registry & per-tenant module enablement.
+  - **ADR-0009** — Pragmatic DDD layout for module bounded contexts.
+  - **ADR-0010** — Booking Core kernel and the dual-consumer rule.
+
+### Coming next
+
+- **Phase 6a** — Module Registry runtime (`Module`, `TenantModule`
+  Prisma models, manifest scanner, dependency resolver,
+  `@RequireModule()` guard).
+- **Phase 6b** — Refactor existing `contacts` and `conversations`
+  modules into the new four-layer layout.
+- **Phase 6d-6f** — Customization Layer (Config, Custom Fields,
+  Hooks, Policies, UI Slots).
+- **Phase 7** — wa'lawe shipped as the first business module on the
+  new platform.
+
+Subscribe to release notifications via your customer Discord channel.
 
 ---
 

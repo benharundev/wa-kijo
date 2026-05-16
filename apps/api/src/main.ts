@@ -30,7 +30,7 @@ async function bootstrap(): Promise<void> {
     {
       bufferLogs: true,
       // rawBody: true stores the raw request body buffer on req.rawBody.
-      // Required for webhook signature verification (Stripe, Curlec, Billplz).
+      // Required for Stripe webhook signature verification.
       rawBody: true,
     },
   );

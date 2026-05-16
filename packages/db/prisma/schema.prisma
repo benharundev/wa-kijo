@@ -292,16 +292,12 @@ model Plan {
   features String? // JSON array of feature strings shown in pricing table
   limits   String? // JSON object: { contacts: 1000, messages: 10000, agents: 5 }
 
-  // Stripe
+  // Stripe (the only billing provider in wa'kijo Community).
+  // Additional provider price IDs (Billplz, Curlec, etc.) are added by
+  // wa'kijo-pro via its own migration.
   stripePriceMonthlyId String?
   stripePriceYearlyId  String?
   stripeProductId      String?
-
-  // Billplz (collection is shared; amount is taken from priceMonthly/priceYearly)
-  billplzCollectionId String?
-
-  // Curlec / Razorpay
-  curlecPlanId String? // Razorpay plan ID
 
   isActive  Boolean @default(true)
   sortOrder Int     @default(0)
@@ -334,16 +330,10 @@ model Subscription {
   cancelAt           DateTime?
   canceledAt         DateTime?
 
-  // Stripe
+  // Stripe (the only billing provider in wa'kijo Community).
+  // Additional provider IDs are added by wa'kijo-pro via its own migration.
   stripeCustomerId     String? @unique
   stripeSubscriptionId String? @unique
-
-  // Billplz (latest bill ID — Billplz is per-bill, not a subscription object)
-  billplzBillId String?
-
-  // Curlec / Razorpay
-  curlecCustomerId     String?
-  curlecSubscriptionId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -394,3 +384,11 @@ model Invitation {
   @@index([status])
   @@map("invitation")
 }
+
+// ---------------------------------------------------------------------------
+// Module Registry models removed per ADR-0011 (2026-05-17).
+// The platform-pivot direction set by ADR-0008 was reversed when v1.0 scope
+// narrowed to wa'kijo + wa'lawe only. Module + TenantModule lived here previously.
+// To restore for a future paid-tier release: see the wa-kijo-pro repo's
+// archive/platform-thesis branch.
+// ---------------------------------------------------------------------------

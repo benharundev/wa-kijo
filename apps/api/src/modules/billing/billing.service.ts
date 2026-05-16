@@ -9,8 +9,6 @@ import type { CreateCheckoutDto, CreatePortalDto } from '@wa-kijo/shared';
 import type { RequestContext } from '../../common/context/request-context';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
-  BILLING_BILLPLZ_PROVIDER,
-  BILLING_CURLEC_PROVIDER,
   BILLING_STRIPE_PROVIDER,
   type BillingProvider,
   type BillingWebhookEvent,
@@ -20,10 +18,11 @@ import {
  * BillingService — business logic for subscription lifecycle management.
  *
  * Provider selection:
- *  The service holds three optional providers (Stripe, Billplz, Curlec).
- *  The provider is selected per-request via CreateCheckoutDto.provider.
- *  If the requested provider is not configured (missing env vars), a
- *  BadRequestException is thrown before any external call is made.
+ *  Community ships with Stripe only. The provider is selected per-request
+ *  via CreateCheckoutDto.provider, kept as a string so wa'kijo-pro can add
+ *  more providers without changing this contract. If the requested provider
+ *  is not configured, a BadRequestException is thrown before any external
+ *  call is made.
  *
  * Subscription persistence:
  *  A single Subscription row per org tracks the current plan, status, and
@@ -41,10 +40,6 @@ export class BillingService {
     private readonly prisma: PrismaService,
     @Inject(BILLING_STRIPE_PROVIDER)
     private readonly stripeProvider: BillingProvider | null,
-    @Inject(BILLING_BILLPLZ_PROVIDER)
-    private readonly billplzProvider: BillingProvider | null,
-    @Inject(BILLING_CURLEC_PROVIDER)
-    private readonly curlecProvider: BillingProvider | null,
   ) {}
 
   // ── Plans ─────────────────────────────────────────────────────────────────
@@ -89,19 +84,22 @@ export class BillingService {
     const provider = this.getProvider(dto.provider);
     const plan = await this.getPlan(dto.planId);
 
-    // Resolve the provider price/plan ID based on interval
+    // Community ships Stripe only — additional provider price ID resolution
+    // lives in wa'kijo-pro. Reject non-Stripe providers explicitly.
+    if (dto.provider !== 'stripe') {
+      throw new BadRequestException(
+        `Billing provider '${dto.provider}' is not available in wa'kijo Community. Stripe is the only supported provider; additional providers (Billplz, Curlec) require wa'kijo Pro or higher.`,
+      );
+    }
+
     const priceId =
-      dto.provider === 'stripe'
-        ? dto.interval === 'month'
-          ? (plan.stripePriceMonthlyId ?? '')
-          : (plan.stripePriceYearlyId ?? '')
-        : dto.provider === 'curlec'
-          ? (plan.curlecPlanId ?? '')
-          : String(dto.interval === 'month' ? plan.priceMonthly : plan.priceYearly);
+      dto.interval === 'month'
+        ? (plan.stripePriceMonthlyId ?? '')
+        : (plan.stripePriceYearlyId ?? '');
 
     if (!priceId) {
       throw new BadRequestException(
-        `Plan '${plan.slug}' has no ${dto.provider} price configured for ${dto.interval}ly billing`,
+        `Plan '${plan.slug}' has no Stripe price configured for ${dto.interval}ly billing`,
       );
     }
 
@@ -142,18 +140,14 @@ export class BillingService {
       throw new NotFoundException('No active subscription found for this organisation');
     }
 
-    // Determine provider from the stored subscription
-    const providerName = sub.stripeCustomerId
-      ? 'stripe'
-      : sub.billplzBillId
-        ? 'billplz'
-        : 'curlec';
+    if (!sub.stripeCustomerId) {
+      throw new BadRequestException(
+        'No Stripe customer ID on this subscription. wa\'kijo Community only supports the Stripe Customer Portal.',
+      );
+    }
 
-    const provider = this.getProvider(providerName);
-    const customerId =
-      sub.stripeCustomerId ?? sub.curlecCustomerId ?? ctx.orgId;
-
-    return provider.createPortalSession(customerId, dto.returnUrl);
+    const provider = this.getProvider('stripe');
+    return provider.createPortalSession(sub.stripeCustomerId, dto.returnUrl);
   }
 
   // ── Webhook handlers ──────────────────────────────────────────────────────
@@ -164,37 +158,20 @@ export class BillingService {
     await this.processWebhookEvent('stripe', event);
   }
 
-  async handleBillplzWebhook(payload: Buffer, signature: string): Promise<void> {
-    const provider = this.getProvider('billplz');
-    const event = await provider.handleWebhook(payload, signature);
-    await this.processWebhookEvent('billplz', event);
-  }
-
-  async handleCurlecWebhook(payload: Buffer, signature: string): Promise<void> {
-    const provider = this.getProvider('curlec');
-    const event = await provider.handleWebhook(payload, signature);
-    await this.processWebhookEvent('curlec', event);
-  }
-
   // ── Internal helpers ──────────────────────────────────────────────────────
 
   private getProvider(name: string): BillingProvider {
-    const provider =
-      name === 'stripe'
-        ? this.stripeProvider
-        : name === 'billplz'
-          ? this.billplzProvider
-          : name === 'curlec'
-            ? this.curlecProvider
-            : null;
-
-    if (!provider) {
+    if (name !== 'stripe') {
       throw new BadRequestException(
-        `Billing provider '${name}' is not configured. Check the corresponding env vars.`,
+        `Billing provider '${name}' is not available in wa'kijo Community. Additional providers (Billplz, Curlec, etc.) require wa'kijo Pro or higher.`,
       );
     }
-
-    return provider;
+    if (!this.stripeProvider) {
+      throw new BadRequestException(
+        `Stripe is not configured. Set STRIPE_SECRET_KEY in your .env file.`,
+      );
+    }
+    return this.stripeProvider;
   }
 
   private async processWebhookEvent(
@@ -233,18 +210,11 @@ export class BillingService {
       return;
     }
 
-    const stripeSubId = providerName === 'stripe' ? String(data['id'] ?? '') : undefined;
-    const stripeCustomerId =
-      providerName === 'stripe' ? String(data['customer'] ?? '') : undefined;
-    const curlecSubId = providerName === 'curlec'
-      ? String((data['subscription'] as Record<string, unknown> | undefined)?.['entity'] ?? '')
-      : undefined;
-
+    const stripeSubId = String(data['id'] ?? '');
+    const stripeCustomerId = String(data['customer'] ?? '');
     const status = this.normaliseStatus(providerName, data);
     const now = new Date();
-    const periodEnd = providerName === 'stripe'
-      ? new Date((data['current_period_end'] as number) * 1000)
-      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // Billplz/Curlec: +30 days
+    const periodEnd = new Date((data['current_period_end'] as number) * 1000);
 
     await this.prisma.subscription.upsert({
       where: { organizationId: orgId },
@@ -257,14 +227,12 @@ export class BillingService {
         currentPeriodEnd: periodEnd,
         stripeSubscriptionId: stripeSubId,
         stripeCustomerId,
-        curlecSubscriptionId: curlecSubId,
       },
       update: {
         status,
         currentPeriodEnd: periodEnd,
-        stripeSubscriptionId: stripeSubId ?? undefined,
-        stripeCustomerId: stripeCustomerId ?? undefined,
-        curlecSubscriptionId: curlecSubId ?? undefined,
+        stripeSubscriptionId: stripeSubId || undefined,
+        stripeCustomerId: stripeCustomerId || undefined,
       },
     });
 
@@ -317,38 +285,24 @@ export class BillingService {
   }
 
   private extractOrgId(
-    providerName: string,
+    _providerName: string,
     data: Record<string, unknown>,
   ): string | null {
-    if (providerName === 'stripe') {
-      const metadata = data['metadata'] as Record<string, string> | undefined;
-      return metadata?.['orgId'] ?? null;
-    }
-    if (providerName === 'billplz') {
-      return String(data['reference_1'] ?? '') || null;
-    }
-    if (providerName === 'curlec') {
-      const notes = (data['subscription'] as Record<string, unknown> | undefined)?.['notes'] as
-        | Record<string, string>
-        | undefined;
-      return notes?.['orgId'] ?? null;
-    }
-    return null;
+    // Stripe — orgId set as metadata at checkout-session creation.
+    const metadata = data['metadata'] as Record<string, string> | undefined;
+    return metadata?.['orgId'] ?? null;
   }
 
-  private normaliseStatus(providerName: string, data: Record<string, unknown>): string {
-    if (providerName === 'stripe') {
-      const map: Record<string, string> = {
-        trialing: 'trialing',
-        active: 'active',
-        past_due: 'past_due',
-        canceled: 'canceled',
-        incomplete: 'incomplete',
-        paused: 'paused',
-      };
-      return map[String(data['status'] ?? '')] ?? 'active';
-    }
-    return 'active';
+  private normaliseStatus(_providerName: string, data: Record<string, unknown>): string {
+    const map: Record<string, string> = {
+      trialing: 'trialing',
+      active: 'active',
+      past_due: 'past_due',
+      canceled: 'canceled',
+      incomplete: 'incomplete',
+      paused: 'paused',
+    };
+    return map[String(data['status'] ?? '')] ?? 'active';
   }
 
   private async resolvePlanId(

@@ -14,29 +14,115 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-05-17 — **OSS Community release** 🎉
+
+> **Major repositioning + first public release.** wa'kijo is now a
+> two-tier product: a public Apache 2.0 Community edition (this repo)
+> and a private wa'kijo-pro repo with five paid tiers (A–E). The
+> 2026-05-10 platform-pivot direction set by ADR-0008 is **reversed**
+> per ADR-0011 — wa'kijo Community is the enterprise foundation under a
+> single business module (wa'lawe ships as its own separate OSS repo),
+> not a multi-module platform.
+
 ### Added
 
-- _(add new entries here as they land on `main`)_
+- **License:** repository relicensed from the commercial draft to
+  **Apache 2.0** ([`LICENSE`](LICENSE)). [`NOTICE`](NOTICE) carries the
+  informal "please don't repackage as a competing boilerplate" note
+  alongside the standard attribution.
+- **ADR-0011** — formalises the platform-thesis reversal: Module
+  Registry, Customization Layer, and kernel governance dropped from
+  v1.0. Pragmatic DDD softened to recommended pattern. Booking Core
+  stays in-API rather than as a workspace package. Engines-first
+  build order (Path 2) confirmed across Phases 6/8/9 before wa'lawe in
+  Phase 10. Partially supersedes ADR-0008, ADR-0009, ADR-0010.
+- **PRD §8 Commercial Tiers and Licensing** — full feature matrix for
+  Community + five tiers A–E (Starter / Pro / Team / Enterprise / OEM),
+  one-time pricing with tier-dependent update windows, wa'lawe
+  positioning (separate OSS repo, requires Tier B+ to run).
+- **PRD §4 re-sort** — Phases 6–10 reorganised into five epochs
+  (Platform Hardening / Compliance & DX / Commerce & White-Label /
+  Engines Build-out / wa'lawe + v1.0 GA). v1.0 GA estimate updated
+  to ~15–22 months from 2026-05-17.
+- **Public-facing README** — rewritten for OSS positioning with
+  Community feature list, quickstart, pointers to wa'kijo Pro for
+  paid features.
+- **Stripe billing UI** — `apps/web/src/app/(app)/orgs/[orgId]/billing`
+  upgraded from a stub to a fully working flow: plan list, monthly /
+  yearly toggle, Stripe Checkout redirect, Customer Portal access,
+  status-aware return-URL toasts, current-subscription view.
+- **`fetcher` upgrade** — `apps/web/src/lib/fetcher.ts` now correctly
+  unwraps the `{ success: true, data }` envelope from the API and
+  parses the `{ success: false, error, message }` error shape.
 
 ### Changed
 
-- _nothing yet_
+- **Phase 6 critical path** is now Audit engine hardening + Storage
+  engine + enterprise identity (MFA / SSO / SCIM / sessions /
+  impersonation / IP allowlist / org lifecycle / maintenance mode).
+  Module Registry runtime work removed from Phase 6.
+- `CLAUDE.md` strategic pivot section updated to keep ADR-0008/0009/0010
+  as historical context with a clear "reversed by ADR-0011" callout.
+- Example plans in `packages/db/src/seed.ts` are now generic
+  (Starter / Growth / Enterprise) rather than WhatsApp-specific —
+  buyers replace them with the plans their actual product needs.
+- `BillingService` provider selection narrowed to Stripe-only in
+  Community; the `BillingProvider` interface and `provider` enum stay
+  open so wa'kijo-pro can add Billplz / Curlec / others without
+  diverging the API contract.
+- `.env.example` cleaned of paid-tier env vars (Billplz, Curlec)
+  and given clearer Stripe CLI setup hints.
+
+### Removed (from this repo — preserved in `wa-kijo-pro`)
+
+- **`@wa-kijo/booking-core` workspace package** — code preserved on
+  the `archive/platform-thesis` branch in `wa-kijo-pro`. Becomes
+  `apps/api/src/modules/booking/` inside the Pro repo at engine
+  build-out time.
+- **Module Registry runtime** — `apps/api/src/platform/module-registry/`,
+  the `Module` + `TenantModule` Prisma models, manifest scanner,
+  dependency resolver, `@RequireModule()` guard, manifest files in
+  `contacts` and `conversations` modules.
+- **`apps/api/src/modules/walawe/`** — moves to its own OSS repo
+  (`wa-lawe`, MIT licence) and requires wa'kijo Pro to run.
+- **`apps/api/src/modules/_template/`** — was a Module-Registry
+  consumer template; no longer load-bearing under the (b) scope.
+- **`apps/api/src/modules/billing/providers/billplz.billing-provider.ts`**
+  and **`curlec.billing-provider.ts`** — multi-provider billing is a
+  Tier A+ feature in Pro.
+- **Plan + Subscription Billplz/Curlec columns** — Prisma schema cleaned
+  to Stripe-only. Pro adds them back via its own migration.
+- **`packages/shared/src/platform/`** — Module manifest schemas / admin
+  DTOs no longer exported from `@wa-kijo/shared` in Community.
+- **`razorpay` runtime dependency** — only needed by the removed Curlec
+  provider.
+- **Mintlify `reference/module-registry.mdx`** — removed from the docs
+  site nav alongside the runtime.
 
 ### Deprecated
 
-- _nothing yet_
-
-### Removed
-
-- _nothing yet_
-
-### Fixed
-
-- _nothing yet_
+- **ADR-0008, ADR-0009, ADR-0010** are partially superseded by ADR-0011.
+  They remain in `docs/decisions/` as historical record of the path not
+  taken — read them for context, but the 2026-05-17 reversal is the
+  current source of truth.
 
 ### Security
 
-- _nothing yet_
+- Cross-tenant fuzz tests continue to run in CI on the Community-scoped
+  models — verified after the schema cleanup that no test imports
+  removed code.
+
+### Migration notes
+
+- **From any previous internal version**: run
+  `pnpm db:migrate -- --name drop_platform_thesis_models` to generate
+  the migration that drops `module`, `tenant_module`, and the
+  Billplz / Curlec columns on `plan` and `subscription`. Review the
+  generated SQL before accepting.
+- **Pro tier buyers**: continue using `wa-kijo-pro` — all paid features
+  remain available on the `archive/platform-thesis` branch and will be
+  integrated into the Pro mainline through the engines build-out plan
+  (PRD §4).
 
 ---
 
@@ -223,9 +309,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/your-org/wa-kijo/compare/v0.5.0...HEAD
-[0.5.0]: https://github.com/your-org/wa-kijo/compare/v0.4.0...v0.5.0
-[0.4.0]: https://github.com/your-org/wa-kijo/compare/v0.3.0...v0.4.0
-[0.3.0]: https://github.com/your-org/wa-kijo/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/your-org/wa-kijo/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/your-org/wa-kijo/releases/tag/v0.1.0
+[Unreleased]: https://github.com/benharundev/wa-kijo/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/benharundev/wa-kijo/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/benharundev/wa-kijo/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/benharundev/wa-kijo/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/benharundev/wa-kijo/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/benharundev/wa-kijo/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/benharundev/wa-kijo/releases/tag/v0.1.0

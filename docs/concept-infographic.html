@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>wa'kijo Concept Infographic</title>
+    <style>
+      :root {
+        --ink: #15120e;
+        --muted: #625c52;
+        --paper: #f7f2e8;
+        --panel: #fffaf0;
+        --line: #d8c8ad;
+        --orange: #f26922;
+        --green: #17745c;
+        --blue: #226b8f;
+        --maroon: #9e3032;
+        --gold: #c98b19;
+        --shadow: 0 22px 80px rgba(47, 36, 20, 0.18);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at 20% 12%, rgba(242, 105, 34, 0.16), transparent 30rem),
+          radial-gradient(circle at 84% 22%, rgba(34, 107, 143, 0.13), transparent 28rem),
+          linear-gradient(135deg, #f4ebdc 0%, #fffaf0 45%, #f3ead8 100%);
+        color: var(--ink);
+        font-family: Avenir Next, Avenir, Trebuchet MS, sans-serif;
+      }
+
+      .sheet {
+        width: min(1600px, calc(100vw - 48px));
+        min-height: 100vh;
+        margin: 24px auto;
+        padding: 42px;
+        border: 1px solid rgba(122, 88, 43, 0.28);
+        background:
+          linear-gradient(rgba(21, 18, 14, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(21, 18, 14, 0.035) 1px, transparent 1px),
+          var(--paper);
+        background-size: 26px 26px;
+        box-shadow: var(--shadow);
+      }
+
+      header {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) 0.9fr;
+        gap: 34px;
+        align-items: end;
+        margin-bottom: 34px;
+      }
+
+      .kicker {
+        display: inline-flex;
+        gap: 10px;
+        align-items: center;
+        width: fit-content;
+        padding: 8px 12px;
+        border: 1px solid var(--line);
+        background: rgba(255, 250, 240, 0.76);
+        color: var(--green);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .kicker::before {
+        content: "";
+        width: 10px;
+        height: 10px;
+        background: var(--green);
+      }
+
+      h1 {
+        max-width: 920px;
+        margin: 18px 0 20px;
+        padding-bottom: 8px;
+        font-family: Georgia, Times New Roman, serif;
+        font-size: clamp(52px, 5.7vw, 102px);
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        max-width: 850px;
+        color: var(--muted);
+        font-size: 22px;
+        line-height: 1.42;
+      }
+
+      .meta {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .meta div {
+        border: 1px solid var(--line);
+        background: rgba(255, 250, 240, 0.8);
+        padding: 14px 16px;
+      }
+
+      .meta b {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--ink);
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+      }
+
+      .meta span {
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.35;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.18fr 1fr 0.86fr;
+        gap: 22px;
+      }
+
+      section {
+        border: 1px solid var(--line);
+        background: rgba(255, 250, 240, 0.86);
+        min-width: 0;
+      }
+
+      .section-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      h2 {
+        margin: 0;
+        font-family: Georgia, Times New Roman, serif;
+        font-size: 30px;
+        line-height: 1;
+      }
+
+      .tag {
+        align-self: start;
+        white-space: nowrap;
+        padding: 6px 9px;
+        background: var(--ink);
+        color: var(--paper);
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .stack {
+        padding: 20px;
+      }
+
+      .layer {
+        position: relative;
+        margin-bottom: 12px;
+        padding: 16px 16px 16px 72px;
+        border: 1px solid var(--line);
+        background: #fffdf7;
+      }
+
+      .layer:last-child {
+        margin-bottom: 0;
+      }
+
+      .num {
+        position: absolute;
+        top: 14px;
+        left: 14px;
+        display: grid;
+        place-items: center;
+        width: 38px;
+        height: 38px;
+        background: var(--orange);
+        color: #fff;
+        font-weight: 900;
+      }
+
+      .layer h3,
+      .module h3,
+      .flow h3,
+      .tile h3 {
+        margin: 0 0 7px;
+        font-size: 20px;
+        line-height: 1.1;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.42;
+      }
+
+      .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-top: 12px;
+      }
+
+      .pill {
+        border: 1px solid rgba(21, 18, 14, 0.2);
+        padding: 5px 8px;
+        color: #2f2921;
+        background: #f7efe1;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .flow-wrap {
+        padding: 20px;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 14px;
+        align-items: start;
+        position: relative;
+        padding: 0 0 22px;
+      }
+
+      .flow:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        left: 23px;
+        top: 50px;
+        bottom: 2px;
+        width: 2px;
+        background: var(--line);
+      }
+
+      .dot {
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        background: var(--blue);
+        color: #fff;
+        font-weight: 900;
+        border: 4px solid var(--paper);
+        outline: 1px solid var(--line);
+      }
+
+      .module-map {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        padding: 20px;
+      }
+
+      .module {
+        min-height: 168px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        background: #fffdf7;
+      }
+
+      .module.core {
+        grid-column: 1 / -1;
+        min-height: 0;
+        background: #1e1a15;
+        color: var(--paper);
+      }
+
+      .module.core p,
+      .module.core .mini {
+        color: #efe0c6;
+      }
+
+      .mini {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .dependency {
+        margin-top: 12px;
+        border-left: 4px solid var(--orange);
+        padding-left: 10px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .side {
+        display: grid;
+        grid-template-rows: auto auto 1fr;
+        gap: 22px;
+      }
+
+      .tiles {
+        padding: 20px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .tile {
+        padding: 15px;
+        border: 1px solid var(--line);
+        background: #fffdf7;
+      }
+
+      .tile h3 {
+        font-size: 18px;
+      }
+
+      .wide {
+        grid-column: 1 / -1;
+        margin-top: 22px;
+      }
+
+      .road {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 10px;
+        padding: 20px;
+      }
+
+      .step {
+        position: relative;
+        min-height: 146px;
+        padding: 15px;
+        background: #fffdf7;
+        border: 1px solid var(--line);
+      }
+
+      .step::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: -11px;
+        width: 10px;
+        height: 2px;
+        background: var(--line);
+      }
+
+      .step:last-child::after {
+        display: none;
+      }
+
+      .step b {
+        display: block;
+        margin-bottom: 10px;
+        color: var(--orange);
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .step strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 18px;
+      }
+
+      footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        margin-top: 22px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      @media (max-width: 1100px) {
+        .sheet {
+          width: min(980px, calc(100vw - 24px));
+          padding: 24px;
+        }
+
+        header,
+        .grid,
+        .road {
+          grid-template-columns: 1fr;
+        }
+
+        .side {
+          grid-template-rows: none;
+        }
+
+        .step::after {
+          display: none;
+        }
+      }
+
+      @media print {
+        body {
+          background: white;
+        }
+
+        .sheet {
+          width: 1600px;
+          margin: 0;
+          box-shadow: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="sheet" aria-label="wa'kijo concept infographic">
+      <header>
+        <div>
+          <div class="kicker">Concept infographic from latest code</div>
+          <h1>wa'kijo modular SaaS platform</h1>
+          <p class="subtitle">
+            One shared platform foundation for tenant-aware B2B products, with business modules
+            registered at boot, enabled per organisation, and extended without breaking upstream upgrades.
+          </p>
+        </div>
+        <div class="meta" aria-label="code snapshot">
+          <div>
+            <b>Runtime shape</b>
+            <span>NestJS 11 + Fastify API, Next.js 15 web app, Prisma/PostgreSQL, BullMQ/Redis</span>
+          </div>
+          <div>
+            <b>Platform pivot</b>
+            <span>Module Registry + TenantModule enablement replaces one-product-per-fork as the default path</span>
+          </div>
+          <div>
+            <b>Latest registered modules</b>
+            <span>Contacts 0.5.0 and Conversations 0.5.0, with Conversations depending on Contacts</span>
+          </div>
+          <div>
+            <b>Shared kernel</b>
+            <span>@wa-kijo/booking-core provides scheduling primitives for future booking-heavy modules</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid">
+        <section>
+          <div class="section-head">
+            <h2>Platform foundation</h2>
+            <span class="tag">shared core</span>
+          </div>
+          <div class="stack">
+            <article class="layer">
+              <span class="num">1</span>
+              <h3>Request context and auth boundary</h3>
+              <p>
+                Fastify opens AsyncLocalStorage per request. Better Auth owns /api/auth/* before NestJS.
+                AuthGuard resolves user, org, role, and hierarchy into RequestContext.
+              </p>
+              <div class="pill-row">
+                <span class="pill">Better Auth</span>
+                <span class="pill">session cookie</span>
+                <span class="pill">active org</span>
+              </div>
+            </article>
+
+            <article class="layer">
+              <span class="num">2</span>
+              <h3>RBAC and module access gates</h3>
+              <p>
+                PermissionGuard checks static shared permissions. RequireModuleGuard hides disabled modules
+                with 404 responses so tenants cannot infer licensed features.
+              </p>
+              <div class="pill-row">
+                <span class="pill">owner</span>
+                <span class="pill">admin</span>
+                <span class="pill">member</span>
+                <span class="pill">@RequireModule</span>
+              </div>
+            </article>
+
+            <article class="layer">
+              <span class="num">3</span>
+              <h3>Tenant-safe data layer</h3>
+              <p>
+                BaseRepository injects org scoping into feature queries. Prisma persists organisations,
+                contacts, conversations, modules, tenant module flags, audit data, and billing state.
+              </p>
+              <div class="pill-row">
+                <span class="pill">PostgreSQL 16</span>
+                <span class="pill">Prisma 5</span>
+                <span class="pill">soft delete</span>
+              </div>
+            </article>
+
+            <article class="layer">
+              <span class="num">4</span>
+              <h3>Operations and extensibility</h3>
+              <p>
+                BullMQ handles dispatch work. Module manifests expose permissions, routes, hooks, fields,
+                UI slots, per-tenant config, and lifecycle handlers as the public module contract.
+              </p>
+              <div class="pill-row">
+                <span class="pill">BullMQ</span>
+                <span class="pill">Redis 7</span>
+                <span class="pill">module manifest</span>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section>
+          <div class="section-head">
+            <h2>Module runtime</h2>
+            <span class="tag">boot to request</span>
+          </div>
+          <div class="flow-wrap">
+            <article class="flow">
+              <span class="dot">A</span>
+              <div>
+                <h3>Scan manifests</h3>
+                <p>ModuleScanner discovers apps/api/src/modules/*/module.manifest.ts and skips private folders.</p>
+              </div>
+            </article>
+            <article class="flow">
+              <span class="dot">B</span>
+              <div>
+                <h3>Validate contracts</h3>
+                <p>Zod checks slug, SemVer, dependency ranges, permissions, hooks, custom fields, UI slots, routes, and config.</p>
+              </div>
+            </article>
+            <article class="flow">
+              <span class="dot">C</span>
+              <div>
+                <h3>Resolve dependency graph</h3>
+                <p>Startup aborts on missing modules, incompatible versions, or dependency cycles.</p>
+              </div>
+            </article>
+            <article class="flow">
+              <span class="dot">D</span>
+              <div>
+                <h3>Sync registry tables</h3>
+                <p>Module rows are upserted; removed modules become retired instead of deleted.</p>
+              </div>
+            </article>
+            <article class="flow">
+              <span class="dot">E</span>
+              <div>
+                <h3>Enable per tenant</h3>
+                <p>/api/v1/admin/modules toggles TenantModule state for the active organisation only.</p>
+              </div>
+            </article>
+            <article class="flow">
+              <span class="dot">F</span>
+              <div>
+                <h3>Serve gated routes</h3>
+                <p>Controllers use @RequireModule("slug") so disabled or unknown features resolve as 404.</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <div class="side">
+          <section>
+            <div class="section-head">
+              <h2>Business modules</h2>
+              <span class="tag">installed</span>
+            </div>
+            <div class="module-map">
+              <article class="module core">
+                <h3>SaaS Core Platform</h3>
+                <p>Auth, org hierarchy, RBAC, module registry, request context, audit, billing, jobs, email, docs.</p>
+                <div class="mini">Shared once across every customer product and enabled module.</div>
+              </article>
+              <article class="module">
+                <h3>Contacts</h3>
+                <p>Per-organisation contact directory with phone, email, tags, and blocked state.</p>
+                <div class="dependency">Foundational dependency</div>
+              </article>
+              <article class="module">
+                <h3>Conversations</h3>
+                <p>Channel-agnostic inbox with outbound message dispatch through queues.</p>
+                <div class="dependency">Depends on Contacts ^0.5.0</div>
+              </article>
+              <article class="module">
+                <h3>Billing</h3>
+                <p>Provider abstraction for Stripe, Billplz, and Curlec-style payment flows.</p>
+                <div class="dependency">Decoupled provider module</div>
+              </article>
+              <article class="module">
+                <h3>Email</h3>
+                <p>Transactional delivery foundation for verification, invitations, and notifications.</p>
+                <div class="dependency">Global service module</div>
+              </article>
+            </div>
+          </section>
+
+          <section>
+            <div class="section-head">
+              <h2>Booking core</h2>
+              <span class="tag">shared engine</span>
+            </div>
+            <div class="tiles">
+              <article class="tile">
+                <h3>Small scheduling kernel</h3>
+                <p>TimeRange, Resource, Schedulable, AvailabilityRule, BookingState, conflict checks, availability checks.</p>
+              </article>
+              <article class="tile">
+                <h3>Consumer-owned vocabulary</h3>
+                <p>Workshop, tournament, rental, and CRM modules keep their own entities, persistence, routes, and invariants.</p>
+              </article>
+              <article class="tile">
+                <h3>Dual-consumer rule</h3>
+                <p>A concept graduates into the kernel only after at least two real modules need it.</p>
+              </article>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <section class="wide">
+        <div class="section-head">
+          <h2>Customer customization and upgrade path</h2>
+          <span class="tag">mergeable by design</span>
+        </div>
+        <div class="road">
+          <article class="step">
+            <b>01</b>
+            <strong>Use default module</strong>
+            <p>Start with upstream wa'kijo modules and generated docs as the source of truth.</p>
+          </article>
+          <article class="step">
+            <b>02</b>
+            <strong>Enable for tenant</strong>
+            <p>Turn features on per organisation through TenantModule state and config JSON.</p>
+          </article>
+          <article class="step">
+            <b>03</b>
+            <strong>Configure safely</strong>
+            <p>Use manifest-declared config, permissions, routes, and future custom-field definitions.</p>
+          </article>
+          <article class="step">
+            <b>04</b>
+            <strong>Extend via hooks</strong>
+            <p>Add processors, policies, UI slots, and event handlers in customer-owned modules.</p>
+          </article>
+          <article class="step">
+            <b>05</b>
+            <strong>Fork only last</strong>
+            <p>Direct source changes remain the fallback when a module cannot be extended cleanly.</p>
+          </article>
+          <article class="step">
+            <b>06</b>
+            <strong>Upgrade upstream</strong>
+            <p>Core fixes land once across auth, tenant scoping, billing, docs, and shared kernels.</p>
+          </article>
+        </div>
+      </section>
+
+      <footer>
+        <span>Prepared from the current wa-kijo checkout, including uncommitted Module Registry and manifest changes.</span>
+        <span>Source references: README.md, docs/architecture.md, ADR-0008, ADR-0010, module.manifest.ts, booking-core.</span>
+      </footer>
+    </main>
+  </body>
+</html>
