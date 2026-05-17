@@ -53,38 +53,39 @@ decisions live in `@docs/roadmap.md`.
 
 ## Project structure
 
+Most of the layout is `ls`-discoverable. The non-obvious load-bearing locations:
+
 ```
-wa-kijo/
-├── apps/
-│   ├── api/src/
-│   │   ├── main.ts               # Fastify bootstrap + Better Auth hooks
-│   │   ├── auth/                 # Better Auth factory + AuthService
-│   │   ├── base/                 # BaseRepository<T> — extend for every repo
-│   │   ├── common/{context,decorators,filters,guards,interceptors,logger}/
-│   │   ├── config/               # EnvService (Zod-validated, @Global)
-│   │   ├── prisma/               # PrismaModule + PrismaService (@Global)
-│   │   ├── queues/               # BullMQ jobs/, processors/, queue.names.ts
-│   │   ├── redis/                # RedisModule (@Global)
-│   │   └── modules/              # health/, email/, contacts/, conversations/, billing/
-│   └── web/src/
-│       ├── app/{(auth),(app)}/   # auth pages + authenticated shell
-│       ├── components/{layout,ui}/
-│       ├── hooks/                # use-can, use-session, use-toast
-│       ├── lib/                  # auth-client.ts, fetcher.ts
-│       └── providers/            # QueryProvider, ThemeProvider
-├── packages/
-│   ├── db/prisma/schema.prisma   # single Prisma schema (Better Auth + custom)
-│   └── shared/src/{auth,dto}/    # roles, permissions, Zod DTOs
-├── docs/decisions/               # ADRs 0001–0011
-└── .claude/rules/                # backend.md, frontend.md, security.md, testing.md
+apps/api/src/
+├── base/                 # BaseRepository<T> — extend for every repo
+├── common/context/       # AsyncLocalStorage RequestContext store
+├── common/guards/        # AuthGuard + PermissionGuard (registered as APP_GUARDs)
+├── queues/               # BullMQ; queue.names.ts is the queue-string SSoT
+└── modules/              # health, email, contacts, conversations, billing
+
+packages/
+├── db/prisma/schema.prisma   # single Prisma schema (Better Auth + custom)
+└── shared/src/{auth,dto}/    # roles, permissions, Zod DTOs
+
+docs/decisions/         # ADRs 0001–0011
+.claude/rules/          # backend.md, frontend.md, security.md, testing.md
 ```
+
+The frontend (`apps/web/src/`) follows standard Next.js App Router conventions —
+route groups `(auth)/` and `(app)/`, `components/{layout,ui}/`, `hooks/`,
+`lib/`, `providers/`.
 
 ## Always do these
 
-1. **Use the BaseRepository pattern** for all data access. See the
-   `nestjs-prisma` skill for the canonical implementation.
+1. **Use the BaseRepository pattern** for all data access. See
+   `apps/api/src/base/` for the canonical implementation; backend rules in
+   `@.claude/rules/backend.md` cover the conventions in depth.
 2. **Soft delete by default.** No hard deletes outside explicit cleanup jobs.
-3. **Audit log all mutations** on flagged entities via Prisma middleware.
+3. **Design for the audit engine** (Phase 6 work in progress). Mutations on
+   flagged entities will route through a Prisma middleware that doesn't exist
+   yet — keep write paths through repository methods (not raw
+   `prisma.$transaction` in services) so the middleware drop-in stays cheap when
+   it lands.
 4. **Tenant-scope every query** via the BaseRepository's tenant middleware. No
    raw `prisma.<model>.findMany` outside of admin/system code.
 5. **Cursor pagination** for any list endpoint that could grow past 1k rows.
@@ -244,43 +245,13 @@ billing.** The stub to replace is `MessageDispatchProcessor` in
 `job.data.channel` (`whatsapp | email | sms`) and currently marks every job
 `sent` with a placeholder `externalId`.
 
-## Integration test patterns
+## Integration tests
 
-Integration tests live in `apps/api/test/integration/` and run against a real
-Postgres container. Use `pnpm test:integration` (serial — one container at a
-time).
-
-**Setup (`setup/testcontainers.ts`):** Launches `postgres:16-alpine` via
-Testcontainers, runs `prisma migrate deploy`, returns `{ prisma, container }`.
-Call `teardownTestDb(db)` in `afterAll`.
-
-**Factories (`setup/test-factories.ts`):** Write directly via Prisma (bypass
-Better Auth HTTP). Never import in production code.
-
-- `createTestTenant(prisma, opts?)` — one call creates org + user + member,
-  returns `{ org, user, member }`. Use this by default.
-- `createTestOrg`, `createTestUser`, `createTestMember` — lower-level primitives
-  for edge cases.
-
-**`makeCtx` helper (copy into each spec file):**
-
-```typescript
-function makeCtx(userId: string, orgId: string): RequestContext {
-  return {
-    userId,
-    orgId,
-    orgType: 'WORKSPACE',
-    userRole: 'admin',
-    globalRole: 'user',
-    requestId: 'test-request',
-  };
-}
-```
-
-**Tenant isolation tests:**
-`apps/api/test/integration/tenant-isolation/cross-tenant.spec.ts` is the
-canonical reference. Every new repository must assert that cross-org `findById`
-returns `null` (not an error) and `findAll` returns only own-org records.
+Integration tests run against a real Postgres container (Testcontainers,
+serial). Setup, factories, `makeCtx` helper, tenant-isolation conventions, and
+mock policy live in `@.claude/rules/testing.md` — it loads automatically when
+you edit a test file. The canonical cross-tenant test is
+`apps/api/test/integration/tenant-isolation/cross-tenant.spec.ts`.
 
 ## Workspace package build pattern
 
@@ -303,8 +274,6 @@ load-bearing for backend code:
 
 ## Skills to consult
 
-- `nestjs-prisma` — every backend module
-- `nestjs-better-auth` — anything auth or org-related
 - `frontend-design` — every new page or component
 - `webapp-testing` — E2E test scaffolding
 
