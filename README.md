@@ -20,6 +20,8 @@ Clone it, configure six env vars, and you have a working SaaS scaffold at
 `localhost` — no four-week boilerplate slog before you can start on the features
 that actually differentiate your product.
 
+![wa'kijo concept](docs/diagrams/concept-infographic.svg)
+
 ---
 
 ## What's included
@@ -130,7 +132,16 @@ wa-kijo/
 
 ## Architecture overview
 
-Every authenticated request flows through:
+Three diagrams in [`docs/diagrams/`](docs/diagrams/) cover the topology and the
+request lifecycle:
+
+| Diagram                                                      | What it shows                                                              |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| [Server architecture](docs/diagrams/server-architecture.md)  | Deployment topology — app processes, data stores, external services, ports |
+| [Service flow](docs/diagrams/service-flow.md)                | Request lifecycle from cookie through guards to `BaseRepository` and back  |
+| [Concept infographic](docs/diagrams/concept-infographic.svg) | One-page visual of the layered stack (shown above)                         |
+
+At a glance:
 
 ```
 Fastify onRequest hook  → AsyncLocalStorage.run({ requestId, userId, orgId, … })
