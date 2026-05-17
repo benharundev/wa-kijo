@@ -20,7 +20,7 @@ Clone it, configure six env vars, and you have a working SaaS scaffold at
 `localhost` — no four-week boilerplate slog before you can start on the features
 that actually differentiate your product.
 
-![wa'kijo concept](docs/diagrams/concept-infographic.svg)
+![wa'kijo enterprise SaaS architecture](docs/diagrams/wakijo-enterprise-saas-latest.png)
 
 ---
 
@@ -138,7 +138,9 @@ request lifecycle:
 | Diagram                                                      | What it shows                                                              |
 | ------------------------------------------------------------ | -------------------------------------------------------------------------- |
 | [Server architecture](docs/diagrams/server-architecture.md)  | Deployment topology — app processes, data stores, external services, ports |
+| [Module map](docs/diagrams/module-map.md)                    | Every NestJS module + workspace package + canonical feature internals + frontend structure |
 | [Service flow](docs/diagrams/service-flow.md)                | Request lifecycle from cookie through guards to `BaseRepository` and back  |
+| [Enterprise SaaS infographic](docs/diagrams/wakijo-enterprise-saas-latest.html) | Wide visual summary of the latest v0.6.1 architecture and ADR-0011 direction |
 | [Concept infographic](docs/diagrams/concept-infographic.svg) | One-page visual of the layered stack (shown above)                         |
 
 At a glance:
